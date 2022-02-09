@@ -58,12 +58,12 @@ Shader "Aetherius/RaymarchShader"
 				return length(centre - p) - radius;
 			}
 
-			float Raymarching(float3 ro, float3 rd) //where ro is ray origin & rd is ray direction
+			float4 Raymarching(float3 ro, float3 rd) //where ro is ray origin & rd is ray direction
 			{
-				float density = 0.0;
-				float maxSteps = 128;
-				float maxRayDist = 5;//100 meters
-				float stepLength = maxRayDist / maxSteps;
+				float4 result = float4(0.0,0.0,0.0,0.0);
+				float maxSteps = 256;
+				float maxRayDist = 5;//In meters "Far Plane" of the raycast
+				float stepLength = maxRayDist / maxSteps; //TODO provisional, will find another solution for the stepping later
 
 				float3 currPos = ro;
 
@@ -73,32 +73,31 @@ Shader "Aetherius/RaymarchShader"
 
 					if (Sphere(float3(0.0,0.0,0.0), 0.5, currPos) <= 0.0)
 					{
-						density += .1;
+						result.w += .025;//this is the density for now TODO change
 					}
 
 				}
 
+				result.w = clamp(result.w, 0.0, 1.0);//we dont want density above 1 for now (TODO visual glitch in the sun if above 1, fix this?)
+				result.rgb = float3(1.0,0.1,1.0);
 
-
-
-				return density;
+				return result;
 			}
 
 
 
 			fixed4 frag(v2f i) : SV_Target
 			{
-				fixed4 col = tex2D(_MainTex, i.uv);
+				fixed3 col = tex2D(_MainTex, i.uv);
 			// just invert the colors
 			//col.rgb = 1 - col.rgb;
 
 			float3 rayDirection = normalize(i.ray.xyz);
 			float3 rayOrigin = _WorldSpaceCameraPos;
 
-			float density = Raymarching(rayOrigin, rayDirection);
+			float4 result = Raymarching(rayOrigin, rayDirection);
 
-			col.rgb = rayDirection * density;
-			return col;
+			return fixed4(col * (1.0 - result.w) + result.rgb * result.w,1.0); //lerp between colors of the scene & the color of the volume (TODO temporal, will have another solution later)
 
 			}
 ENDCG

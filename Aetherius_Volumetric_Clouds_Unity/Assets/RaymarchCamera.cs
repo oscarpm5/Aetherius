@@ -50,7 +50,7 @@ public class RaymarchCamera : MonoBehaviour
 
         _rayMarchMaterial.SetMatrix("_CamFrustum", CamFrustrumFromCam(_camera));
         _rayMarchMaterial.SetMatrix("_CamToWorldMat", _camera.cameraToWorldMatrix);
-
+        _rayMarchMaterial.SetTexture("_MainTex", source); //input the rendered camera texture 
 
         //Create a screen quad
         RenderTexture.active = destination;
