@@ -13,7 +13,7 @@ public class RaymarchCamera : MonoBehaviour
     private Shader _shader;
     private Material _material;
 
-    public Material _rayMarchMaterial
+    public Material rayMarchMaterial
     {
         get
         {
@@ -42,21 +42,21 @@ public class RaymarchCamera : MonoBehaviour
 
     private void OnRenderImage(RenderTexture source, RenderTexture destination)
     {
-        if (_rayMarchMaterial == null)
+        if (rayMarchMaterial == null)
         {
             Graphics.Blit(source, destination);
             return;
         }
 
-        _rayMarchMaterial.SetMatrix("_CamFrustum", CamFrustrumFromCam(_camera));
-        _rayMarchMaterial.SetMatrix("_CamToWorldMat", _camera.cameraToWorldMatrix);
-        _rayMarchMaterial.SetTexture("_MainTex", source); //input the rendered camera texture 
+        rayMarchMaterial.SetMatrix("_CamFrustum", CamFrustrumFromCam(_camera));
+        rayMarchMaterial.SetMatrix("_CamToWorldMat", _camera.cameraToWorldMatrix);
+        rayMarchMaterial.SetTexture("_MainTex", source); //input the rendered camera texture 
 
         //Create a screen quad
         RenderTexture.active = destination;
         GL.PushMatrix();
         GL.LoadOrtho();
-        _rayMarchMaterial.SetPass(0);
+        rayMarchMaterial.SetPass(0);
         GL.Begin(GL.QUADS);
         //Bottom Left
         GL.MultiTexCoord2(0, 0.0f, 0.0f);
@@ -73,6 +73,10 @@ public class RaymarchCamera : MonoBehaviour
 
         GL.End();
         GL.PopMatrix();
+
+
+
+
     }
 
 
