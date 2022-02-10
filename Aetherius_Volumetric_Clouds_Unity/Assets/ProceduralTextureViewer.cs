@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using UnityEngine;
 
 [RequireComponent(typeof(Camera))]
+[ExecuteInEditMode]
+[ImageEffectAllowedInSceneView]
 public class ProceduralTextureViewer : MonoBehaviour
 {
     //Compute shader
@@ -15,6 +17,8 @@ public class ProceduralTextureViewer : MonoBehaviour
     [SerializeField]
     private Shader _displayPreviewShader;
     private Material _material;
+    [SerializeField]
+    private bool _displayTexture = false;
 
     [SerializeField]
     [Range(0.0f, 1.0f)]
@@ -43,12 +47,15 @@ public class ProceduralTextureViewer : MonoBehaviour
             _renderTexture.Create();
         }
 
+        if (_computeShader == null)
+            return;
+
         _computeShader.SetTexture(0, "Result", _renderTexture);
         _computeShader.Dispatch(0, _renderTexture.width / 8, _renderTexture.height / 8, 1); //Image size divided by the thread size of each group
 
 
 
-        if (displayMaterial == null)
+        if (displayMaterial == null || !_displayTexture)
         {
             Graphics.Blit(source, destination);
             return;
