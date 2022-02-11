@@ -7,30 +7,26 @@ using UnityEngine;
 [ImageEffectAllowedInSceneView]
 public class ProceduralTextureViewer : MonoBehaviour
 {
+    public bool updateTextureAuto = false;
+    
     //Compute shader
-    [SerializeField]
-    private ComputeShader _computeShader;
-    [SerializeField]
-    private RenderTexture _renderTexture;
+    public ComputeShader computeShader;
+    public RenderTexture renderTexture=null;
 
     //Display shader
-    [SerializeField]
-    private Shader _displayPreviewShader;
+    public Shader displayPreviewShader;
     private Material _material;
-    [SerializeField]
-    private bool _displayTexture = false;
-
-    [SerializeField]
+    public bool displayTexture = false;
     [Range(0.0f, 1.0f)]
-    private float _debugDisplaySize = 0.5f;
+    public float debugDisplaySize = 0.5f;
 
-    public Material displayMaterial
+    public Material material
     {
         get
         {
-            if (!_material && _displayPreviewShader)
+            if (!_material && displayPreviewShader)
             {
-                _material = new Material(_displayPreviewShader);
+                _material = new Material(displayPreviewShader);
                 _material.hideFlags = HideFlags.HideAndDontSave;
             }
             return _material;
@@ -40,31 +36,48 @@ public class ProceduralTextureViewer : MonoBehaviour
 
     private void OnRenderImage(RenderTexture source, RenderTexture destination)
     {
-        if (_renderTexture == null)
+        if(updateTextureAuto)
         {
-            _renderTexture = new RenderTexture(256, 256, 24);
-            _renderTexture.enableRandomWrite = true;//So it can be used by the compute shader
-            _renderTexture.Create();
+            GenerateTexture();
         }
 
-        if (_computeShader == null)
-            return;
-
-        _computeShader.SetTexture(0, "Result", _renderTexture);
-        _computeShader.Dispatch(0, _renderTexture.width / 8, _renderTexture.height / 8, 1); //Image size divided by the thread size of each group
-
-
-
-        if (displayMaterial == null || !_displayTexture)
+        if (material == null || !displayTexture)
         {
             Graphics.Blit(source, destination);
             return;
         }
 
-        displayMaterial.SetTexture("_DisplayTex", _renderTexture); //input the procedural texture
-        displayMaterial.SetFloat("debugTextureSize", _debugDisplaySize);
+        material.SetTexture("_DisplayTex", renderTexture); //input the procedural texture
+        material.SetFloat("debugTextureSize", debugDisplaySize);
 
-        Graphics.Blit(source, destination,displayMaterial);
+        Graphics.Blit(source, destination,material);
+    }
+
+    private void Start()
+    {
+        renderTexture = null;
+        _material = null;
+        GenerateTexture();
+    }
+
+
+    public void GenerateTexture()
+    {
+
+        if (renderTexture == null)
+        {
+            renderTexture = new RenderTexture(256, 256, 24);
+            renderTexture.enableRandomWrite = true;//So it can be used by the compute shader
+            renderTexture.Create();
+        }
+
+        if (computeShader == null)
+            return;
+
+        int currKernel = computeShader.FindKernel("CSMain");
+        computeShader.SetTexture(currKernel, "Result", renderTexture);
+        computeShader.Dispatch(currKernel, renderTexture.width / 8, renderTexture.height / 8, 1); //Image size divided by the thread size of each group
+
     }
 
 }

@@ -9,6 +9,9 @@ RWTexture2D<float4> Result;
 void CSMain (uint3 id : SV_DispatchThreadID)
 {
     // TODO: insert actual code here!
+    float numCellsX=8.0;
+    float numCellsY=8.0;
+    float2 currCell= float2((id.x)%(256.0/numCellsX),(id.y)%(256.0/numCellsY));
 
-    Result[id.xy] = float4(id.x & id.y, (id.x & 15)/15.0, (id.y & 15)/15.0, 0.0);
+    Result[id.xy] = float4(currCell.x, currCell.y/*!(id.x  15) && !(id.y & 15)*/, 0, 0.0);
 }
