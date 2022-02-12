@@ -19,6 +19,8 @@ public class ProceduralTextureViewer : MonoBehaviour
     public bool displayTexture = false;
     [Range(0.0f, 1.0f)]
     public float debugDisplaySize = 0.5f;
+    [Range(1, 5)]
+    public float tileAmmount = 1;
     public Vector2 numberOfCells = Vector2.one;
 
     public Material material
@@ -50,7 +52,7 @@ public class ProceduralTextureViewer : MonoBehaviour
 
         material.SetTexture("_DisplayTex", renderTexture); //input the procedural texture
         material.SetFloat("debugTextureSize", debugDisplaySize);
-
+        material.SetFloat("tileAmmount", tileAmmount);
         Graphics.Blit(source, destination,material);
     }
 

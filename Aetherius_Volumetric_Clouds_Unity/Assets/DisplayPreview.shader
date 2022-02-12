@@ -40,36 +40,23 @@ Shader "Aetherius/DisplayPreview"
 			sampler2D _MainTex;
 			sampler2D _DisplayTex;
 			float debugTextureSize;//between 0 and 1
-
+			float tileAmmount;//amount of tiling for the texture
 
 			fixed4 frag(v2f i) : SV_Target
 			{
-
 				fixed4 col = tex2D(_MainTex, i.uv);
 
-				float tileAmmount = 3.0;
 				float w = _ScreenParams.x;//width of the cam target texture in pixels
 				float h = _ScreenParams.y;//height of the cam target texture in pixels
 
-				float minDimensions = min(w, h);//we get the shortest screen axis in pixels
-
-				float x = i.uv.x * w; //Pixel equivalent of uv.x
-				float y = i.uv.y * h; //Pixel equivalent of uv.y
+				float minDimensionsScaled = min(w, h) * debugTextureSize;//we get the shortest screen axis in pixels and multiply it by a scale factor between 0 and 1
+				float2 currPixel = float2(i.uv.x * w, i.uv.y * h);//Pixel equivalent of uv.xy //TODO change name to a more readable one
 
 
-				float2 st = i.uv* tileAmmount;
-				st.x = x / (minDimensions*debugTextureSize);
-				st.y = y / (minDimensions* debugTextureSize);
-				st *= tileAmmount;
-				float2 i_st = floor(st);
-				float2 f_st = frac(st);
-				//return float4(f_st.xy, 0.0, 0.0);
-
-
-				if (x < minDimensions * debugTextureSize && y < (minDimensions * debugTextureSize))
+				if (currPixel.x < minDimensionsScaled && currPixel.y < minDimensionsScaled) //overwrite only the pixels inside the wanted square
 				{
-					float2 samplePos =float2(x,y)/(minDimensions* debugTextureSize);
-					col = tex2D(_DisplayTex, f_st);
+					float2 st = (currPixel / minDimensionsScaled) * tileAmmount;
+					col = tex2D(_DisplayTex, frac(st));
 				}
 				return col;
 
