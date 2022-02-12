@@ -38,9 +38,11 @@ Shader "Aetherius/DisplayPreview"
 			}
 
 			sampler2D _MainTex;
-			sampler2D _DisplayTex;
+			sampler2D _DisplayTex2D;
+			sampler3D _DisplayTex3D;
 			float debugTextureSize;//between 0 and 1
 			float tileAmmount;//amount of tiling for the texture
+			float slice3DTex;
 
 			fixed4 frag(v2f i) : SV_Target
 			{
@@ -56,7 +58,7 @@ Shader "Aetherius/DisplayPreview"
 				if (currPixel.x < minDimensionsScaled && currPixel.y < minDimensionsScaled) //overwrite only the pixels inside the wanted square
 				{
 					float2 st = (currPixel / minDimensionsScaled) * tileAmmount;
-					col = tex2D(_DisplayTex, frac(st));
+					col = tex3D(_DisplayTex3D, float3(frac(st), slice3DTex));
 				}
 				return col;
 

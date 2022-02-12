@@ -421,15 +421,17 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c153721c13fdf2146b06d0cf0a9bd6f4, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  updateTextureAuto: 1
+  updateTextureAuto: 0
   computeShader: {fileID: 7200000, guid: 2ae0c58880eea7044a62d375123f3294, type: 3}
-  renderTexture: {fileID: 1167785027}
+  renderTexture2D: {fileID: 0}
+  renderTexture3D: {fileID: 1435734914}
   displayPreviewShader: {fileID: 4800000, guid: 2205b0981fb20cc48a4293e9f98062fd, type: 3}
   displayTexture: 1
-  debugDisplaySize: 1
-  tileAmmount: 1
-  numberOfCells: {x: 8, y: 8}
---- !u!84 &1167785027
+  debugDisplaySize: 0.843
+  tileAmmount: 1.54
+  numberOfCells: 8
+  textureSlice: 0.385
+--- !u!84 &1435734914
 RenderTexture:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -447,7 +449,7 @@ RenderTexture:
   m_Height: 256
   m_AntiAliasing: 1
   m_MipCount: -1
-  m_DepthFormat: 2
+  m_DepthFormat: 0
   m_ColorFormat: 8
   m_MipMap: 0
   m_GenerateMips: 1
@@ -463,5 +465,5 @@ RenderTexture:
     m_WrapU: 1
     m_WrapV: 1
     m_WrapW: 1
-  m_Dimension: 2
-  m_VolumeDepth: 1
+  m_Dimension: 3
+  m_VolumeDepth: 256
