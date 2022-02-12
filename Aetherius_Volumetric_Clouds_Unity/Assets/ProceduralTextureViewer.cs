@@ -21,7 +21,7 @@ public class ProceduralTextureViewer : MonoBehaviour
     public float debugDisplaySize = 0.5f;
     [Range(1, 5)]
     public float tileAmmount = 1;
-    public Vector2 numberOfCells = Vector2.one;
+    public int numberOfCells = 1;
 
     public Material material
     {
@@ -78,14 +78,12 @@ public class ProceduralTextureViewer : MonoBehaviour
         if (computeShader == null)
             return;
 
-        int currKernel = computeShader.FindKernel("CSMain");
+        int currKernel = computeShader.FindKernel("Worley2DTexture");
         computeShader.SetTexture(currKernel, "Result", renderTexture);
         computeShader.SetFloat("textureSizeP", dimensions);
       
-        float []numCells = new float[2];
-        numCells[0] = numberOfCells.x;
-        numCells[1] = numberOfCells.y;
-        computeShader.SetFloats("numCells", numCells);
+
+        computeShader.SetInt("numCells2D", numberOfCells);
 
         //computeShader.Dispatch(currKernel, dimensions / 8, dimensions / 8, dimensions / 8); //Image size divided by the thread size of each group
         computeShader.Dispatch(currKernel, dimensions / 8, dimensions / 8,1); //Image size divided by the thread size of each group

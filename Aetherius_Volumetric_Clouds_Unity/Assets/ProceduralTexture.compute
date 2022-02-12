@@ -1,25 +1,27 @@
 // Each #kernel tells which function to compile; you can have many kernels
-#pragma kernel CSMain
+#pragma kernel Worley2DTexture
+
 
 // Create a RenderTexture with enableRandomWrite flag and set it
 // with cs.SetTexture
 RWTexture2D<float4> Result;
 float textureSizeP;//Texture Size in pixels
-float2 numCells;
+int numCells2D;
 float2 random2( float2 p ) 
 {
     return frac(sin(float2(dot(p,float2(127.1,311.7)),dot(p,float2(269.5,183.3))))*43758.5453);
 }
 
+
+
 [numthreads(8,8,1)]
-void CSMain (uint3 id : SV_DispatchThreadID)
+void Worley2DTexture (uint3 id : SV_DispatchThreadID)
 {
     // TODO: insert actual code here!
 
 
     float2 st = id.xy/textureSizeP; //convert pixel space into 0 to 1 coordinates
-    st.x*=numCells.x;
-    st.y*=numCells.y;
+    st*=numCells2D;
    
     float2 iPos = floor(st); //get integer coords
     float2 fPos = frac(st); //get fractional coords
@@ -30,20 +32,19 @@ void CSMain (uint3 id : SV_DispatchThreadID)
     {
         for(int x=-1; x<=1;++x)
         {
-            float2 neighbourOffset= float2(float(x),float(y)); //get an offset for the 9 adjacent tiles
+            float2 neighbourOffset= float2(float(x),float(y)); //get an offset for the 8 adjacent tiles + the center one
             float2 neighbourPos =iPos+neighbourOffset; //Position of the cell where we want to obtain the random point
             if(neighbourPos.x<0.0f) //Cannot do modulo if its a negative number
             {
-                neighbourPos.x=numCells.x-1;
+                neighbourPos.x=numCells2D-1.0;
             }
             if(neighbourPos.y<0.0f)//Cannot do modulo if its a negative number
             {
-                neighbourPos.y=numCells.y-1;
+                neighbourPos.y=numCells2D-1.0;
             }
 
-            neighbourPos = neighbourPos % numCells;
-
-            float randPoint=random2(neighbourPos); //take a random point given the position of the current tile + the offset of the neighbour we are checking as a seed
+            neighbourPos= neighbourPos % numCells2D;
+            float2 randPoint=random2(neighbourPos); //take a random point given the position of the current tile + the offset of the neighbour we are checking as a seed
             float2 distV = neighbourOffset+randPoint - fPos; //we calculate the distance vector between the position in our tile and the position of the random point in the neighbouring tile
             float dist = length(distV); //we calculate the distance from the distance vector
             minDist= min(minDist,dist); //we take the minimum distance from all neighbours
