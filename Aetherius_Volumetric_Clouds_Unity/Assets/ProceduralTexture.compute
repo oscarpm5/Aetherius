@@ -31,7 +31,19 @@ void CSMain (uint3 id : SV_DispatchThreadID)
         for(int x=-1; x<=1;++x)
         {
             float2 neighbourOffset= float2(float(x),float(y)); //get an offset for the 9 adjacent tiles
-            float randPoint=random2(iPos+neighbourOffset); //take a random point given the position of the current tile + the offset of the neighbour we are checking as a seed
+            float2 neighbourPos =iPos+neighbourOffset; //Position of the cell where we want to obtain the random point
+            if(neighbourPos.x<0.0f) //Cannot do modulo if its a negative number
+            {
+                neighbourPos.x=numCells.x-1;
+            }
+            if(neighbourPos.y<0.0f)//Cannot do modulo if its a negative number
+            {
+                neighbourPos.y=numCells.y-1;
+            }
+
+            neighbourPos = neighbourPos % numCells;
+
+            float randPoint=random2(neighbourPos); //take a random point given the position of the current tile + the offset of the neighbour we are checking as a seed
             float2 distV = neighbourOffset+randPoint - fPos; //we calculate the distance vector between the position in our tile and the position of the random point in the neighbouring tile
             float dist = length(distV); //we calculate the distance from the distance vector
             minDist= min(minDist,dist); //we take the minimum distance from all neighbours

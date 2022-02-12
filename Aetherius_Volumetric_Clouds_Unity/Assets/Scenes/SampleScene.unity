@@ -423,13 +423,13 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   updateTextureAuto: 1
   computeShader: {fileID: 7200000, guid: 2ae0c58880eea7044a62d375123f3294, type: 3}
-  renderTexture: {fileID: 1652860569}
+  renderTexture: {fileID: 1167785027}
   displayPreviewShader: {fileID: 4800000, guid: 2205b0981fb20cc48a4293e9f98062fd, type: 3}
   displayTexture: 1
-  debugDisplaySize: 0.5
-  tileAmmount: 3
+  debugDisplaySize: 1
+  tileAmmount: 1
   numberOfCells: {x: 8, y: 8}
---- !u!84 &1652860569
+--- !u!84 &1167785027
 RenderTexture:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
