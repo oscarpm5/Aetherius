@@ -40,20 +40,14 @@ Shader "Aetherius/DisplayPreview"
 			sampler2D _MainTex;
 			sampler2D _DisplayTex;
 			float debugTextureSize;//between 0 and 1
-			float debugTextureOffsetX;
-			float debugTextureOffsetY;
-
-
-			fixed4 debugTextureDisplay(float2 uv)
-			{
-				return tex2D(_DisplayTex, uv);
-			}
 
 
 			fixed4 frag(v2f i) : SV_Target
 			{
+
 				fixed4 col = tex2D(_MainTex, i.uv);
 
+				float tileAmmount = 2.0;
 				float w = _ScreenParams.x;//width of the cam target texture in pixels
 				float h = _ScreenParams.y;//height of the cam target texture in pixels
 
@@ -63,10 +57,10 @@ Shader "Aetherius/DisplayPreview"
 				float y = i.uv.y * h; //Pixel equivalent of uv.y
 
 
-
-				if (x + debugTextureOffsetX < minDimensions * debugTextureSize && y + debugTextureOffsetY < (minDimensions * debugTextureSize))
+				if (x < minDimensions * debugTextureSize && y < (minDimensions * debugTextureSize))
 				{
-					col = debugTextureDisplay(float2(x / (minDimensions * debugTextureSize),y / (minDimensions * debugTextureSize)));
+					float2 samplePos =float2(x,y)/(minDimensions* debugTextureSize);
+					col = tex2D(_DisplayTex, samplePos);
 				}
 				return col;
 

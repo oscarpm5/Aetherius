@@ -462,5 +462,5 @@ MonoBehaviour:
   renderTexture: {fileID: 37182761}
   displayPreviewShader: {fileID: 4800000, guid: 2205b0981fb20cc48a4293e9f98062fd, type: 3}
   displayTexture: 1
-  debugDisplaySize: 0.57
+  debugDisplaySize: 1
   numberOfCells: {x: 8, y: 8}
