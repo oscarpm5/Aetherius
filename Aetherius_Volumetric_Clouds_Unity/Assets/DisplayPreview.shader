@@ -47,7 +47,7 @@ Shader "Aetherius/DisplayPreview"
 
 				fixed4 col = tex2D(_MainTex, i.uv);
 
-				float tileAmmount = 2.0;
+				float tileAmmount = 3.0;
 				float w = _ScreenParams.x;//width of the cam target texture in pixels
 				float h = _ScreenParams.y;//height of the cam target texture in pixels
 
@@ -57,10 +57,19 @@ Shader "Aetherius/DisplayPreview"
 				float y = i.uv.y * h; //Pixel equivalent of uv.y
 
 
+				float2 st = i.uv* tileAmmount;
+				st.x = x / (minDimensions*debugTextureSize);
+				st.y = y / (minDimensions* debugTextureSize);
+				st *= tileAmmount;
+				float2 i_st = floor(st);
+				float2 f_st = frac(st);
+				//return float4(f_st.xy, 0.0, 0.0);
+
+
 				if (x < minDimensions * debugTextureSize && y < (minDimensions * debugTextureSize))
 				{
 					float2 samplePos =float2(x,y)/(minDimensions* debugTextureSize);
-					col = tex2D(_DisplayTex, samplePos);
+					col = tex2D(_DisplayTex, f_st);
 				}
 				return col;
 
