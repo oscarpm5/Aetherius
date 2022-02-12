@@ -19,6 +19,7 @@ public class ProceduralTextureViewer : MonoBehaviour
     public bool displayTexture = false;
     [Range(0.0f, 1.0f)]
     public float debugDisplaySize = 0.5f;
+    public Vector2 numberOfCells = Vector2.one;
 
     public Material material
     {
@@ -38,7 +39,7 @@ public class ProceduralTextureViewer : MonoBehaviour
     {
         if(updateTextureAuto)
         {
-            GenerateTexture();
+            GenerateTexture(256);
         }
 
         if (material == null || !displayTexture)
@@ -57,17 +58,18 @@ public class ProceduralTextureViewer : MonoBehaviour
     {
         renderTexture = null;
         _material = null;
-        GenerateTexture();
+        GenerateTexture(256);
     }
 
 
-    public void GenerateTexture()
+    public void GenerateTexture(int dimensions)
     {
-
         if (renderTexture == null)
         {
-            renderTexture = new RenderTexture(256, 256, 24);
+            renderTexture = new RenderTexture(dimensions, dimensions, 24);
             renderTexture.enableRandomWrite = true;//So it can be used by the compute shader
+            //renderTexture.dimension = UnityEngine.Rendering.TextureDimension.Tex3D;
+            //renderTexture.volumeDepth = dimensions;
             renderTexture.Create();
         }
 
@@ -76,7 +78,15 @@ public class ProceduralTextureViewer : MonoBehaviour
 
         int currKernel = computeShader.FindKernel("CSMain");
         computeShader.SetTexture(currKernel, "Result", renderTexture);
-        computeShader.Dispatch(currKernel, renderTexture.width / 8, renderTexture.height / 8, 1); //Image size divided by the thread size of each group
+        computeShader.SetFloat("textureSizeP", dimensions);
+      
+        float []numCells = new float[2];
+        numCells[0] = numberOfCells.x;
+        numCells[1] = numberOfCells.y;
+        computeShader.SetFloats("numCells", numCells);
+
+        //computeShader.Dispatch(currKernel, dimensions / 8, dimensions / 8, dimensions / 8); //Image size divided by the thread size of each group
+        computeShader.Dispatch(currKernel, dimensions / 8, dimensions / 8,1); //Image size divided by the thread size of each group
 
     }
 
