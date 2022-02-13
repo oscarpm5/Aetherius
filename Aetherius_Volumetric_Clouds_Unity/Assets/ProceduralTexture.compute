@@ -10,9 +10,20 @@ RWTexture3D<float4> Result3D;
 
 float textureSizeP;//Texture Size in pixels
 int numCells;
+
+float random (float2 p)
+{
+    return frac(sin(dot(p,float2(12.9898,78.233)))*43758.5453123);
+}
+
 float2 random2( float2 p ) 
 {
     return frac(sin(float2(dot(p,float2(127.1,311.7)),dot(p,float2(269.5,183.3))))*43758.5453);
+}
+
+float3 random3(float3 p)
+{
+    return float3(random2(p.xy),random(p.xy*(1+p.z)));
 }
 
 
@@ -98,8 +109,7 @@ void Worley3DTexture (uint3 id : SV_DispatchThreadID)
                 }
 
                 neighbourPos= neighbourPos % numCells;
-                //TODO fix this rand for 3 dimensions
-                float3 randPoint=float3(random2(neighbourPos).xy,0.0); //take a random point given the position of the current tile + the offset of the neighbour we are checking as a seed
+                float3 randPoint=random3(neighbourPos); //take a random point given the position of the current tile + the offset of the neighbour we are checking as a seed
                 float3 distV = neighbourOffset+randPoint - fPos; //we calculate the distance vector between the position in our tile and the position of the random point in the neighbouring tile
                 float dist = length(distV); //we calculate the distance from the distance vector
                 minDist= min(minDist,dist); //we take the minimum distance from all neighbours
