@@ -71,14 +71,10 @@ void Worley2DTexture (uint3 id : SV_DispatchThreadID)
 
 }
 
-
-
-[numthreads(8,8,8)]
-void Worley3DTexture (uint3 id : SV_DispatchThreadID)
+float GetWorleyDistFromCellNum(uint3 id, float cellsNum)
 {
-
     float3 st = id.xyz/float(textureSizeP); //convert pixel space into 0 to 1 coordinates
-    st*=float(numCells);
+    st*=float(cellsNum);
    
     float3 iPos = floor(st); //get integer coords
     float3 fPos = frac(st); //get fractional coords
@@ -96,19 +92,19 @@ void Worley3DTexture (uint3 id : SV_DispatchThreadID)
             
                 if(neighbourPos.x<0.0f) //Cannot do modulo if its a negative number
                 {
-                    neighbourPos.x=numCells-1.0;
+                    neighbourPos.x=cellsNum-1.0;
                 }
 
                 if(neighbourPos.y<0.0f)//Cannot do modulo if its a negative number
                 {
-                    neighbourPos.y=numCells-1.0;
+                    neighbourPos.y=cellsNum-1.0;
                 }
                 if(neighbourPos.z<0.0f)//Cannot do modulo if its a negative number
                 {
-                    neighbourPos.z=numCells-1.0;
+                    neighbourPos.z=cellsNum-1.0;
                 }
 
-                neighbourPos= neighbourPos % numCells;
+                neighbourPos= neighbourPos % cellsNum;
                 float3 randPoint=random3(neighbourPos); //take a random point given the position of the current tile + the offset of the neighbour we are checking as a seed
                 float3 distV = neighbourOffset+randPoint - fPos; //we calculate the distance vector between the position in our tile and the position of the random point in the neighbouring tile
                 float dist = length(distV); //we calculate the distance from the distance vector
@@ -117,8 +113,20 @@ void Worley3DTexture (uint3 id : SV_DispatchThreadID)
         }
     }
 
-    minDist = 1-minDist; //we invert the distance
+    return minDist;
+}
+
+
+[numthreads(8,8,8)]
+void Worley3DTexture (uint3 id : SV_DispatchThreadID)
+{
+    float layeredVal=0.0;
+    layeredVal += GetWorleyDistFromCellNum(id,float(numCells));
+    //layeredVal += GetWorleyDistFromCellNum(id,float(numCells))*0.625;
+    //layeredVal += GetWorleyDistFromCellNum(id,float(numCells)*2)*0.25;
+    //layeredVal += GetWorleyDistFromCellNum(id,float(numCells)*4)*0.125;
+    layeredVal= 1-layeredVal;//we invert the distance
     
-    Result3D[id.xyz] = float4(minDist,minDist,minDist,1.0);
+    Result3D[id.xyz] = float4(layeredVal,layeredVal,layeredVal,1.0);
 
 }
