@@ -77,8 +77,8 @@ void Worley2DTexture (uint3 id : SV_DispatchThreadID)
 void Worley3DTexture (uint3 id : SV_DispatchThreadID)
 {
 
-    float3 st = id.xyz/textureSizeP; //convert pixel space into 0 to 1 coordinates
-    st*=numCells;
+    float3 st = id.xyz/float(textureSizeP); //convert pixel space into 0 to 1 coordinates
+    st*=float(numCells);
    
     float3 iPos = floor(st); //get integer coords
     float3 fPos = frac(st); //get fractional coords

@@ -21,7 +21,7 @@ public class ProceduralTextureViewerEditor : Editor
         {
             if (GUILayout.Button("GenerateTexture"))
             {
-                myScript.GenerateTexture(256);//TODO doesnt work directly, call it OnRenderImage
+                myScript.GenerateTexture(myScript.resolution);//TODO doesnt work directly, call it OnRenderImage
             }
         }
     }

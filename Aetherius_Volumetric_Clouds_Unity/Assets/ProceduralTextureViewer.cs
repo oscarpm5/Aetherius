@@ -26,6 +26,8 @@ public class ProceduralTextureViewer : MonoBehaviour
     public int numberOfCells = 1;
     [Range(0.0f,1.0f)]
     public float textureSlice = 1.0f;
+    public int resolution = 256;
+    int _resolution = 256;
 
     public Material material
     {
@@ -45,7 +47,7 @@ public class ProceduralTextureViewer : MonoBehaviour
     {
         if (updateTextureAuto)
         {
-            GenerateTexture(256);
+            GenerateTexture(resolution);
         }
 
         if (material == null || !displayTexture)
@@ -67,7 +69,7 @@ public class ProceduralTextureViewer : MonoBehaviour
         renderTexture2D = null;
         renderTexture3D = null;
         _material = null;
-        GenerateTexture(256);
+        GenerateTexture(resolution);
     }
 
 
@@ -78,10 +80,15 @@ public class ProceduralTextureViewer : MonoBehaviour
 
     public void Generate2DWorley(int dimensions)
     {
-        if (renderTexture2D == null)
+        int dim = Mathf.Max(dimensions, 8);
+
+        if (renderTexture2D == null || _resolution != dim)
         {
-            renderTexture2D = new RenderTexture(dimensions, dimensions, 24);
+            _resolution = dim;
+            renderTexture2D = new RenderTexture(dim, dim, 24);
             renderTexture2D.enableRandomWrite = true;//So it can be used by the compute shader
+            renderTexture3D.filterMode = FilterMode.Trilinear;
+            renderTexture3D.wrapMode = TextureWrapMode.Repeat;
             renderTexture2D.Create();
         }
 
@@ -91,22 +98,26 @@ public class ProceduralTextureViewer : MonoBehaviour
 
         int currKernel = computeShader.FindKernel("Worley2DTexture");
         computeShader.SetTexture(currKernel, "Result2D", renderTexture2D);
-        computeShader.SetFloat("textureSizeP", dimensions);
+        computeShader.SetFloat("textureSizeP", dim);
 
         computeShader.SetInt("numCells", numberOfCells);
 
-        computeShader.Dispatch(currKernel, dimensions / 8, dimensions / 8, 1); //Image size divided by the thread size of each group
+        computeShader.Dispatch(currKernel, dim / 8, dim / 8, 1); //Image size divided by the thread size of each group
     }
 
 
     public void Generate3DWorley(int dimensions)
     {
-        if (renderTexture3D == null)
+        int dim = Mathf.Max(dimensions, 8);
+        if (renderTexture3D == null || _resolution!= dim)
         {
-            renderTexture3D = new RenderTexture(dimensions, dimensions, 0);
+            _resolution = dim;
+            renderTexture3D = new RenderTexture(dim, dim, 0);
             renderTexture3D.enableRandomWrite = true;//So it can be used by the compute shader
             renderTexture3D.dimension = UnityEngine.Rendering.TextureDimension.Tex3D;
-            renderTexture3D.volumeDepth = dimensions;
+            renderTexture3D.volumeDepth = dim;
+            renderTexture3D.filterMode = FilterMode.Point;
+            renderTexture3D.wrapMode = TextureWrapMode.Repeat;
             renderTexture3D.Create();
         }
 
@@ -115,11 +126,11 @@ public class ProceduralTextureViewer : MonoBehaviour
 
         int currKernel = computeShader.FindKernel("Worley3DTexture");
         computeShader.SetTexture(currKernel, "Result3D", renderTexture3D);
-        computeShader.SetFloat("textureSizeP", dimensions);
+        computeShader.SetFloat("textureSizeP", dim);
 
         computeShader.SetInt("numCells", numberOfCells);
 
-        computeShader.Dispatch(currKernel, dimensions / 8, dimensions / 8, dimensions / 8); //Image size divided by the thread size of each group
+        computeShader.Dispatch(currKernel, dim / 8, dim / 8, dim / 8); //Image size divided by the thread size of each group
     }
 }
 
