@@ -1,11 +1,9 @@
 // Each #kernel tells which function to compile; you can have many kernels
-#pragma kernel Worley2DTexture
 #pragma kernel Worley3DTexture
 
 
 // Create a RenderTexture with enableRandomWrite flag and set it
 // with cs.SetTexture
-RWTexture2D<float4> Result2D;
 RWTexture3D<float4> Result3D;
 
 float textureSizeP;//Texture Size in pixels
@@ -24,51 +22,6 @@ float2 random2( float2 p )
 float3 random3(float3 p)
 {
     return float3(random2(p.xy),random(p.xy*(1+p.z)));
-}
-
-
-
-[numthreads(8,8,1)]
-void Worley2DTexture (uint3 id : SV_DispatchThreadID)
-{
-
-    float2 st = id.xy/textureSizeP; //convert pixel space into 0 to 1 coordinates
-    st*=numCells;
-   
-    float2 iPos = floor(st); //get integer coords
-    float2 fPos = frac(st); //get fractional coords
-
-
-    float minDist=  1.0;  // minimum distance
-    for(int y=-1; y<=1;++y)
-    {
-        for(int x=-1; x<=1;++x)
-        {
-            float2 neighbourOffset= float2(float(x),float(y)); //get an offset for the 8 adjacent tiles + the center one
-            float2 neighbourPos =iPos+neighbourOffset; //Position of the cell where we want to obtain the random point
-            
-            if(neighbourPos.x<0.0f) //Cannot do modulo if its a negative number
-            {
-                neighbourPos.x=numCells-1.0;
-            }
-
-            if(neighbourPos.y<0.0f)//Cannot do modulo if its a negative number
-            {
-                neighbourPos.y=numCells-1.0;
-            }
-
-            neighbourPos= neighbourPos % numCells;
-            float2 randPoint=random2(neighbourPos); //take a random point given the position of the current tile + the offset of the neighbour we are checking as a seed
-            float2 distV = neighbourOffset+randPoint - fPos; //we calculate the distance vector between the position in our tile and the position of the random point in the neighbouring tile
-            float dist = length(distV); //we calculate the distance from the distance vector
-            minDist= min(minDist,dist); //we take the minimum distance from all neighbours
-        }
-    }
-
-    minDist = 1-minDist; //we invert the distance
-    
-    Result2D[id.xy] = float4(minDist,minDist,minDist,1.0);
-
 }
 
 float GetWorleyDistFromCellNum(uint3 id, float cellsNum)

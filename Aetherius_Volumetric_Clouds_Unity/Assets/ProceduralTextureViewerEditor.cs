@@ -20,8 +20,9 @@ public class ProceduralTextureViewerEditor : Editor
         if(!myScript.updateTextureAuto)
         {
             if (GUILayout.Button("GenerateTexture"))
-            {
-                myScript.GenerateTexture(myScript.resolution);//TODO doesnt work directly, call it OnRenderImage
+            {            
+                myScript.UpdateNoise();
+                Debug.Log("Manual Update!");
             }
         }
     }

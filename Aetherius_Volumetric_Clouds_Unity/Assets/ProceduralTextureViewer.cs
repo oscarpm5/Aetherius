@@ -2,32 +2,40 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
+public class WorleyData
+{
+    public int seed;
+
+    public int numberOfCellsA;
+    public int numberOfCellsB;
+    public int numberOfCellsC;
+}
 
 [RequireComponent(typeof(Camera))]
 [ExecuteInEditMode]
 [ImageEffectAllowedInSceneView]
 public class ProceduralTextureViewer : MonoBehaviour
 {
-    public bool updateTextureAuto = false;
-
     //Compute shader
-    public ComputeShader computeShader;
-    public RenderTexture renderTexture2D = null;
-    public RenderTexture renderTexture3D = null;
+    [Header("Texture Generation")]
+    public ComputeShader computeShader= null;
+    public bool updateTextureAuto = false;
+    [Range(1,100)]
+    public int numberOfCells = 1;
+    public int resolution = 256;
+    private RenderTexture _renderTexture3D = null;
 
     //Display shader
+    [Header("Texture Display")]
     public Shader displayPreviewShader;
-    private Material _material;
     public bool displayTexture = false;
     [Range(0.0f, 1.0f)]
     public float debugDisplaySize = 0.5f;
     [Range(1, 5)]
     public float tileAmmount = 1;
-    public int numberOfCells = 1;
-    [Range(0.0f,1.0f)]
+    [Range(0.0f, 1.0f)]
     public float textureSlice = 1.0f;
-    public int resolution = 256;
-    int _resolution = 256;
+
 
     public Material material
     {
@@ -41,13 +49,19 @@ public class ProceduralTextureViewer : MonoBehaviour
             return _material;
         }
     }
+    private Material _material;
 
+    public void UpdateNoise()
+    {
+        GenerateTexture3D(resolution, ref _renderTexture3D);
+        Generate3DWorley(resolution, ref _renderTexture3D);
+    }
 
     private void OnRenderImage(RenderTexture source, RenderTexture destination)
     {
-        if (updateTextureAuto)
+        if (updateTextureAuto == true)
         {
-            GenerateTexture(resolution);
+            UpdateNoise();
         }
 
         if (material == null || !displayTexture)
@@ -56,81 +70,61 @@ public class ProceduralTextureViewer : MonoBehaviour
             return;
         }
 
-        material.SetTexture("_DisplayTex2D", renderTexture2D); //input the procedural texture
-        material.SetTexture("_DisplayTex3D", renderTexture3D); //input the procedural texture
+        material.SetTexture("_DisplayTex3D", _renderTexture3D); //input the procedural texture
         material.SetFloat("slice3DTex", textureSlice);
         material.SetFloat("debugTextureSize", debugDisplaySize);
         material.SetFloat("tileAmmount", tileAmmount);
         Graphics.Blit(source, destination, material);
     }
 
-    private void Start()
-    {
-        renderTexture2D = null;
-        renderTexture3D = null;
-        _material = null;
-        GenerateTexture(resolution);
-    }
-
-
-    public void GenerateTexture(int dimensions)
-    {
-        Generate3DWorley(dimensions);
-    }
-
-    public void Generate2DWorley(int dimensions)
+    public void Generate3DWorley(int dimensions,ref RenderTexture targetTexture)
     {
         int dim = Mathf.Max(dimensions, 8);
-
-        if (renderTexture2D == null || _resolution != dim)
-        {
-            _resolution = dim;
-            renderTexture2D = new RenderTexture(dim, dim, 24);
-            renderTexture2D.enableRandomWrite = true;//So it can be used by the compute shader
-            renderTexture3D.filterMode = FilterMode.Trilinear;
-            renderTexture3D.wrapMode = TextureWrapMode.Repeat;
-            renderTexture2D.Create();
-        }
-
-        if (computeShader == null)
-            return;
-
-
-        int currKernel = computeShader.FindKernel("Worley2DTexture");
-        computeShader.SetTexture(currKernel, "Result2D", renderTexture2D);
-        computeShader.SetFloat("textureSizeP", dim);
-
-        computeShader.SetInt("numCells", numberOfCells);
-
-        computeShader.Dispatch(currKernel, dim / 8, dim / 8, 1); //Image size divided by the thread size of each group
-    }
-
-
-    public void Generate3DWorley(int dimensions)
-    {
-        int dim = Mathf.Max(dimensions, 8);
-        if (renderTexture3D == null || _resolution!= dim)
-        {
-            _resolution = dim;
-            renderTexture3D = new RenderTexture(dim, dim, 0);
-            renderTexture3D.enableRandomWrite = true;//So it can be used by the compute shader
-            renderTexture3D.dimension = UnityEngine.Rendering.TextureDimension.Tex3D;
-            renderTexture3D.volumeDepth = dim;
-            renderTexture3D.filterMode = FilterMode.Point;
-            renderTexture3D.wrapMode = TextureWrapMode.Repeat;
-            renderTexture3D.Create();
-        }
-
         if (computeShader == null)
             return;
 
         int currKernel = computeShader.FindKernel("Worley3DTexture");
-        computeShader.SetTexture(currKernel, "Result3D", renderTexture3D);
+        computeShader.SetTexture(currKernel, "Result3D", targetTexture);
         computeShader.SetFloat("textureSizeP", dim);
-
         computeShader.SetInt("numCells", numberOfCells);
 
         computeShader.Dispatch(currKernel, dim / 8, dim / 8, dim / 8); //Image size divided by the thread size of each group
     }
+
+
+    void GeneratePointsWorley(WorleyData data)
+    {
+        System.Random random = new System.Random(data.seed);
+
+
+
+    }
+
+    void CreateComputeBuffer(int dataStride, System.Array data, string bufferName, int kernel)
+    {
+        ComputeBuffer newBuffer = new ComputeBuffer(data.Length, dataStride, ComputeBufferType.Structured);
+
+    }
+
+    void GenerateTexture3D(int texResolution, ref RenderTexture myTexture)
+    {
+        int res = Mathf.Max(texResolution, 8);
+        if (myTexture == null || myTexture.height != res || myTexture.width!= res || myTexture.volumeDepth != res) //if texture doesnt exist or resolution has changed, recreate the texture
+        {
+            if(myTexture!=null)
+            {
+                myTexture.Release();
+            }
+
+            myTexture = new RenderTexture(res, res, 0);
+            myTexture.enableRandomWrite = true;//So it can be used by the compute shader
+            myTexture.dimension = UnityEngine.Rendering.TextureDimension.Tex3D;
+            myTexture.volumeDepth = res;
+            myTexture.filterMode = FilterMode.Point;
+            myTexture.wrapMode = TextureWrapMode.Repeat;
+            myTexture.Create();
+        }
+    }
+
 }
 
