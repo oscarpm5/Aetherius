@@ -422,9 +422,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   computeShader: {fileID: 7200000, guid: 2ae0c58880eea7044a62d375123f3294, type: 3}
-  numberOfCells: 20
-  resolution: 128
   updateTextureAuto: 1
+  numberOfCellsOnAxis: 16
+  resolution: 128
   displayPreviewShader: {fileID: 4800000, guid: 2205b0981fb20cc48a4293e9f98062fd, type: 3}
   displayTexture: 1
   debugDisplaySize: 1

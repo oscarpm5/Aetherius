@@ -21,9 +21,11 @@ public class ProceduralTextureViewer : MonoBehaviour
     public ComputeShader computeShader= null;
     public bool updateTextureAuto = false;
     [Range(1,100)]
-    public int numberOfCells = 1;
+    public int numberOfCellsOnAxis = 1;
     public int resolution = 256;
     private RenderTexture _renderTexture3D = null;
+
+    List<ComputeBuffer> buffersToDelete;
 
     //Display shader
     [Header("Texture Display")]
@@ -55,6 +57,7 @@ public class ProceduralTextureViewer : MonoBehaviour
     {
         GenerateTexture3D(resolution, ref _renderTexture3D);
         Generate3DWorley(resolution, ref _renderTexture3D);
+        DeleteComputeBuffers();
     }
 
     private void OnRenderImage(RenderTexture source, RenderTexture destination)
@@ -86,24 +89,48 @@ public class ProceduralTextureViewer : MonoBehaviour
         int currKernel = computeShader.FindKernel("Worley3DTexture");
         computeShader.SetTexture(currKernel, "Result3D", targetTexture);
         computeShader.SetFloat("textureSizeP", dim);
-        computeShader.SetInt("numCells", numberOfCells);
+        computeShader.SetInt("numCells", numberOfCellsOnAxis);
 
         computeShader.Dispatch(currKernel, dim / 8, dim / 8, dim / 8); //Image size divided by the thread size of each group
     }
 
 
-    void GeneratePointsWorley(WorleyData data)
+    void GeneratePointsWorley(WorleyData data) //TODO retrieve data from Worley Data not for number of Cells
     {
         System.Random random = new System.Random(data.seed);
 
-
+        int totalNumOfCells = numberOfCellsOnAxis * numberOfCellsOnAxis * numberOfCellsOnAxis;//3D grid
+        Vector3[] points = new Vector3[totalNumOfCells];
+        for (int i = 0; i < totalNumOfCells; ++i)
+        {
+            points[i]= new Vector3((float)random.NextDouble(), (float)random.NextDouble(), (float)random.NextDouble());
+        }
+        CreateComputeBuffer(sizeof(float) * 3, points, "pointsA", "Worley3DTexture");
 
     }
 
-    void CreateComputeBuffer(int dataStride, System.Array data, string bufferName, int kernel)
+    void CreateComputeBuffer(int dataStride, System.Array data, string bufferName, string kernelName)
     {
         ComputeBuffer newBuffer = new ComputeBuffer(data.Length, dataStride, ComputeBufferType.Structured);
+        newBuffer.SetData(data);
+        computeShader.SetBuffer(computeShader.FindKernel(kernelName), bufferName, newBuffer);
 
+        if (buffersToDelete == null)
+            buffersToDelete = new List<ComputeBuffer>();
+
+        buffersToDelete.Add(newBuffer);
+    }
+
+    void DeleteComputeBuffers()
+    {
+        if (buffersToDelete == null)
+            return;
+
+        foreach (ComputeBuffer currentBuffer in buffersToDelete)
+        {
+            currentBuffer.Release();
+        }
+        buffersToDelete = null;
     }
 
     void GenerateTexture3D(int texResolution, ref RenderTexture myTexture)
