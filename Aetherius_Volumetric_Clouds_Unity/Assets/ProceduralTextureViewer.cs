@@ -18,10 +18,14 @@ public class ProceduralTextureViewer : MonoBehaviour
 {
     //Compute shader
     [Header("Texture Generation")]
-    public ComputeShader computeShader= null;
+    public ComputeShader computeShader = null;
     public bool updateTextureAuto = false;
-    [Range(1,100)]
-    public int numberOfCellsOnAxis = 1;
+    [Range(1, 100)]
+    public int numberOfCellsOnAxisA = 1;
+    [Range(1, 100)]
+    public int numberOfCellsOnAxisB = 1;
+    [Range(1, 100)]
+    public int numberOfCellsOnAxisC = 1;
     public int resolution = 256;
     private RenderTexture _renderTexture3D = null;
 
@@ -80,33 +84,43 @@ public class ProceduralTextureViewer : MonoBehaviour
         Graphics.Blit(source, destination, material);
     }
 
-    public void Generate3DWorley(int dimensions,ref RenderTexture targetTexture)
+    public void Generate3DWorley(int dimensions, ref RenderTexture targetTexture)
     {
         int dim = Mathf.Max(dimensions, 8);
         if (computeShader == null)
             return;
 
-        int currKernel = computeShader.FindKernel("Worley3DTexture");
+        GeneratePointsWorley();
+        int currKernel = computeShader.FindKernel("Worley3DTextureWithPoints");
         computeShader.SetTexture(currKernel, "Result3D", targetTexture);
         computeShader.SetFloat("textureSizeP", dim);
-        computeShader.SetInt("numCells", numberOfCellsOnAxis);
+        computeShader.SetInt("numCellsA", numberOfCellsOnAxisA);
+        computeShader.SetInt("numCellsB", numberOfCellsOnAxisB);
+        computeShader.SetInt("numCellsC", numberOfCellsOnAxisC);
 
         computeShader.Dispatch(currKernel, dim / 8, dim / 8, dim / 8); //Image size divided by the thread size of each group
     }
 
 
-    void GeneratePointsWorley(WorleyData data) //TODO retrieve data from Worley Data not for number of Cells
+    void GeneratePointsWorley() //TODO retrieve data from Worley Data not for number of Cells
     {
-        System.Random random = new System.Random(data.seed);
+        System.Random random = new System.Random(0);
 
-        int totalNumOfCells = numberOfCellsOnAxis * numberOfCellsOnAxis * numberOfCellsOnAxis;//3D grid
+        GeneratePoints(random, numberOfCellsOnAxisA, "pointsA", "Worley3DTextureWithPoints");
+        GeneratePoints(random, numberOfCellsOnAxisB, "pointsB", "Worley3DTextureWithPoints");
+        GeneratePoints(random, numberOfCellsOnAxisC, "pointsC", "Worley3DTextureWithPoints");
+    }
+
+    void GeneratePoints(System.Random rand, int numberOfCellsAxis, string bufferName, string kernelName)
+    {
+        int totalNumOfCells = numberOfCellsAxis * numberOfCellsAxis * numberOfCellsAxis;//3D grid
         Vector3[] points = new Vector3[totalNumOfCells];
         for (int i = 0; i < totalNumOfCells; ++i)
         {
-            points[i]= new Vector3((float)random.NextDouble(), (float)random.NextDouble(), (float)random.NextDouble());
+            points[i] = new Vector3((float)rand.NextDouble(), (float)rand.NextDouble(), (float)rand.NextDouble());
         }
-        CreateComputeBuffer(sizeof(float) * 3, points, "pointsA", "Worley3DTexture");
 
+        CreateComputeBuffer(sizeof(float) * 3, points, bufferName, kernelName);
     }
 
     void CreateComputeBuffer(int dataStride, System.Array data, string bufferName, string kernelName)
@@ -136,11 +150,15 @@ public class ProceduralTextureViewer : MonoBehaviour
     void GenerateTexture3D(int texResolution, ref RenderTexture myTexture)
     {
         int res = Mathf.Max(texResolution, 8);
-        if (myTexture == null || myTexture.height != res || myTexture.width!= res || myTexture.volumeDepth != res) //if texture doesnt exist or resolution has changed, recreate the texture
+        if (myTexture == null || myTexture.height != res || myTexture.width != res || myTexture.volumeDepth != res) //if texture doesnt exist or resolution has changed, recreate the texture
         {
-            if(myTexture!=null)
+            Debug.Log("GeneratingTexture...");
+
+            if (myTexture != null)
             {
+                Debug.Log("Deleting ancient texture...");
                 myTexture.Release();
+                myTexture = null;
             }
 
             myTexture = new RenderTexture(res, res, 0);
@@ -150,6 +168,22 @@ public class ProceduralTextureViewer : MonoBehaviour
             myTexture.filterMode = FilterMode.Point;
             myTexture.wrapMode = TextureWrapMode.Repeat;
             myTexture.Create();
+        }
+    }
+
+    private void OnEnable() //Called after component awakens and after a hot reload
+    {
+        UpdateNoise();
+    }
+
+    private void OnDisable() //happens before a hot reload
+    {
+        DeleteComputeBuffers();
+
+        if (_renderTexture3D != null)
+        {
+            _renderTexture3D.Release();
+            _renderTexture3D = null;
         }
     }
 

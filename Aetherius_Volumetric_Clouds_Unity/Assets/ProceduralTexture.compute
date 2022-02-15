@@ -1,30 +1,24 @@
 // Each #kernel tells which function to compile; you can have many kernels
-#pragma kernel Worley3DTexture
-
+#pragma kernel Worley3DTextureWithPoints
 
 // Create a RenderTexture with enableRandomWrite flag and set it
 // with cs.SetTexture
 RWTexture3D<float4> Result3D;
+StructuredBuffer<float3> pointsA;
+StructuredBuffer<float3> pointsB;
+StructuredBuffer<float3> pointsC;
 
 float textureSizeP;//Texture Size in pixels
-int numCells;
+int numCellsA;
+int numCellsB;
+int numCellsC;
 
-float random (float2 p)
-{
-    return frac(sin(dot(p,float2(12.9898,78.233)))*43758.5453123);
+float GetRandomIndexFromPoint(float3 p,int numOfCellsAxis)
+{  
+    return p.x + numOfCellsAxis * (p.y + numOfCellsAxis * p.z);
 }
 
-float2 random2( float2 p ) 
-{
-    return frac(sin(float2(dot(p,float2(127.1,311.7)),dot(p,float2(269.5,183.3))))*43758.5453);
-}
-
-float3 random3(float3 p)
-{
-    return float3(random2(p.xy),random(p.xy*(1+p.z)));
-}
-
-float GetWorleyDistFromCellNum(uint3 id, float cellsNum)
+float GetWorleyDistFromCellNumWithPoints(uint3 id, float cellsNum, StructuredBuffer<float3> randomPoints)
 {
     float3 st = id.xyz/float(textureSizeP); //convert pixel space into 0 to 1 coordinates
     st*=float(cellsNum);
@@ -58,7 +52,7 @@ float GetWorleyDistFromCellNum(uint3 id, float cellsNum)
                 }
 
                 neighbourPos= neighbourPos % cellsNum;
-                float3 randPoint=random3(neighbourPos); //take a random point given the position of the current tile + the offset of the neighbour we are checking as a seed
+                float3 randPoint=randomPoints[GetRandomIndexFromPoint(neighbourPos,cellsNum)]; //take a random point given the position of the current tile + the offset of the neighbour we are checking as a seed
                 float3 distV = neighbourOffset+randPoint - fPos; //we calculate the distance vector between the position in our tile and the position of the random point in the neighbouring tile
                 float dist = length(distV); //we calculate the distance from the distance vector
                 minDist= min(minDist,dist); //we take the minimum distance from all neighbours
@@ -69,15 +63,13 @@ float GetWorleyDistFromCellNum(uint3 id, float cellsNum)
     return minDist;
 }
 
-
 [numthreads(8,8,8)]
-void Worley3DTexture (uint3 id : SV_DispatchThreadID)
+void Worley3DTextureWithPoints (uint3 id : SV_DispatchThreadID)
 {
     float layeredVal=0.0;
-    layeredVal += GetWorleyDistFromCellNum(id,float(numCells));
-    //layeredVal += GetWorleyDistFromCellNum(id,float(numCells))*0.625;
-    //layeredVal += GetWorleyDistFromCellNum(id,float(numCells)*2)*0.25;
-    //layeredVal += GetWorleyDistFromCellNum(id,float(numCells)*4)*0.125;
+    layeredVal += GetWorleyDistFromCellNumWithPoints(id,float(numCellsA),pointsA)*0.625;
+    layeredVal += GetWorleyDistFromCellNumWithPoints(id,float(numCellsB),pointsB)*0.25;
+    layeredVal += GetWorleyDistFromCellNumWithPoints(id,float(numCellsC),pointsC)*0.125;
     layeredVal= 1-layeredVal;//we invert the distance
     
     Result3D[id.xyz] = float4(layeredVal,layeredVal,layeredVal,1.0);
