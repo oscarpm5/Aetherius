@@ -226,18 +226,21 @@ public class ProceduralTextureViewer : MonoBehaviour
     }
     void Generate3DPerlin(int dimensions, ref RenderTexture targetTexture)
     {
-        int numCellsPerlin = 16;//TODO provisional delete
         int dim = Mathf.Max(dimensions, 8);
         if (computeShader == null)
             return;
 
         GenerateCornerVectors();
-        GeneratePermutationTable(numCellsPerlin, 0, "permTableA");
+        GeneratePermutationTable(11, 0, "permTableA"); //TODO configure values through inspector not hardcoded
+        GeneratePermutationTable(21, 10, "permTableB");//TODO configure values through inspector not hardcoded
+        GeneratePermutationTable(31, 0, "permTableC");//TODO configure values through inspector not hardcoded
+        computeShader.SetInt("permTableSizeA", 11);//TODO configure values through inspector not hardcoded
+        computeShader.SetInt("permTableSizeB", 21);//TODO configure values through inspector not hardcoded
+        computeShader.SetInt("permTableSizeC", 31);//TODO configure values through inspector not hardcoded
 
         int currKernel = computeShader.FindKernel("Perlin3DTexture");
         computeShader.SetTexture(currKernel, "Result3D", targetTexture);
         computeShader.SetInt("textureSizeP", dim);
-        computeShader.SetInt("permTableSizeA", numCellsPerlin);
 
 
         computeShader.Dispatch(currKernel, dim / 8, dim / 8, dim / 8); //Image size divided by the thread size of each group

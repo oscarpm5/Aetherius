@@ -152,7 +152,7 @@ float3 GetPerlinGradient(uint3 id, int permTableSize,StructuredBuffer<int>permTa
     float dotVecB = lerp(dotVecBL,dotVecBR,u);
     float dotVecT = lerp(dotVecTL,dotVecTR,u);
 
-    float finalPoint=(0.5*lerp(dotVecB,dotVecT,v))+0.5;
+    float finalPoint=(0.5*lerp(dotVecB,dotVecT,v))+0.5; //Normalize from -1,1 to 0,1
 
     return float3(finalPoint,finalPoint,finalPoint);
 }
@@ -162,7 +162,9 @@ float3 GetPerlinGradient(uint3 id, int permTableSize,StructuredBuffer<int>permTa
 void Perlin3DTexture(uint3 id : SV_DispatchThreadID)
 {
 
-    float3 layeredVal = GetPerlinGradient(id, permTableSizeA,permTableA);
+    float3 layeredVal = GetPerlinGradient(id, permTableSizeA,permTableA)*0.625;
+    layeredVal += GetPerlinGradient(id, permTableSizeB,permTableB)*0.5;
+    layeredVal += GetPerlinGradient(id, permTableSizeC,permTableC)*0.25;
 
     Result3D[id.xyz] = float4(layeredVal.x,layeredVal.y,layeredVal.z,1.0);
 
