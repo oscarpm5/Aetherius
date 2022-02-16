@@ -416,7 +416,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 963194225}
-  m_Enabled: 0
+  m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: c153721c13fdf2146b06d0cf0a9bd6f4, type: 3}
   m_Name: 
@@ -426,7 +426,7 @@ MonoBehaviour:
   numberOfCellsOnAxisA: 5
   numberOfCellsOnAxisB: 15
   numberOfCellsOnAxisC: 27
-  resolution: 128
+  resolution: 256
   displayPreviewShader: {fileID: 4800000, guid: 2205b0981fb20cc48a4293e9f98062fd, type: 3}
   displayTexture: 1
   debugDisplaySize: 1

@@ -226,7 +226,7 @@ public class ProceduralTextureViewer : MonoBehaviour
     }
     void Generate3DPerlin(int dimensions, ref RenderTexture targetTexture)
     {
-        int numCellsPerlin = 256;//TODO provisional delete
+        int numCellsPerlin = 32;//TODO provisional delete
         int dim = Mathf.Max(dimensions, 8);
         if (computeShader == null)
             return;

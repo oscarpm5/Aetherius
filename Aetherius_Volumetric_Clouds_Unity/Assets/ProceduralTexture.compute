@@ -79,40 +79,38 @@ void Worley3DTextureWithPoints (uint3 id : SV_DispatchThreadID)
 
 StructuredBuffer<float3> vecTable;
 
-StructuredBuffer<float3> permTableA;
-StructuredBuffer<float3> permTableB;
-StructuredBuffer<float3> permTableC;
+StructuredBuffer<int> permTableA;
+StructuredBuffer<int> permTableB;
+StructuredBuffer<int> permTableC;
 int permTableSizeA;
 int permTableSizeB;
 int permTableSizeC;
 
 int WrapPosComponent(int posComp,int wrapNum)
 {
-    posComp = posComp % wrapNum;
     if(posComp<0)
     {
-        posComp = wrapNum-1;  
+        return (wrapNum-1);  
     }
-    return posComp;
+    return (posComp % wrapNum);
 }
 
-int GetpermutationIndexFromPos(int3 pos,int permTableSize, StructuredBuffer<float3>permTable)
+int GetpermutationIndexFromPos(int3 pos,int permTableSize, StructuredBuffer<int>permTable)
 {
-    int index = permTable[WrapPosComponent(pos.x,permTableSize)];
-    index= permTable[WrapPosComponent(index+pos.y,permTableSize)];
-    index= permTable[WrapPosComponent(index+pos.z,permTableSize)];
+    int index = permTable[WrapPosComponent(int(pos.x),permTableSize)];
+    index= permTable[WrapPosComponent(int(index+pos.y),permTableSize)];
+    index= permTable[WrapPosComponent(int(index+pos.z),permTableSize)];
+
     return index;
 }
 
-
-
-float3 GetGradientVectorFromPos(int3 pos,int permTableSize,StructuredBuffer<float3>permTable)
+float3 GetGradientVectorFromPos(int3 pos,int permTableSize,StructuredBuffer<int>permTable)
 {
     int vecIndex=GetpermutationIndexFromPos(pos,permTableSize,permTable)&7;
     return vecTable[vecIndex];
 }
 
-float GetPerlinGradient(uint3 id, int permTableSize,StructuredBuffer<float3>permTable)
+float3 GetPerlinGradient(uint3 id, int permTableSize,StructuredBuffer<int>permTable)
 {
     float3 st = id.xyz/float(textureSizeP); //convert pixel space into 0 to 1 coordinates
     st*=float(permTableSize); //TODO this might be permTableSize-1?
@@ -131,16 +129,17 @@ float GetPerlinGradient(uint3 id, int permTableSize,StructuredBuffer<float3>perm
 
     //TODO continue, make dot product,etc...
 
-    return vecBLC.x;//TODO this line has to be changed
+
+    return vecBLC;//TODO this line has to be changed
 }
 
 
 [numthreads(8,8,8)]
-void Perlin3DTexture (uint3 id : SV_DispatchThreadID)
+void Perlin3DTexture(uint3 id : SV_DispatchThreadID)
 {
 
-    float layeredVal = GetPerlinGradient(id, permTableSizeA,permTableA);
+    float3 layeredVal = GetPerlinGradient(id, permTableSizeA,permTableA);
 
-    Result3D[id.xyz] = float4(layeredVal,layeredVal,layeredVal,1.0);
+    Result3D[id.xyz] = float4(layeredVal.x,layeredVal.y,layeredVal.z,1.0);
 
 }
