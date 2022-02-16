@@ -60,7 +60,8 @@ public class ProceduralTextureViewer : MonoBehaviour
     public void UpdateNoise()
     {
         GenerateTexture3D(resolution, ref _renderTexture3D);
-        Generate3DWorley(resolution, ref _renderTexture3D);
+        //Generate3DWorley(resolution, ref _renderTexture3D);
+        Generate3DPerlin(resolution, ref _renderTexture3D);
         DeleteComputeBuffers();
     }
 
@@ -93,7 +94,7 @@ public class ProceduralTextureViewer : MonoBehaviour
         GeneratePointsWorley();
         int currKernel = computeShader.FindKernel("Worley3DTextureWithPoints");
         computeShader.SetTexture(currKernel, "Result3D", targetTexture);
-        computeShader.SetFloat("textureSizeP", dim);
+        computeShader.SetInt("textureSizeP", dim);
         computeShader.SetInt("numCellsA", numberOfCellsOnAxisA);
         computeShader.SetInt("numCellsB", numberOfCellsOnAxisB);
         computeShader.SetInt("numCellsC", numberOfCellsOnAxisC);
@@ -185,6 +186,61 @@ public class ProceduralTextureViewer : MonoBehaviour
             _renderTexture3D.Release();
             _renderTexture3D = null;
         }
+    }
+
+    void GeneratePermutationTable(int size, int seed,string bufferName)
+    {
+        System.Random rand = new System.Random(seed);
+
+        int[] permutation = new int[size];
+
+        for (int i = 0; i < size; ++i)
+        {
+            permutation[i] = i;
+        }
+
+        for (int i = size - 1; i > 0; --i)
+        {
+            int index = Mathf.RoundToInt((float)rand.NextDouble() * (i - 1));
+            int aux = permutation[i];
+            permutation[i] = permutation[index];
+            permutation[index] = aux;
+        }
+
+        CreateComputeBuffer(sizeof(int), permutation, bufferName, "Perlin3DTexture");
+    }
+
+    void GenerateCornerVectors()
+    {
+        Vector3[] directions = new Vector3[8];
+        directions[0] = new Vector3(1.0f, 1.0f, 1.0f);
+        directions[1] = new Vector3(1.0f, 1.0f, 0.0f);
+        directions[2] = new Vector3(1.0f, 0.0f, 1.0f);
+        directions[3] = new Vector3(1.0f, 0.0f, 0.0f);
+        directions[4] = new Vector3(0.0f, 1.0f, 1.0f);
+        directions[5] = new Vector3(0.0f, 1.0f, 0.0f);
+        directions[6] = new Vector3(0.0f, 0.0f, 1.0f);
+        directions[7] = new Vector3(0.0f, 0.0f, 0.0f);
+
+        CreateComputeBuffer(sizeof(float) * 3, directions, "vecTable", "Perlin3DTexture");
+    }
+    void Generate3DPerlin(int dimensions, ref RenderTexture targetTexture)
+    {
+        int numCellsPerlin = 256;//TODO provisional delete
+        int dim = Mathf.Max(dimensions, 8);
+        if (computeShader == null)
+            return;
+
+        GenerateCornerVectors();
+        GeneratePermutationTable(numCellsPerlin, 0, "permTableA");
+
+        int currKernel = computeShader.FindKernel("Perlin3DTexture");
+        computeShader.SetTexture(currKernel, "Result3D", targetTexture);
+        computeShader.SetInt("textureSizeP", dim);
+        computeShader.SetInt("permTableSizeA", numCellsPerlin);
+
+
+        computeShader.Dispatch(currKernel, dim / 8, dim / 8, dim / 8); //Image size divided by the thread size of each group
     }
 
 }

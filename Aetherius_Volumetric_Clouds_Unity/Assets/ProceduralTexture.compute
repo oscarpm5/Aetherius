@@ -1,5 +1,6 @@
 // Each #kernel tells which function to compile; you can have many kernels
 #pragma kernel Worley3DTextureWithPoints
+#pragma kernel Perlin3DTexture
 
 // Create a RenderTexture with enableRandomWrite flag and set it
 // with cs.SetTexture
@@ -8,7 +9,7 @@ StructuredBuffer<float3> pointsA;
 StructuredBuffer<float3> pointsB;
 StructuredBuffer<float3> pointsC;
 
-float textureSizeP;//Texture Size in pixels
+int textureSizeP;//Texture Size in pixels
 int numCellsA;
 int numCellsB;
 int numCellsC;
@@ -72,6 +73,74 @@ void Worley3DTextureWithPoints (uint3 id : SV_DispatchThreadID)
     layeredVal += GetWorleyDistFromCellNumWithPoints(id,float(numCellsC),pointsC)*0.125;
     layeredVal= 1-layeredVal;//we invert the distance
     
+    Result3D[id.xyz] = float4(layeredVal,layeredVal,layeredVal,1.0);
+
+}
+
+StructuredBuffer<float3> vecTable;
+
+StructuredBuffer<float3> permTableA;
+StructuredBuffer<float3> permTableB;
+StructuredBuffer<float3> permTableC;
+int permTableSizeA;
+int permTableSizeB;
+int permTableSizeC;
+
+int WrapPosComponent(int posComp,int wrapNum)
+{
+    posComp = posComp % wrapNum;
+    if(posComp<0)
+    {
+        posComp = wrapNum-1;  
+    }
+    return posComp;
+}
+
+int GetpermutationIndexFromPos(int3 pos,int permTableSize, StructuredBuffer<float3>permTable)
+{
+    int index = permTable[WrapPosComponent(pos.x,permTableSize)];
+    index= permTable[WrapPosComponent(index+pos.y,permTableSize)];
+    index= permTable[WrapPosComponent(index+pos.z,permTableSize)];
+    return index;
+}
+
+
+
+float3 GetGradientVectorFromPos(int3 pos,int permTableSize,StructuredBuffer<float3>permTable)
+{
+    int vecIndex=GetpermutationIndexFromPos(pos,permTableSize,permTable)&7;
+    return vecTable[vecIndex];
+}
+
+float GetPerlinGradient(uint3 id, int permTableSize,StructuredBuffer<float3>permTable)
+{
+    float3 st = id.xyz/float(textureSizeP); //convert pixel space into 0 to 1 coordinates
+    st*=float(permTableSize); //TODO this might be permTableSize-1?
+   
+    float3 iPos = floor(st); //get integer coords
+    float3 fPos = frac(st); //get fractional coords
+
+    float3 vecBLC = GetGradientVectorFromPos(int3(iPos.x,iPos.y,iPos.z)+int3(0,0,0),permTableSize,permTable);//bottom left close corner
+    float3 vecBLF = GetGradientVectorFromPos(int3(iPos.x,iPos.y,iPos.z)+int3(0,0,1),permTableSize,permTable);//bottom left far corner
+    float3 vecBRC = GetGradientVectorFromPos(int3(iPos.x,iPos.y,iPos.z)+int3(1,0,0),permTableSize,permTable);//bottom right close corner
+    float3 vecBRF = GetGradientVectorFromPos(int3(iPos.x,iPos.y,iPos.z)+int3(1,0,1),permTableSize,permTable);//bottom right far corner
+    float3 vecTLC = GetGradientVectorFromPos(int3(iPos.x,iPos.y,iPos.z)+int3(0,1,0),permTableSize,permTable);//top left close corner
+    float3 vecTLF = GetGradientVectorFromPos(int3(iPos.x,iPos.y,iPos.z)+int3(0,1,1),permTableSize,permTable);//top left far corner
+    float3 vecTRC = GetGradientVectorFromPos(int3(iPos.x,iPos.y,iPos.z)+int3(1,1,0),permTableSize,permTable);//top right close corner
+    float3 vecTRF = GetGradientVectorFromPos(int3(iPos.x,iPos.y,iPos.z)+int3(1,1,1),permTableSize,permTable);//top right far corner
+
+    //TODO continue, make dot product,etc...
+
+    return vecBLC.x;//TODO this line has to be changed
+}
+
+
+[numthreads(8,8,8)]
+void Perlin3DTexture (uint3 id : SV_DispatchThreadID)
+{
+
+    float layeredVal = GetPerlinGradient(id, permTableSizeA,permTableA);
+
     Result3D[id.xyz] = float4(layeredVal,layeredVal,layeredVal,1.0);
 
 }
