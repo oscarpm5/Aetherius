@@ -152,7 +152,7 @@ float3 GetPerlinGradient(uint3 id, int permTableSize,StructuredBuffer<int>permTa
     float dotVecB = lerp(dotVecBL,dotVecBR,u);
     float dotVecT = lerp(dotVecTL,dotVecTR,u);
 
-    float finalPoint=lerp(dotVecB,dotVecT,v);
+    float finalPoint=(0.5*lerp(dotVecB,dotVecT,v))+0.5;
 
     return float3(finalPoint,finalPoint,finalPoint);
 }
