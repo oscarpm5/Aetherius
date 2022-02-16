@@ -188,7 +188,7 @@ public class ProceduralTextureViewer : MonoBehaviour
         }
     }
 
-    void GeneratePermutationTable(int size, int seed,string bufferName)
+    void GeneratePermutationTable(int size, int seed, string bufferName)
     {
         System.Random rand = new System.Random(seed);
 
@@ -214,19 +214,19 @@ public class ProceduralTextureViewer : MonoBehaviour
     {
         Vector3[] directions = new Vector3[8];
         directions[0] = new Vector3(1.0f, 1.0f, 1.0f);
-        directions[1] = new Vector3(1.0f, 1.0f, 0.0f);
-        directions[2] = new Vector3(1.0f, 0.0f, 1.0f);
-        directions[3] = new Vector3(1.0f, 0.0f, 0.0f);
-        directions[4] = new Vector3(0.0f, 1.0f, 1.0f);
-        directions[5] = new Vector3(0.0f, 1.0f, 0.0f);
-        directions[6] = new Vector3(0.0f, 0.0f, 1.0f);
-        directions[7] = new Vector3(0.0f, 0.0f, 0.0f);
+        directions[1] = new Vector3(1.0f, 1.0f, -1.0f);
+        directions[2] = new Vector3(1.0f, -1.0f, 1.0f);
+        directions[3] = new Vector3(1.0f, -1.0f, -1.0f);
+        directions[4] = new Vector3(-1.0f, 1.0f, 1.0f);
+        directions[5] = new Vector3(-1.0f, 1.0f, -1.0f);
+        directions[6] = new Vector3(-1.0f, -1.0f, 1.0f);
+        directions[7] = new Vector3(-1.0f, -1.0f, -1.0f);
 
         CreateComputeBuffer(sizeof(float) * 3, directions, "vecTable", "Perlin3DTexture");
     }
     void Generate3DPerlin(int dimensions, ref RenderTexture targetTexture)
     {
-        int numCellsPerlin = 32;//TODO provisional delete
+        int numCellsPerlin = 16;//TODO provisional delete
         int dim = Mathf.Max(dimensions, 8);
         if (computeShader == null)
             return;

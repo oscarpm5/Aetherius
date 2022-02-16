@@ -110,6 +110,10 @@ float3 GetGradientVectorFromPos(int3 pos,int permTableSize,StructuredBuffer<int>
     return vecTable[vecIndex];
 }
 
+float Fade(float t){
+	return ((6.0*t - 15.0)*t + 10.0)*t*t*t;
+}
+
 float3 GetPerlinGradient(uint3 id, int permTableSize,StructuredBuffer<int>permTable)
 {
     float3 st = id.xyz/float(textureSizeP); //convert pixel space into 0 to 1 coordinates
@@ -127,10 +131,30 @@ float3 GetPerlinGradient(uint3 id, int permTableSize,StructuredBuffer<int>permTa
     float3 vecTRC = GetGradientVectorFromPos(int3(iPos.x,iPos.y,iPos.z)+int3(1,1,0),permTableSize,permTable);//top right close corner
     float3 vecTRF = GetGradientVectorFromPos(int3(iPos.x,iPos.y,iPos.z)+int3(1,1,1),permTableSize,permTable);//top right far corner
 
-    //TODO continue, make dot product,etc...
+    float dotVecBLC = dot(vecBLC,fPos-float3(0.0,0.0,0.0));
+    float dotVecBLF = dot(vecBLF,fPos-float3(0.0,0.0,1.0));
+    float dotVecBRC = dot(vecBRC,fPos-float3(1.0,0.0,0.0));
+    float dotVecBRF = dot(vecBRF,fPos-float3(1.0,0.0,1.0));
+    float dotVecTLC = dot(vecTLC,fPos-float3(0.0,1.0,0.0));
+    float dotVecTLF = dot(vecTLF,fPos-float3(0.0,1.0,1.0));
+    float dotVecTRC = dot(vecTRC,fPos-float3(1.0,1.0,0.0));
+    float dotVecTRF = dot(vecTRF,fPos-float3(1.0,1.0,1.0));
+    
+    float u = Fade(fPos.x); //we use this instead of a linear value to not have hard edges, we also use this instead of smoothstep as it has no discontinuities
+    float v = Fade(fPos.y);
+    float w = Fade(fPos.z);
 
+    float dotVecBL = lerp(dotVecBLC,dotVecBLF,w);
+    float dotVecBR = lerp(dotVecBRC,dotVecBRF,w);
+    float dotVecTL = lerp(dotVecTLC,dotVecTLF,w);
+    float dotVecTR = lerp(dotVecTRC,dotVecTRF,w);
 
-    return vecBLC;//TODO this line has to be changed
+    float dotVecB = lerp(dotVecBL,dotVecBR,u);
+    float dotVecT = lerp(dotVecTL,dotVecTR,u);
+
+    float finalPoint=lerp(dotVecB,dotVecT,v);
+
+    return float3(finalPoint,finalPoint,finalPoint);
 }
 
 
