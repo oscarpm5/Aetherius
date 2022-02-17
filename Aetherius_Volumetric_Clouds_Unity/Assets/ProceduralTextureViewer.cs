@@ -26,6 +26,7 @@ public class ProceduralTextureViewer : MonoBehaviour
     public int numberOfCellsOnAxisB = 1;
     [Range(1, 100)]
     public int numberOfCellsOnAxisC = 1;
+    [Range(8,1024)]
     public int resolution = 256;
     private RenderTexture _renderTexture3D = null;
 
@@ -41,7 +42,14 @@ public class ProceduralTextureViewer : MonoBehaviour
     public float tileAmmount = 1;
     [Range(0.0f, 1.0f)]
     public float textureSlice = 1.0f;
-
+    [Range(1,8)]
+    public int nomOctavesPerlin = 5;
+    [Range(0.0f,1.0f)]
+    public float persistencePerlin = 0.5f;
+    [Range(1.0f, 10.0f)]
+    public float lacunarityPerlin = 3.0f;
+    [Range(1, 32)]
+    public int gridSizePerlin=32;
 
     public Material material
     {
@@ -231,13 +239,11 @@ public class ProceduralTextureViewer : MonoBehaviour
             return;
 
         GenerateCornerVectors();
-        GeneratePermutationTable(11, 0, "permTableA"); //TODO configure values through inspector not hardcoded
-        GeneratePermutationTable(21, 10, "permTableB");//TODO configure values through inspector not hardcoded
-        GeneratePermutationTable(31, 0, "permTableC");//TODO configure values through inspector not hardcoded
-        computeShader.SetInt("permTableSizeA", 11);//TODO configure values through inspector not hardcoded
-        computeShader.SetInt("permTableSizeB", 21);//TODO configure values through inspector not hardcoded
-        computeShader.SetInt("permTableSizeC", 31);//TODO configure values through inspector not hardcoded
-
+        GeneratePermutationTable(256, 0, "permTable"); //TODO configure values through inspector not hardcoded     
+        computeShader.SetInt("gridSize", gridSizePerlin);//TODO configure values through inspector not hardcoded
+        computeShader.SetInt("octaves", nomOctavesPerlin);
+        computeShader.SetFloat("persistence", persistencePerlin); //less than 1
+        computeShader.SetFloat("lacunarity", lacunarityPerlin); //More than 1
         int currKernel = computeShader.FindKernel("Perlin3DTexture");
         computeShader.SetTexture(currKernel, "Result3D", targetTexture);
         computeShader.SetInt("textureSizeP", dim);

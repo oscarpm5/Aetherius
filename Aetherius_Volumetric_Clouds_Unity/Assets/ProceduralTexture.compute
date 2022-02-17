@@ -79,34 +79,24 @@ void Worley3DTextureWithPoints (uint3 id : SV_DispatchThreadID)
 
 StructuredBuffer<float3> vecTable;
 
-StructuredBuffer<int> permTableA;
-StructuredBuffer<int> permTableB;
-StructuredBuffer<int> permTableC;
-int permTableSizeA;
-int permTableSizeB;
-int permTableSizeC;
+StructuredBuffer<int> permTable;
+int octaves;
+float persistence;
+float lacunarity;
+int gridSize;
 
-int WrapPosComponent(int posComp,int wrapNum)
+uint GetpermutationIndexFromPos(int3 pos,uint permTableSize)
 {
-    if(posComp<0)
-    {
-        return (wrapNum-1);  
-    }
-    return (posComp % wrapNum);
-}
-
-int GetpermutationIndexFromPos(int3 pos,int permTableSize, StructuredBuffer<int>permTable)
-{
-    int index = permTable[WrapPosComponent(int(pos.x),permTableSize)];
-    index= permTable[WrapPosComponent(int(index+pos.y),permTableSize)];
-    index= permTable[WrapPosComponent(int(index+pos.z),permTableSize)];
+    uint index = permTable[(uint(pos.x) %permTableSize)];
+    index= permTable[(uint(index+pos.y)%permTableSize)];
+    index= permTable[(uint(index+pos.z)%permTableSize)];
 
     return index;
 }
 
-float3 GetGradientVectorFromPos(int3 pos,int permTableSize,StructuredBuffer<int>permTable)
+float3 GetGradientVectorFromPos(int3 pos,uint permTableSize)
 {
-    int vecIndex=GetpermutationIndexFromPos(pos,permTableSize,permTable)&7;
+    uint vecIndex=GetpermutationIndexFromPos(pos,permTableSize)&7;
     return vecTable[vecIndex];
 }
 
@@ -114,22 +104,22 @@ float Fade(float t){
 	return ((6.0*t - 15.0)*t + 10.0)*t*t*t;
 }
 
-float3 GetPerlinGradient(uint3 id, int permTableSize,StructuredBuffer<int>permTable)
+float3 GetPerlinGradient(uint3 id,uint myGridSize)
 {
     float3 st = id.xyz/float(textureSizeP); //convert pixel space into 0 to 1 coordinates
-    st*=float(permTableSize); //TODO this might be permTableSize-1?
+    st*=float(myGridSize);
    
     float3 iPos = floor(st); //get integer coords
     float3 fPos = frac(st); //get fractional coords
 
-    float3 vecBLC = GetGradientVectorFromPos(int3(iPos.x,iPos.y,iPos.z)+int3(0,0,0),permTableSize,permTable);//bottom left close corner
-    float3 vecBLF = GetGradientVectorFromPos(int3(iPos.x,iPos.y,iPos.z)+int3(0,0,1),permTableSize,permTable);//bottom left far corner
-    float3 vecBRC = GetGradientVectorFromPos(int3(iPos.x,iPos.y,iPos.z)+int3(1,0,0),permTableSize,permTable);//bottom right close corner
-    float3 vecBRF = GetGradientVectorFromPos(int3(iPos.x,iPos.y,iPos.z)+int3(1,0,1),permTableSize,permTable);//bottom right far corner
-    float3 vecTLC = GetGradientVectorFromPos(int3(iPos.x,iPos.y,iPos.z)+int3(0,1,0),permTableSize,permTable);//top left close corner
-    float3 vecTLF = GetGradientVectorFromPos(int3(iPos.x,iPos.y,iPos.z)+int3(0,1,1),permTableSize,permTable);//top left far corner
-    float3 vecTRC = GetGradientVectorFromPos(int3(iPos.x,iPos.y,iPos.z)+int3(1,1,0),permTableSize,permTable);//top right close corner
-    float3 vecTRF = GetGradientVectorFromPos(int3(iPos.x,iPos.y,iPos.z)+int3(1,1,1),permTableSize,permTable);//top right far corner
+    float3 vecBLC = GetGradientVectorFromPos(int3(iPos.x,iPos.y,iPos.z)+int3(0,0,0),myGridSize);//bottom left close corner
+    float3 vecBLF = GetGradientVectorFromPos(int3(iPos.x,iPos.y,iPos.z)+int3(0,0,1),myGridSize);//bottom left far corner
+    float3 vecBRC = GetGradientVectorFromPos(int3(iPos.x,iPos.y,iPos.z)+int3(1,0,0),myGridSize);//bottom right close corner
+    float3 vecBRF = GetGradientVectorFromPos(int3(iPos.x,iPos.y,iPos.z)+int3(1,0,1),myGridSize);//bottom right far corner
+    float3 vecTLC = GetGradientVectorFromPos(int3(iPos.x,iPos.y,iPos.z)+int3(0,1,0),myGridSize);//top left close corner
+    float3 vecTLF = GetGradientVectorFromPos(int3(iPos.x,iPos.y,iPos.z)+int3(0,1,1),myGridSize);//top left far corner
+    float3 vecTRC = GetGradientVectorFromPos(int3(iPos.x,iPos.y,iPos.z)+int3(1,1,0),myGridSize);//top right close corner
+    float3 vecTRF = GetGradientVectorFromPos(int3(iPos.x,iPos.y,iPos.z)+int3(1,1,1),myGridSize);//top right far corner
 
     float dotVecBLC = dot(vecBLC,fPos-float3(0.0,0.0,0.0));
     float dotVecBLF = dot(vecBLF,fPos-float3(0.0,0.0,1.0));
@@ -152,7 +142,7 @@ float3 GetPerlinGradient(uint3 id, int permTableSize,StructuredBuffer<int>permTa
     float dotVecB = lerp(dotVecBL,dotVecBR,u);
     float dotVecT = lerp(dotVecTL,dotVecTR,u);
 
-    float finalPoint=(0.5*lerp(dotVecB,dotVecT,v))+0.5; //Normalize from -1,1 to 0,1
+    float finalPoint=lerp(dotVecB,dotVecT,v);
 
     return float3(finalPoint,finalPoint,finalPoint);
 }
@@ -162,10 +152,20 @@ float3 GetPerlinGradient(uint3 id, int permTableSize,StructuredBuffer<int>permTa
 void Perlin3DTexture(uint3 id : SV_DispatchThreadID)
 {
 
-    float3 layeredVal = GetPerlinGradient(id, permTableSizeA,permTableA)*0.625;
-    layeredVal += GetPerlinGradient(id, permTableSizeB,permTableB)*0.5;
-    layeredVal += GetPerlinGradient(id, permTableSizeC,permTableC)*0.25;
-
+    float3 layeredVal=0.0; 
+    float amplitude=1.0;
+    float totalAmplitude=0.0;
+    float frequency = 1.0;
+    float3 offset = float3(103.5,211.3,71.1);
+    for(int i =0; i<octaves; ++i)
+    {
+        layeredVal += GetPerlinGradient((id+offset),uint(gridSize*frequency))*amplitude;
+        totalAmplitude += amplitude;
+        amplitude *=persistence;
+        frequency *= lacunarity;
+    }
+    layeredVal = layeredVal/totalAmplitude; //Normalize to -1,1
+    layeredVal = 0.5+layeredVal*0.5;//Normalize from -1,1 to 0,1
     Result3D[id.xyz] = float4(layeredVal.x,layeredVal.y,layeredVal.z,1.0);
 
 }
