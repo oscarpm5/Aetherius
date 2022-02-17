@@ -42,8 +42,8 @@ public class ProceduralTextureViewer : MonoBehaviour
     public float tileAmmount = 1;
     [Range(0.0f, 1.0f)]
     public float textureSlice = 1.0f;
-    [Range(1,8)]
-    public int nomOctavesPerlin = 5;
+    [Range(1,12)]
+    public int numOctavesPerlin = 5;
     [Range(0.0f,1.0f)]
     public float persistencePerlin = 0.5f;
     [Range(1.0f, 10.0f)]
@@ -239,9 +239,9 @@ public class ProceduralTextureViewer : MonoBehaviour
             return;
 
         GenerateCornerVectors();
-        GeneratePermutationTable(256, 0, "permTable"); //TODO configure values through inspector not hardcoded     
-        computeShader.SetInt("gridSize", gridSizePerlin);//TODO configure values through inspector not hardcoded
-        computeShader.SetInt("octaves", nomOctavesPerlin);
+        GeneratePermutationTable(256, 0, "permTable");     
+        computeShader.SetInt("gridSize", gridSizePerlin);
+        computeShader.SetInt("octaves", numOctavesPerlin);
         computeShader.SetFloat("persistence", persistencePerlin); //less than 1
         computeShader.SetFloat("lacunarity", lacunarityPerlin); //More than 1
         int currKernel = computeShader.FindKernel("Perlin3DTexture");

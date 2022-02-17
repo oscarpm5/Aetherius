@@ -432,7 +432,7 @@ MonoBehaviour:
   debugDisplaySize: 1
   tileAmmount: 1
   textureSlice: 0
-  nomOctavesPerlin: 8
-  persistencePerlin: 0.786
-  lacunarityPerlin: 1.5
+  numOctavesPerlin: 8
+  persistencePerlin: 0.517
+  lacunarityPerlin: 2
   gridSizePerlin: 6
