@@ -96,7 +96,7 @@ uint GetpermutationIndexFromPos(int3 pos,uint permTableSize)
 
 float3 GetGradientVectorFromPos(int3 pos,uint permTableSize)
 {
-    uint vecIndex=GetpermutationIndexFromPos(pos,permTableSize)&7;
+    uint vecIndex=GetpermutationIndexFromPos(pos,permTableSize)%12;
     return vecTable[vecIndex];
 }
 

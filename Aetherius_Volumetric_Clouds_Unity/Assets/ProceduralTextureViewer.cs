@@ -26,7 +26,7 @@ public class ProceduralTextureViewer : MonoBehaviour
     public int numberOfCellsOnAxisB = 1;
     [Range(1, 100)]
     public int numberOfCellsOnAxisC = 1;
-    [Range(8,1024)]
+    [Range(8, 1024)]
     public int resolution = 256;
     private RenderTexture _renderTexture3D = null;
 
@@ -42,14 +42,14 @@ public class ProceduralTextureViewer : MonoBehaviour
     public float tileAmmount = 1;
     [Range(0.0f, 1.0f)]
     public float textureSlice = 1.0f;
-    [Range(1,12)]
+    [Range(1, 12)]
     public int numOctavesPerlin = 5;
-    [Range(0.0f,1.0f)]
+    [Range(0.0f, 1.0f)]
     public float persistencePerlin = 0.5f;
     [Range(1.0f, 10.0f)]
     public float lacunarityPerlin = 3.0f;
     [Range(1, 32)]
-    public int gridSizePerlin=32;
+    public int gridSizePerlin = 32;
 
     public Material material
     {
@@ -220,15 +220,19 @@ public class ProceduralTextureViewer : MonoBehaviour
 
     void GenerateCornerVectors()
     {
-        Vector3[] directions = new Vector3[8];
-        directions[0] = new Vector3(1.0f, 1.0f, 1.0f);
-        directions[1] = new Vector3(1.0f, 1.0f, -1.0f);
-        directions[2] = new Vector3(1.0f, -1.0f, 1.0f);
-        directions[3] = new Vector3(1.0f, -1.0f, -1.0f);
-        directions[4] = new Vector3(-1.0f, 1.0f, 1.0f);
-        directions[5] = new Vector3(-1.0f, 1.0f, -1.0f);
-        directions[6] = new Vector3(-1.0f, -1.0f, 1.0f);
-        directions[7] = new Vector3(-1.0f, -1.0f, -1.0f);
+        Vector3[] directions = new Vector3[12];
+        directions[0] = new Vector3(1, 1, 0);
+        directions[1] = new Vector3(-1, 1, 0);
+        directions[2] = new Vector3(1, -1, 0);
+        directions[3] = new Vector3(-1, -1, 0);
+        directions[4] = new Vector3(1, 0, 1);
+        directions[5] = new Vector3(-1, 0, 1);
+        directions[6] = new Vector3(1, 0, -1);
+        directions[7] = new Vector3(-1, 0, -1);
+        directions[8] = new Vector3(0, 1, 1);
+        directions[9] = new Vector3(0, -1, 1);
+        directions[10] = new Vector3(0, 1, -1);
+        directions[11] = new Vector3(0, -1, -1);
 
         CreateComputeBuffer(sizeof(float) * 3, directions, "vecTable", "Perlin3DTexture");
     }
@@ -239,7 +243,7 @@ public class ProceduralTextureViewer : MonoBehaviour
             return;
 
         GenerateCornerVectors();
-        GeneratePermutationTable(256, 0, "permTable");     
+        GeneratePermutationTable(256, 0, "permTable");
         computeShader.SetInt("gridSize", gridSizePerlin);
         computeShader.SetInt("octaves", numOctavesPerlin);
         computeShader.SetFloat("persistence", persistencePerlin); //less than 1
