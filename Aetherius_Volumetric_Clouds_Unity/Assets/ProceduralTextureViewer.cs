@@ -16,6 +16,16 @@ public class WorleyData
 [ImageEffectAllowedInSceneView]
 public class ProceduralTextureViewer : MonoBehaviour
 {
+    public enum TEXTURE_CHANNEL
+    {
+        R,
+        G,
+        B,
+        A
+    }
+
+    public TEXTURE_CHANNEL displayChannel;
+
     //Compute shader
     [Header("Texture Generation")]
     public ComputeShader computeShader = null;
@@ -36,6 +46,8 @@ public class ProceduralTextureViewer : MonoBehaviour
     [Header("Texture Display")]
     public Shader displayPreviewShader;
     public bool displayTexture = false;
+    public bool displayGrayscale = false;
+    public bool displayAllChannels = false;
     [Range(0.0f, 1.0f)]
     public float debugDisplaySize = 0.5f;
     [Range(1, 5)]
@@ -65,11 +77,24 @@ public class ProceduralTextureViewer : MonoBehaviour
     }
     private Material _material;
 
+    public Vector4 channelMask
+    {
+        get
+        {
+            Vector4 ret = new Vector4();
+            ret.x = (displayChannel == TEXTURE_CHANNEL.R) ? 1 : 0;
+            ret.y = (displayChannel == TEXTURE_CHANNEL.G) ? 1 : 0;
+            ret.z = (displayChannel == TEXTURE_CHANNEL.B) ? 1 : 0;
+            ret.w = (displayChannel == TEXTURE_CHANNEL.A) ? 1 : 0;
+            return ret;
+        }
+    }
+
     public void UpdateNoise()
     {
         GenerateTexture3D(resolution, ref _renderTexture3D);
-        //Generate3DWorley(resolution, ref _renderTexture3D);
-        Generate3DPerlin(resolution, ref _renderTexture3D);
+        Generate3DWorley(resolution, ref _renderTexture3D);
+        //Generate3DPerlin(resolution, ref _renderTexture3D);
         DeleteComputeBuffers();
     }
 
@@ -90,6 +115,10 @@ public class ProceduralTextureViewer : MonoBehaviour
         material.SetFloat("slice3DTex", textureSlice);
         material.SetFloat("debugTextureSize", debugDisplaySize);
         material.SetFloat("tileAmmount", tileAmmount);
+        material.SetVector("channelMask", channelMask);
+        material.SetInt("displayGrayscale", displayGrayscale ? 1 : 0);
+        material.SetInt("displayAllChannels", displayAllChannels ? 1 : 0);
+
         Graphics.Blit(source, destination, material);
     }
 

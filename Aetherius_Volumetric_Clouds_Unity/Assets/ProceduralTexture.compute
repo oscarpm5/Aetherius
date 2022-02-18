@@ -73,7 +73,7 @@ void Worley3DTextureWithPoints (uint3 id : SV_DispatchThreadID)
     layeredVal += GetWorleyDistFromCellNumWithPoints(id,numCellsC,pointsC)*0.125;
     layeredVal= 1-layeredVal;//we invert the distance
     
-    Result3D[id.xyz] = float4(layeredVal,layeredVal,layeredVal,1.0);
+    Result3D[id.xyz] = float4(layeredVal,layeredVal,layeredVal,layeredVal);
 
 }
 
