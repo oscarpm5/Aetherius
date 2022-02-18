@@ -10,19 +10,19 @@ StructuredBuffer<float3> pointsB;
 StructuredBuffer<float3> pointsC;
 
 int textureSizeP;//Texture Size in pixels
-int numCellsA;
-int numCellsB;
-int numCellsC;
+uint numCellsA;
+uint numCellsB;
+uint numCellsC;
 
-float GetRandomIndexFromPoint(float3 p,int numOfCellsAxis)
+int GetRandomIndexFromPoint(int3 p,int numOfCellsAxis)
 {  
     return p.x + numOfCellsAxis * (p.y + numOfCellsAxis * p.z);
 }
 
-float GetWorleyDistFromCellNumWithPoints(uint3 id, float cellsNum, StructuredBuffer<float3> randomPoints)
+float GetWorleyDistFromCellNumWithPoints(uint3 id, uint cellsNum, StructuredBuffer<float3> randomPoints)
 {
     float3 st = id.xyz/float(textureSizeP); //convert pixel space into 0 to 1 coordinates
-    st*=float(cellsNum);
+    st*=cellsNum;
    
     float3 iPos = floor(st); //get integer coords
     float3 fPos = frac(st); //get fractional coords
@@ -35,21 +35,21 @@ float GetWorleyDistFromCellNumWithPoints(uint3 id, float cellsNum, StructuredBuf
         {
             for(int x=-1; x<=1;++x)
             {
-                float3 neighbourOffset= float3(float(x),float(y),float(z)); //get an offset for the 26 adjacent tiles + the center one
-                float3 neighbourPos =iPos+neighbourOffset; //Position of the cell where we want to obtain the random point
+                int3 neighbourOffset= int3(x,y,z); //get an offset for the 26 adjacent tiles + the center one
+                int3 neighbourPos =iPos+neighbourOffset; //Position of the cell where we want to obtain the random point
             
-                if(neighbourPos.x<0.0f) //Cannot do modulo if its a negative number
+                if(neighbourPos.x<0) //Cannot do modulo if its a negative number
                 {
-                    neighbourPos.x=cellsNum-1.0;
+                    neighbourPos.x=cellsNum-1;
                 }
 
-                if(neighbourPos.y<0.0f)//Cannot do modulo if its a negative number
+                if(neighbourPos.y<0)//Cannot do modulo if its a negative number
                 {
-                    neighbourPos.y=cellsNum-1.0;
+                    neighbourPos.y=cellsNum-1;
                 }
-                if(neighbourPos.z<0.0f)//Cannot do modulo if its a negative number
+                if(neighbourPos.z<0.)//Cannot do modulo if its a negative number
                 {
-                    neighbourPos.z=cellsNum-1.0;
+                    neighbourPos.z=cellsNum-1;
                 }
 
                 neighbourPos= neighbourPos % cellsNum;
@@ -68,9 +68,9 @@ float GetWorleyDistFromCellNumWithPoints(uint3 id, float cellsNum, StructuredBuf
 void Worley3DTextureWithPoints (uint3 id : SV_DispatchThreadID)
 {
     float layeredVal=0.0;
-    layeredVal += GetWorleyDistFromCellNumWithPoints(id,float(numCellsA),pointsA)*0.625;
-    layeredVal += GetWorleyDistFromCellNumWithPoints(id,float(numCellsB),pointsB)*0.25;
-    layeredVal += GetWorleyDistFromCellNumWithPoints(id,float(numCellsC),pointsC)*0.125;
+    layeredVal += GetWorleyDistFromCellNumWithPoints(id,numCellsA,pointsA)*0.625;
+    layeredVal += GetWorleyDistFromCellNumWithPoints(id,numCellsB,pointsB)*0.25;
+    layeredVal += GetWorleyDistFromCellNumWithPoints(id,numCellsC,pointsC)*0.125;
     layeredVal= 1-layeredVal;//we invert the distance
     
     Result3D[id.xyz] = float4(layeredVal,layeredVal,layeredVal,1.0);
