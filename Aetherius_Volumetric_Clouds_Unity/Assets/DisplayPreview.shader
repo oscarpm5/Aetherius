@@ -67,9 +67,9 @@ Shader "Aetherius/DisplayPreview"
 					{
 						col *= channelMask;
 
-						if (displayGrayscale || channelMask.w == 1)
+						if (displayGrayscale || channelMask.w == 1) //we want to show alpha channel as a grayscale texture with an alpha of 1
 						{
-							float colChannel = col.x + col.y + col.z + col.w;
+							float colChannel = col.x + col.y + col.z + col.w;//we know only one channel will be different from 0 here
 							col = float4(colChannel, colChannel, colChannel, 1.0);
 						}
 					}				

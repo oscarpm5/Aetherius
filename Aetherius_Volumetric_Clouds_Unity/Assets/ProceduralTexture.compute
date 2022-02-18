@@ -5,6 +5,8 @@
 // Create a RenderTexture with enableRandomWrite flag and set it
 // with cs.SetTexture
 RWTexture3D<float4> Result3D;
+float4 channelToWriteTo;
+
 StructuredBuffer<float3> pointsA;
 StructuredBuffer<float3> pointsB;
 StructuredBuffer<float3> pointsC;
@@ -72,8 +74,7 @@ void Worley3DTextureWithPoints (uint3 id : SV_DispatchThreadID)
     layeredVal += GetWorleyDistFromCellNumWithPoints(id,numCellsB,pointsB)*0.25;
     layeredVal += GetWorleyDistFromCellNumWithPoints(id,numCellsC,pointsC)*0.125;
     layeredVal= 1-layeredVal;//we invert the distance
-    
-    Result3D[id.xyz] = float4(layeredVal,layeredVal,layeredVal,layeredVal);
+    Result3D[id.xyz] = lerp(Result3D[id.xyz],float4(layeredVal,layeredVal,layeredVal,layeredVal),channelToWriteTo);
 
 }
 
@@ -104,7 +105,7 @@ float Fade(float t){
 	return ((6.0*t - 15.0)*t + 10.0)*t*t*t;
 }
 
-float3 GetPerlinGradient(uint3 id,uint myGridSize)
+float GetPerlinGradient(uint3 id,uint myGridSize)
 {
     float3 st = id.xyz/float(textureSizeP); //convert pixel space into 0 to 1 coordinates
     st*=float(myGridSize);
@@ -144,7 +145,7 @@ float3 GetPerlinGradient(uint3 id,uint myGridSize)
 
     float finalPoint=lerp(dotVecB,dotVecT,v);
 
-    return float3(finalPoint,finalPoint,finalPoint);
+    return finalPoint;
 }
 
 
@@ -152,7 +153,7 @@ float3 GetPerlinGradient(uint3 id,uint myGridSize)
 void Perlin3DTexture(uint3 id : SV_DispatchThreadID)
 {
 
-    float3 layeredVal=0.0; 
+    float layeredVal=0.0; 
     float amplitude=1.0;
     float totalAmplitude=0.0;
     float frequency = 1.0;
@@ -166,6 +167,6 @@ void Perlin3DTexture(uint3 id : SV_DispatchThreadID)
     }
     layeredVal = layeredVal/totalAmplitude; //Normalize to -1,1
     layeredVal = 0.5+layeredVal*0.5;//Normalize from -1,1 to 0,1
-    Result3D[id.xyz] = float4(layeredVal.x,layeredVal.y,layeredVal.z,1.0);
+    Result3D[id.xyz] = lerp(Result3D[id.xyz],float4(layeredVal,layeredVal,layeredVal,layeredVal),channelToWriteTo);
 
 }
