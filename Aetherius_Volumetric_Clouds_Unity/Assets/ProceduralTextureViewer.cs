@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 
 [RequireComponent(typeof(Camera))]
-[ExecuteInEditMode]
+//[ExecuteInEditMode]
 [ImageEffectAllowedInSceneView]
 public class ProceduralTextureViewer : MonoBehaviour
 {
@@ -20,7 +20,8 @@ public class ProceduralTextureViewer : MonoBehaviour
     //Compute shader
     [Header("Texture Generation")]
     public ComputeShader computeShader = null;
-    public bool updateTextureAuto = false;   
+    public bool updateTextureAuto = false;
+    private bool _updateNoise;
     [Range(8, 1024)]
     public int resolution = 256;
     private RenderTexture _renderTexture3D = null;
@@ -37,6 +38,9 @@ public class ProceduralTextureViewer : MonoBehaviour
     public float debugDisplaySize = 0.5f;
     [Range(1, 5)]
     public float tileAmmount = 1;
+
+
+
     [Range(0.0f, 1.0f)]
     public float textureSlice = 1.0f;
     [Range(1, 12)]
@@ -69,7 +73,7 @@ public class ProceduralTextureViewer : MonoBehaviour
             return GetChannelMask(displayChannel);
         }
     }
-    
+
     public WorleySettings activeWorleyShapeSettings
     {
         get
@@ -81,10 +85,9 @@ public class ProceduralTextureViewer : MonoBehaviour
 
     private void OnRenderImage(RenderTexture source, RenderTexture destination)
     {
-        if (updateTextureAuto == true)
-        {
-            UpdateNoise();
-        }
+
+        UpdateNoise();
+
 
         if (material == null || !displayTexture)
         {
@@ -104,7 +107,7 @@ public class ProceduralTextureViewer : MonoBehaviour
     }
     private void OnEnable() //Called after component awakens and after a hot reload
     {
-        UpdateNoise();
+        GenerateAllNoise();
     }
     private void OnDisable() //happens before a hot reload
     {
@@ -122,40 +125,62 @@ public class ProceduralTextureViewer : MonoBehaviour
     }
     public void UpdateNoise()
     {
+        //TODO handle detail too here
+
+        bool hasGeneratedNewTexture = GenerateTexture3D(resolution, ref _renderTexture3D);
+        if (_updateNoise == true || (hasGeneratedNewTexture&&updateTextureAuto))
+        {
+            _updateNoise = false;
+
+            if (displayChannel == TEXTURE_CHANNEL.R)
+                Generate3DPerlinWorley(resolution, ref _renderTexture3D, TEXTURE_CHANNEL.R);
+            else
+                Generate3DWorley(resolution, ref _renderTexture3D, displayChannel);
+
+            DeleteComputeBuffers();
+        }
+    }
+
+    public void GenerateAllNoise()
+    {
+        _updateNoise = false;
         GenerateTexture3D(resolution, ref _renderTexture3D);
-        
-        //ClearToBlack3DTexture(resolution, ref _renderTexture3D);
         Generate3DPerlinWorley(resolution, ref _renderTexture3D, TEXTURE_CHANNEL.R);
         Generate3DWorley(resolution, ref _renderTexture3D, TEXTURE_CHANNEL.G);
         Generate3DWorley(resolution, ref _renderTexture3D, TEXTURE_CHANNEL.B);
         Generate3DWorley(resolution, ref _renderTexture3D, TEXTURE_CHANNEL.A);
+        //TODO generate detail too here
+        
         DeleteComputeBuffers();
+
     }
 
     //Generation methods ======================================================================
-    public void Generate3DWorley(int dimensions, ref RenderTexture targetTexture,TEXTURE_CHANNEL channelToWriteTo)
+    public void Generate3DWorley(int dimensions, ref RenderTexture targetTexture, TEXTURE_CHANNEL channelToWriteTo)
     {
         int dim = Mathf.Max(dimensions, 8);
         if (computeShader == null)
             return;
 
-        WorleySettings currSettings = activeWorleyShapeSettings;
+        WorleySettings currSettings = worleyShapeSettings[(int)channelToWriteTo];
         if (currSettings == null)
         {
             Debug.LogWarning("Assign a Worley Settings Scriptable Object to the [" + ((int)channelToWriteTo).ToString() + "] element of the 'Worley Settings' array");
             return;
         }
+        string kernelName = "Worley3DTextureWithPoints";
+        GeneratePointsWorley(currSettings, kernelName);
 
-        GeneratePointsWorley(currSettings, "Worley3DTextureWithPoints");
-        
-        int currKernel = computeShader.FindKernel("Worley3DTextureWithPoints");
+        int currKernel = computeShader.FindKernel(kernelName);
         computeShader.SetTexture(currKernel, "Result3D", targetTexture);
         computeShader.SetInt("textureSizeP", dim);
         computeShader.SetInt("numCellsA", currSettings.numberOfCellsAxisA);
         computeShader.SetInt("numCellsB", currSettings.numberOfCellsAxisB);
         computeShader.SetInt("numCellsC", currSettings.numberOfCellsAxisC);
         computeShader.SetVector("channelToWriteTo", GetChannelMask(channelToWriteTo));
+
         computeShader.Dispatch(currKernel, dim / 8, dim / 8, dim / 8); //Image size divided by the thread size of each group
+
     }
     void Generate3DPerlinWorley(int dimensions, ref RenderTexture targetTexture, TEXTURE_CHANNEL channelToWriteTo)
     {
@@ -163,7 +188,7 @@ public class ProceduralTextureViewer : MonoBehaviour
         if (computeShader == null)
             return;
 
-        WorleySettings currSettings = activeWorleyShapeSettings;
+        WorleySettings currSettings = worleyShapeSettings[(int)channelToWriteTo];
         if (currSettings == null)
         {
             Debug.LogWarning("Assign a Worley Settings Scriptable Object to the [" + ((int)channelToWriteTo).ToString() + "] element of the 'Worley Settings' array");
@@ -171,13 +196,13 @@ public class ProceduralTextureViewer : MonoBehaviour
         }
         string kernelName = "PerlinWorley3DTexture";
         int currKernel = computeShader.FindKernel(kernelName);
-       
+
         //Worley
         GeneratePointsWorley(currSettings, kernelName);
         computeShader.SetInt("numCellsA", currSettings.numberOfCellsAxisA);
         computeShader.SetInt("numCellsB", currSettings.numberOfCellsAxisB);
         computeShader.SetInt("numCellsC", currSettings.numberOfCellsAxisC);
-        
+
         //Perlin
         GenerateCornerVectors(kernelName);
         GeneratePermutationTable(256, 0, "permTable", kernelName);
@@ -189,10 +214,11 @@ public class ProceduralTextureViewer : MonoBehaviour
 
         computeShader.SetTexture(currKernel, "Result3D", targetTexture);
         computeShader.SetInt("textureSizeP", dim);
-        computeShader.SetVector("channelToWriteTo", GetChannelMask(channelToWriteTo));
-
+        computeShader.SetVector("channelToWriteTo", GetChannelMask(channelToWriteTo));  
 
         computeShader.Dispatch(currKernel, dim / 8, dim / 8, dim / 8); //Image size divided by the thread size of each group
+       
+
     }
 
     void ClearToBlack3DTexture(int dimensions, ref RenderTexture targetTexture)
@@ -207,7 +233,7 @@ public class ProceduralTextureViewer : MonoBehaviour
     }
 
     //Worley Related ==========================================================================
-    void GeneratePointsWorley(WorleySettings currSettings,string kernelName) //TODO retrieve data from Worley Data not for number of Cells
+    void GeneratePointsWorley(WorleySettings currSettings, string kernelName) //TODO retrieve data from Worley Data not for number of Cells
     {
         System.Random random = new System.Random(currSettings.seed);
 
@@ -229,7 +255,7 @@ public class ProceduralTextureViewer : MonoBehaviour
     }
 
     //Improved Perlin Related =================================================================
-    void GeneratePermutationTable(int size, int seed, string bufferName,string kernelName)
+    void GeneratePermutationTable(int size, int seed, string bufferName, string kernelName)
     {
         System.Random rand = new System.Random(seed);
 
@@ -270,7 +296,7 @@ public class ProceduralTextureViewer : MonoBehaviour
     }
 
     //Compute Buffers =========================================================================
-    void CreateComputeBuffer(int dataStride, System.Array data, string bufferName, string kernelName)
+    ComputeBuffer CreateComputeBuffer(int dataStride, System.Array data, string bufferName, string kernelName)
     {
         ComputeBuffer newBuffer = new ComputeBuffer(data.Length, dataStride, ComputeBufferType.Structured);
         newBuffer.SetData(data);
@@ -280,6 +306,7 @@ public class ProceduralTextureViewer : MonoBehaviour
             buffersToDelete = new List<ComputeBuffer>();
 
         buffersToDelete.Add(newBuffer);
+        return newBuffer;
     }
 
     void DeleteComputeBuffers()
@@ -293,12 +320,15 @@ public class ProceduralTextureViewer : MonoBehaviour
         }
         buffersToDelete = null;
     }
-    
+
     //Textures ================================================================================
-    void GenerateTexture3D(int texResolution, ref RenderTexture myTexture)
+    //returns ture if a texture has been created
+    bool GenerateTexture3D(int texResolution, ref RenderTexture myTexture)
     {
+        bool isNewlyCreated = false;
+        UnityEngine.Experimental.Rendering.GraphicsFormat format = UnityEngine.Experimental.Rendering.GraphicsFormat.R16G16B16A16_UNorm;
         int res = Mathf.Max(texResolution, 8);
-        if (myTexture == null || myTexture.height != res || myTexture.width != res || myTexture.volumeDepth != res) //if texture doesnt exist or resolution has changed, recreate the texture
+        if (myTexture == null || !myTexture.IsCreated() || myTexture.height != res || myTexture.width != res || myTexture.volumeDepth != res || myTexture.graphicsFormat != format) //if texture doesnt exist or resolution has changed, recreate the texture
         {
             Debug.Log("GeneratingTexture...");
 
@@ -313,10 +343,15 @@ public class ProceduralTextureViewer : MonoBehaviour
             myTexture.enableRandomWrite = true;//So it can be used by the compute shader
             myTexture.dimension = UnityEngine.Rendering.TextureDimension.Tex3D;
             myTexture.volumeDepth = res;
-            myTexture.filterMode = FilterMode.Bilinear;
+            myTexture.filterMode = FilterMode.Trilinear;
             myTexture.wrapMode = TextureWrapMode.Repeat;
+            myTexture.graphicsFormat = format;
             myTexture.Create();
+
+            isNewlyCreated = true;
+
         }
+        return isNewlyCreated;
     }
     void ReleaseTexture(ref RenderTexture textureToRelease)
     {
@@ -329,5 +364,18 @@ public class ProceduralTextureViewer : MonoBehaviour
 
 
 
+    public void NoiseSettingsChanged()
+    {
+        if (updateTextureAuto)
+        {
+            _updateNoise = true;
+            Debug.Log("Settings have changed!");
+        }
+    }
+
+    public void UpdateNoiseManually()
+    {
+        GenerateAllNoise();
+    }
 }
 

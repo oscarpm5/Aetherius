@@ -22,7 +22,7 @@ public class ProceduralTextureViewerEditor : Editor
         {
             if (GUILayout.Button("GenerateTexture"))
             {
-                myScript.UpdateNoise();
+                myScript.UpdateNoiseManually();
                 Debug.Log("Manual Update!");
             }
         }
@@ -30,11 +30,17 @@ public class ProceduralTextureViewerEditor : Editor
         Object currSettings = myScript.activeWorleyShapeSettings;
         if (currSettings != null)
         {
-            CreateCachedEditor(currSettings, null, ref _editor);
-            _editor.OnInspectorGUI();
+            using (EditorGUI.ChangeCheckScope check = new EditorGUI.ChangeCheckScope())
+            {
+                CreateCachedEditor(currSettings, null, ref _editor);//With this we can display a scriptable object in the script editor
+                _editor.OnInspectorGUI();
 
-            serializedObject.ApplyModifiedProperties();
+                if (check.changed) //If we changed any parameters of the scriptable object, update its noise
+                {
+                    myScript.NoiseSettingsChanged();
+                }
+            }
         }
     }
-
 }
+
