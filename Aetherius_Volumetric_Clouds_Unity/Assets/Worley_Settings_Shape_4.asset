@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 16b7d4e69fef94d45b009dd4ef698abb, type: 3}
   m_Name: Worley_Settings_Shape_4
   m_EditorClassIdentifier: 
-  seed: 0
-  numberOfCellsAxisA: 10
-  numberOfCellsAxisB: 15
-  numberOfCellsAxisC: 35
+  seed: 111
+  numberOfCellsAxisA: 28
+  numberOfCellsAxisB: 64
+  numberOfCellsAxisC: 86

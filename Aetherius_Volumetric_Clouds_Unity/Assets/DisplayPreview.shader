@@ -38,7 +38,6 @@ Shader "Aetherius/DisplayPreview"
 			}
 
 			sampler2D _MainTex;
-			sampler2D _DisplayTex2D;
 			sampler3D _DisplayTex3D;
 			float debugTextureSize;//between 0 and 1
 			float tileAmmount;//amount of tiling for the texture

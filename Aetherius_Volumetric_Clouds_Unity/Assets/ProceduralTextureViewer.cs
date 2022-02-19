@@ -2,7 +2,6 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-
 [RequireComponent(typeof(Camera))]
 [ExecuteInEditMode]
 [ImageEffectAllowedInSceneView]
@@ -124,7 +123,9 @@ public class ProceduralTextureViewer : MonoBehaviour
     public void UpdateNoise()
     {
         GenerateTexture3D(resolution, ref _renderTexture3D);
-        Generate3DPerlin(resolution, ref _renderTexture3D, TEXTURE_CHANNEL.R);
+        
+        //ClearToBlack3DTexture(resolution, ref _renderTexture3D);
+        Generate3DPerlinWorley(resolution, ref _renderTexture3D, TEXTURE_CHANNEL.R);
         Generate3DWorley(resolution, ref _renderTexture3D, TEXTURE_CHANNEL.G);
         Generate3DWorley(resolution, ref _renderTexture3D, TEXTURE_CHANNEL.B);
         Generate3DWorley(resolution, ref _renderTexture3D, TEXTURE_CHANNEL.A);
@@ -141,7 +142,7 @@ public class ProceduralTextureViewer : MonoBehaviour
         WorleySettings currSettings = activeWorleyShapeSettings;
         if (currSettings == null)
         {
-            Debug.LogWarning("Assign a Worley Settings Scriptable Object to the [" + ((int)displayChannel).ToString() + "] element of the 'Worley Settings' array");
+            Debug.LogWarning("Assign a Worley Settings Scriptable Object to the [" + ((int)channelToWriteTo).ToString() + "] element of the 'Worley Settings' array");
             return;
         }
 
@@ -156,24 +157,52 @@ public class ProceduralTextureViewer : MonoBehaviour
         computeShader.SetVector("channelToWriteTo", GetChannelMask(channelToWriteTo));
         computeShader.Dispatch(currKernel, dim / 8, dim / 8, dim / 8); //Image size divided by the thread size of each group
     }
-    void Generate3DPerlin(int dimensions, ref RenderTexture targetTexture, TEXTURE_CHANNEL channelToWriteTo)
+    void Generate3DPerlinWorley(int dimensions, ref RenderTexture targetTexture, TEXTURE_CHANNEL channelToWriteTo)
     {
         int dim = Mathf.Max(dimensions, 8);
         if (computeShader == null)
             return;
 
-        GenerateCornerVectors();
-        GeneratePermutationTable(256, 0, "permTable");
+        WorleySettings currSettings = activeWorleyShapeSettings;
+        if (currSettings == null)
+        {
+            Debug.LogWarning("Assign a Worley Settings Scriptable Object to the [" + ((int)channelToWriteTo).ToString() + "] element of the 'Worley Settings' array");
+            return;
+        }
+        string kernelName = "PerlinWorley3DTexture";
+        int currKernel = computeShader.FindKernel(kernelName);
+       
+        //Worley
+        GeneratePointsWorley(currSettings, kernelName);
+        computeShader.SetInt("numCellsA", currSettings.numberOfCellsAxisA);
+        computeShader.SetInt("numCellsB", currSettings.numberOfCellsAxisB);
+        computeShader.SetInt("numCellsC", currSettings.numberOfCellsAxisC);
+        
+        //Perlin
+        GenerateCornerVectors(kernelName);
+        GeneratePermutationTable(256, 0, "permTable", kernelName);
         computeShader.SetInt("gridSize", gridSizePerlin);
         computeShader.SetInt("octaves", numOctavesPerlin);
         computeShader.SetFloat("persistence", persistencePerlin); //less than 1
         computeShader.SetFloat("lacunarity", lacunarityPerlin); //More than 1
-        int currKernel = computeShader.FindKernel("Perlin3DTexture");
+
+
         computeShader.SetTexture(currKernel, "Result3D", targetTexture);
         computeShader.SetInt("textureSizeP", dim);
         computeShader.SetVector("channelToWriteTo", GetChannelMask(channelToWriteTo));
 
 
+        computeShader.Dispatch(currKernel, dim / 8, dim / 8, dim / 8); //Image size divided by the thread size of each group
+    }
+
+    void ClearToBlack3DTexture(int dimensions, ref RenderTexture targetTexture)
+    {
+        int dim = Mathf.Max(dimensions, 8);
+        if (computeShader == null)
+            return;
+
+        int currKernel = computeShader.FindKernel("InitializeTexture");
+        computeShader.SetTexture(currKernel, "Result3D", targetTexture);
         computeShader.Dispatch(currKernel, dim / 8, dim / 8, dim / 8); //Image size divided by the thread size of each group
     }
 
@@ -200,7 +229,7 @@ public class ProceduralTextureViewer : MonoBehaviour
     }
 
     //Improved Perlin Related =================================================================
-    void GeneratePermutationTable(int size, int seed, string bufferName)
+    void GeneratePermutationTable(int size, int seed, string bufferName,string kernelName)
     {
         System.Random rand = new System.Random(seed);
 
@@ -219,9 +248,9 @@ public class ProceduralTextureViewer : MonoBehaviour
             permutation[index] = aux;
         }
 
-        CreateComputeBuffer(sizeof(int), permutation, bufferName, "Perlin3DTexture");
+        CreateComputeBuffer(sizeof(int), permutation, bufferName, kernelName);
     }
-    void GenerateCornerVectors()
+    void GenerateCornerVectors(string kernelName)
     {
         Vector3[] directions = new Vector3[12];
         directions[0] = new Vector3(1, 1, 0);
@@ -237,7 +266,7 @@ public class ProceduralTextureViewer : MonoBehaviour
         directions[10] = new Vector3(0, 1, -1);
         directions[11] = new Vector3(0, -1, -1);
 
-        CreateComputeBuffer(sizeof(float) * 3, directions, "vecTable", "Perlin3DTexture");
+        CreateComputeBuffer(sizeof(float) * 3, directions, "vecTable", kernelName);
     }
 
     //Compute Buffers =========================================================================
@@ -284,7 +313,7 @@ public class ProceduralTextureViewer : MonoBehaviour
             myTexture.enableRandomWrite = true;//So it can be used by the compute shader
             myTexture.dimension = UnityEngine.Rendering.TextureDimension.Tex3D;
             myTexture.volumeDepth = res;
-            myTexture.filterMode = FilterMode.Point;
+            myTexture.filterMode = FilterMode.Bilinear;
             myTexture.wrapMode = TextureWrapMode.Repeat;
             myTexture.Create();
         }

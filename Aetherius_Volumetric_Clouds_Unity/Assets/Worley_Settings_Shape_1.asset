@@ -13,6 +13,6 @@ MonoBehaviour:
   m_Name: Worley_Settings_Shape_1
   m_EditorClassIdentifier: 
   seed: 109
-  numberOfCellsAxisA: 11
-  numberOfCellsAxisB: 23
-  numberOfCellsAxisC: 42
+  numberOfCellsAxisA: 7
+  numberOfCellsAxisB: 15
+  numberOfCellsAxisC: 29
