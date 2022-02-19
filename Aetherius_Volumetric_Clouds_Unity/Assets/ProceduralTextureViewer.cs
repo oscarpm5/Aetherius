@@ -2,14 +2,6 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class WorleyData
-{
-    public int seed;
-
-    public int numberOfCellsA;
-    public int numberOfCellsB;
-    public int numberOfCellsC;
-}
 
 [RequireComponent(typeof(Camera))]
 [ExecuteInEditMode]
@@ -29,17 +21,11 @@ public class ProceduralTextureViewer : MonoBehaviour
     //Compute shader
     [Header("Texture Generation")]
     public ComputeShader computeShader = null;
-    public bool updateTextureAuto = false;
-    [Range(1, 100)]
-    public int numberOfCellsOnAxisA = 1;
-    [Range(1, 100)]
-    public int numberOfCellsOnAxisB = 1;
-    [Range(1, 100)]
-    public int numberOfCellsOnAxisC = 1;
+    public bool updateTextureAuto = false;   
     [Range(8, 1024)]
     public int resolution = 256;
     private RenderTexture _renderTexture3D = null;
-
+    public WorleySettings[] worleyShapeSettings = new WorleySettings[4];
     List<ComputeBuffer> buffersToDelete;
 
     //Display shader
@@ -84,8 +70,14 @@ public class ProceduralTextureViewer : MonoBehaviour
             return GetChannelMask(displayChannel);
         }
     }
-
-
+    
+    public WorleySettings activeWorleyShapeSettings
+    {
+        get
+        {
+            return worleyShapeSettings[(int)displayChannel];
+        }
+    }
 
 
     private void OnRenderImage(RenderTexture source, RenderTexture destination)
@@ -132,8 +124,10 @@ public class ProceduralTextureViewer : MonoBehaviour
     public void UpdateNoise()
     {
         GenerateTexture3D(resolution, ref _renderTexture3D);
-        Generate3DWorley(resolution, ref _renderTexture3D,TEXTURE_CHANNEL.R);
-        Generate3DPerlin(resolution, ref _renderTexture3D, TEXTURE_CHANNEL.G);
+        Generate3DPerlin(resolution, ref _renderTexture3D, TEXTURE_CHANNEL.R);
+        Generate3DWorley(resolution, ref _renderTexture3D, TEXTURE_CHANNEL.G);
+        Generate3DWorley(resolution, ref _renderTexture3D, TEXTURE_CHANNEL.B);
+        Generate3DWorley(resolution, ref _renderTexture3D, TEXTURE_CHANNEL.A);
         DeleteComputeBuffers();
     }
 
@@ -144,13 +138,21 @@ public class ProceduralTextureViewer : MonoBehaviour
         if (computeShader == null)
             return;
 
-        GeneratePointsWorley();
+        WorleySettings currSettings = activeWorleyShapeSettings;
+        if (currSettings == null)
+        {
+            Debug.LogWarning("Assign a Worley Settings Scriptable Object to the [" + ((int)displayChannel).ToString() + "] element of the 'Worley Settings' array");
+            return;
+        }
+
+        GeneratePointsWorley(currSettings, "Worley3DTextureWithPoints");
+        
         int currKernel = computeShader.FindKernel("Worley3DTextureWithPoints");
         computeShader.SetTexture(currKernel, "Result3D", targetTexture);
         computeShader.SetInt("textureSizeP", dim);
-        computeShader.SetInt("numCellsA", numberOfCellsOnAxisA);
-        computeShader.SetInt("numCellsB", numberOfCellsOnAxisB);
-        computeShader.SetInt("numCellsC", numberOfCellsOnAxisC);
+        computeShader.SetInt("numCellsA", currSettings.numberOfCellsAxisA);
+        computeShader.SetInt("numCellsB", currSettings.numberOfCellsAxisB);
+        computeShader.SetInt("numCellsC", currSettings.numberOfCellsAxisC);
         computeShader.SetVector("channelToWriteTo", GetChannelMask(channelToWriteTo));
         computeShader.Dispatch(currKernel, dim / 8, dim / 8, dim / 8); //Image size divided by the thread size of each group
     }
@@ -176,13 +178,13 @@ public class ProceduralTextureViewer : MonoBehaviour
     }
 
     //Worley Related ==========================================================================
-    void GeneratePointsWorley() //TODO retrieve data from Worley Data not for number of Cells
+    void GeneratePointsWorley(WorleySettings currSettings,string kernelName) //TODO retrieve data from Worley Data not for number of Cells
     {
-        System.Random random = new System.Random(0);
+        System.Random random = new System.Random(currSettings.seed);
 
-        GeneratePoints(random, numberOfCellsOnAxisA, "pointsA", "Worley3DTextureWithPoints");
-        GeneratePoints(random, numberOfCellsOnAxisB, "pointsB", "Worley3DTextureWithPoints");
-        GeneratePoints(random, numberOfCellsOnAxisC, "pointsC", "Worley3DTextureWithPoints");
+        GeneratePoints(random, currSettings.numberOfCellsAxisA, "pointsA", kernelName);
+        GeneratePoints(random, currSettings.numberOfCellsAxisB, "pointsB", kernelName);
+        GeneratePoints(random, currSettings.numberOfCellsAxisC, "pointsC", kernelName);
     }
 
     void GeneratePoints(System.Random rand, int numberOfCellsAxis, string bufferName, string kernelName)

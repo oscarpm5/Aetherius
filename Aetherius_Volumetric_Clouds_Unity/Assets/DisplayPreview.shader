@@ -44,8 +44,8 @@ Shader "Aetherius/DisplayPreview"
 			float tileAmmount;//amount of tiling for the texture
 			float slice3DTex;
 			float4 channelMask;
-			bool displayGrayscale;
-			bool displayAllChannels;
+			int displayGrayscale;
+			int displayAllChannels;
 
 			fixed4 frag(v2f i) : SV_Target
 			{
@@ -63,16 +63,21 @@ Shader "Aetherius/DisplayPreview"
 					float2 st = (currPixel / minDimensionsScaled) * tileAmmount;
 					col = tex3D(_DisplayTex3D, float3(frac(st), slice3DTex));
 					
-					if (!displayAllChannels) //If we only want to display one channel
+					if (displayAllChannels == 0) //If we only want to display one channel
 					{
 						col *= channelMask;
 
-						if (displayGrayscale || channelMask.w == 1) //we want to show alpha channel as a grayscale texture with an alpha of 1
+						if (displayGrayscale!=0 || channelMask.w == 1) //we want to show alpha channel as a grayscale texture with an alpha of 1
 						{
 							float colChannel = col.x + col.y + col.z + col.w;//we know only one channel will be different from 0 here
 							col = float4(colChannel, colChannel, colChannel, 1.0);
 						}
-					}				
+					}
+					else
+					{
+						col *= col.w;
+						col.w = 1.0;
+					}
 				}
 
 				return col;

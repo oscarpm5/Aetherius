@@ -421,21 +421,23 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c153721c13fdf2146b06d0cf0a9bd6f4, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  displayChannel: 0
+  displayChannel: 2
   computeShader: {fileID: 7200000, guid: 2ae0c58880eea7044a62d375123f3294, type: 3}
   updateTextureAuto: 1
-  numberOfCellsOnAxisA: 5
-  numberOfCellsOnAxisB: 15
-  numberOfCellsOnAxisC: 34
   resolution: 256
+  worleyShapeSettings:
+  - {fileID: 11400000, guid: d53327065840a8d4287b2fa83bbd962d, type: 2}
+  - {fileID: 11400000, guid: 90d281431bdb07f4db80b51fd0b828a3, type: 2}
+  - {fileID: 11400000, guid: 064f12052fd19d84489fc5b12a7824d6, type: 2}
+  - {fileID: 11400000, guid: 9c78e821e3634834182bccacf1904c97, type: 2}
   displayPreviewShader: {fileID: 4800000, guid: 2205b0981fb20cc48a4293e9f98062fd, type: 3}
   displayTexture: 1
   displayGrayscale: 1
-  displayAllChannels: 1
+  displayAllChannels: 0
   debugDisplaySize: 1
-  tileAmmount: 1.84
+  tileAmmount: 1
   textureSlice: 0
   numOctavesPerlin: 8
   persistencePerlin: 0.517
   lacunarityPerlin: 2
-  gridSizePerlin: 8
+  gridSizePerlin: 6
