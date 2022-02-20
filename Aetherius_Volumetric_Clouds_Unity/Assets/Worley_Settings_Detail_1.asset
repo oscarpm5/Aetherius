@@ -9,11 +9,11 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 536ac16a80ef54f4ab848394278c1074, type: 3}
-  m_Name: Improved_Perlin_Settings_Shape_1
+  m_Script: {fileID: 11500000, guid: 16b7d4e69fef94d45b009dd4ef698abb, type: 3}
+  m_Name: Worley_Settings_Detail_1
   m_EditorClassIdentifier: 
-  seed: -12
-  numOctavesPerlin: 9
-  persistencePerlin: 0.5
-  lacunarityPerlin: 3
-  gridSizePerlin: 5
+  seed: 42
+  numberOfCellsAxisA: 39
+  numberOfCellsAxisB: 33
+  numberOfCellsAxisC: 60
+  persistence: 0.361

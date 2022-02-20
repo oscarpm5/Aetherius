@@ -45,6 +45,7 @@ Shader "Aetherius/DisplayPreview"
 			float4 channelMask;
 			int displayGrayscale;
 			int displayAllChannels;
+			int isDetail;
 
 			fixed4 frag(v2f i) : SV_Target
 			{
@@ -72,11 +73,11 @@ Shader "Aetherius/DisplayPreview"
 							col = float4(colChannel, colChannel, colChannel, 1.0);
 						}
 					}
-					else
+					else if(isDetail==0) //if its not detail shape show alpha channel
 					{
 						col *= col.w;
 						col.w = 1.0;
-					}
+					}					
 				}
 
 				return col;

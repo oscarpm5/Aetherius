@@ -432,7 +432,7 @@ MonoBehaviour:
   textureSlice: 0
   updateTextureAuto: 1
   baseShapeResolution: 256
-  detailResolution: 256
+  detailResolution: 32
   computeShader: {fileID: 7200000, guid: 2ae0c58880eea7044a62d375123f3294, type: 3}
   perlinShapeSettings: {fileID: 11400000, guid: ee937917236aa82449ab7de2db735d1e, type: 2}
   worleyShapeSettings:
@@ -440,3 +440,7 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 90d281431bdb07f4db80b51fd0b828a3, type: 2}
   - {fileID: 11400000, guid: 064f12052fd19d84489fc5b12a7824d6, type: 2}
   - {fileID: 11400000, guid: 9c78e821e3634834182bccacf1904c97, type: 2}
+  worleyDetailSettings:
+  - {fileID: 11400000, guid: 1e13bd58664b3ec448d391dd9a041f51, type: 2}
+  - {fileID: 11400000, guid: 3d04b3037c1a4a640b7ac77a0decf1c4, type: 2}
+  - {fileID: 11400000, guid: cdb03daae29d1a74f9d322db4dace868, type: 2}

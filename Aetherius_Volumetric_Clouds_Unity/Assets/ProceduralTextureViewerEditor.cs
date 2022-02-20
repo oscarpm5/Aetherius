@@ -27,7 +27,7 @@ public class ProceduralTextureViewerEditor : Editor
             }
         }
 
-        Object currSettings = myScript.activeWorleyShapeSettings;
+        Object currSettings = myScript.activeWorleySettings;
         if (currSettings != null)
         {
             using (EditorGUI.ChangeCheckScope check = new EditorGUI.ChangeCheckScope())
