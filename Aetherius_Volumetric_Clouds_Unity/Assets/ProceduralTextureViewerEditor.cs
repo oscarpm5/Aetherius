@@ -41,6 +41,25 @@ public class ProceduralTextureViewerEditor : Editor
                 }
             }
         }
+
+        //If base texture & R channel show perlin
+        if (myScript.displayType==ProceduralTextureViewer.TEXTURE_TYPE.BASE_SHAPE && myScript.displayChannel== ProceduralTextureViewer.TEXTURE_CHANNEL.R)
+        {
+            currSettings = myScript.perlinShapeSettings;
+            if (currSettings != null)
+            {
+                using (EditorGUI.ChangeCheckScope check = new EditorGUI.ChangeCheckScope())
+                {
+                    CreateCachedEditor(currSettings, null, ref _editor);//With this we can display a scriptable object in the script editor
+                    _editor.OnInspectorGUI();
+
+                    if (check.changed) //If we changed any parameters of the scriptable object, update its noise
+                    {
+                        myScript.NoiseSettingsChanged();
+                    }
+                }
+            }
+        }
     }
 }
 
