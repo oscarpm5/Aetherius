@@ -16,3 +16,4 @@ MonoBehaviour:
   numberOfCellsAxisA: 7
   numberOfCellsAxisB: 15
   numberOfCellsAxisC: 29
+  persistence: 0.5

@@ -177,6 +177,7 @@ public class ProceduralTextureViewer : MonoBehaviour
         computeShader.SetInt("numCellsA", currSettings.numberOfCellsAxisA);
         computeShader.SetInt("numCellsB", currSettings.numberOfCellsAxisB);
         computeShader.SetInt("numCellsC", currSettings.numberOfCellsAxisC);
+        computeShader.SetFloat("persistenceWorley", currSettings.persistence); //less than 1
         computeShader.SetVector("channelToWriteTo", GetChannelMask(channelToWriteTo));
 
         computeShader.Dispatch(currKernel, dim / 8, dim / 8, dim / 8); //Image size divided by the thread size of each group
@@ -202,13 +203,14 @@ public class ProceduralTextureViewer : MonoBehaviour
         computeShader.SetInt("numCellsA", currSettings.numberOfCellsAxisA);
         computeShader.SetInt("numCellsB", currSettings.numberOfCellsAxisB);
         computeShader.SetInt("numCellsC", currSettings.numberOfCellsAxisC);
+        computeShader.SetFloat("persistenceWorley", currSettings.persistence); //less than 1
 
         //Perlin
         GenerateCornerVectors(kernelName);
         GeneratePermutationTable(256, 0, "permTable", kernelName);
         computeShader.SetInt("gridSize", gridSizePerlin);
         computeShader.SetInt("octaves", numOctavesPerlin);
-        computeShader.SetFloat("persistence", persistencePerlin); //less than 1
+        computeShader.SetFloat("persistencePerlin", persistencePerlin); //less than 1
         computeShader.SetFloat("lacunarity", lacunarityPerlin); //More than 1
 
 

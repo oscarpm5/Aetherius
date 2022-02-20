@@ -12,6 +12,8 @@ public class WorleySettings : ScriptableObject
     public int numberOfCellsAxisB=15;
     [Range(1, 100)]
     public int numberOfCellsAxisC=35;
+    [Range(0.0f,1.0f)]
+    public float persistence = 0.5f;
 
     WorleySettings()
     {
@@ -19,5 +21,6 @@ public class WorleySettings : ScriptableObject
         numberOfCellsAxisA = 10;
         numberOfCellsAxisB = 15;
         numberOfCellsAxisC = 35;
+        persistence = 0.5f;
     }
 }
