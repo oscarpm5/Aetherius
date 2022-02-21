@@ -149,11 +149,33 @@ public class ProceduralTextureViewer : MonoBehaviour
 
             if (displayType == TEXTURE_TYPE.BASE_SHAPE) //We only update the texture that is being displayed as is the one being edited
             {
-                GenerateBaseShapeNoise();
+                if (GenerateTexture3D(baseShapeResolution, ref _baseShapeRenderTexture, UnityEngine.Experimental.Rendering.GraphicsFormat.R16G16B16A16_UNorm))
+                {
+                    GenerateBaseShapeNoise();
+                    return;
+                }
+
+
+                if (displayChannel == TEXTURE_CHANNEL.R)
+                {
+                    Generate3DPerlinWorley(_baseShapeRenderTexture.height, ref _baseShapeRenderTexture, displayChannel, displayType);
+                }
+                else
+                {
+                    Generate3DWorley(_baseShapeRenderTexture.height, ref _baseShapeRenderTexture, displayChannel, displayType);
+                }
+
+
             }
             else
             {
-                GenerateDetailNoise();
+                if (GenerateTexture3D(detailResolution, ref _detailRenderTexture, UnityEngine.Experimental.Rendering.GraphicsFormat.R16G16B16A16_UNorm))
+                {
+                    GenerateDetailNoise();
+                    return;
+                }
+
+                Generate3DWorley(_detailRenderTexture.height, ref _detailRenderTexture, displayChannel, displayType);
             }
         }
     }
