@@ -145,19 +145,28 @@ public class ProceduralTextureViewer : MonoBehaviour
     {
         if (_updateNoise == true)
         {
-            GenerateAllNoise();
+            _updateNoise = false;
+
+            if (displayType == TEXTURE_TYPE.BASE_SHAPE) //We only update the texture that is being displayed as is the one being edited
+            {
+                GenerateBaseShapeNoise();
+            }
+            else
+            {
+                GenerateDetailNoise();
+            }
         }
     }
 
     public void GenerateAllNoise()
     {
+        _updateNoise = false;
         GenerateBaseShapeNoise();
         GenerateDetailNoise();
     }
 
     public void GenerateBaseShapeNoise()
     {
-        _updateNoise = false;
         //Base Shape Texture
         GenerateTexture3D(baseShapeResolution, ref _baseShapeRenderTexture, UnityEngine.Experimental.Rendering.GraphicsFormat.R16G16B16A16_UNorm);
         Generate3DPerlinWorley(baseShapeResolution, ref _baseShapeRenderTexture, TEXTURE_CHANNEL.R, TEXTURE_TYPE.BASE_SHAPE);
@@ -170,7 +179,6 @@ public class ProceduralTextureViewer : MonoBehaviour
 
     public void GenerateDetailNoise()
     {
-        _updateNoise = false;
         //Detail Texture
         GenerateTexture3D(detailResolution, ref _detailRenderTexture, UnityEngine.Experimental.Rendering.GraphicsFormat.R16G16B16A16_UNorm);
         Generate3DWorley(detailResolution, ref _detailRenderTexture, TEXTURE_CHANNEL.R, TEXTURE_TYPE.DETAIL);
@@ -394,8 +402,6 @@ public class ProceduralTextureViewer : MonoBehaviour
             textureToRelease = null;
         }
     }
-
-
 
     public void NoiseSettingsChanged()
     {
