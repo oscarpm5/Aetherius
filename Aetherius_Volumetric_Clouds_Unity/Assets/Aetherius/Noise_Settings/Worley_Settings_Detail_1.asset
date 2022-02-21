@@ -10,10 +10,10 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 16b7d4e69fef94d45b009dd4ef698abb, type: 3}
-  m_Name: Worley_Settings_Shape_1
+  m_Name: Worley_Settings_Detail_1
   m_EditorClassIdentifier: 
-  seed: 110
-  numberOfCellsAxisA: 7
-  numberOfCellsAxisB: 15
-  numberOfCellsAxisC: 29
-  persistence: 0.403
+  seed: 138
+  numberOfCellsAxisA: 8
+  numberOfCellsAxisB: 18
+  numberOfCellsAxisC: 34
+  persistence: 0.4

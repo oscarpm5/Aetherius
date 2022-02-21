@@ -39,13 +39,14 @@ public class ProceduralTextureViewer : MonoBehaviour
     [Range(0.0f, 1.0f)]
     public float textureSlice = 1.0f;
     private Material _material;
-
     //Compute shader
     [Header("Texture Generation")]
     public bool updateTextureAuto = false;
-    [Range(8, 1024)]
+    [HideInInspector]
+    [Range(8, 512)]
     public int baseShapeResolution = 256;
-    [Range(8, 1024)]
+    [HideInInspector]
+    [Range(8, 512)]
     public int detailResolution = 32;
 
     public ComputeShader computeShader = null;
@@ -54,8 +55,8 @@ public class ProceduralTextureViewer : MonoBehaviour
     public WorleySettings[] worleyDetailSettings = new WorleySettings[3];
     private bool _updateNoise;
     List<ComputeBuffer> buffersToDelete;
-    private RenderTexture baseShapeRenderTexture = null;
-    private RenderTexture detailRenderTexture = null;
+    private RenderTexture _baseShapeRenderTexture = null;
+    private RenderTexture _detailRenderTexture = null;
 
     public Material material
     {
@@ -82,7 +83,7 @@ public class ProceduralTextureViewer : MonoBehaviour
     {
         get
         {
-            return (displayType == TEXTURE_TYPE.BASE_SHAPE) ? baseShapeRenderTexture : detailRenderTexture;
+            return (displayType == TEXTURE_TYPE.BASE_SHAPE) ? _baseShapeRenderTexture : _detailRenderTexture;
         }
     }
     public WorleySettings activeWorleySettings
@@ -129,7 +130,7 @@ public class ProceduralTextureViewer : MonoBehaviour
     private void OnDisable() //happens before a hot reload
     {
         DeleteComputeBuffers();
-        ReleaseTexture(ref baseShapeRenderTexture);
+        ReleaseTexture(ref _baseShapeRenderTexture);
     }
     Vector4 GetChannelMask(TEXTURE_CHANNEL channel)
     {
@@ -142,56 +143,43 @@ public class ProceduralTextureViewer : MonoBehaviour
     }
     public void UpdateNoise()
     {
-
-        GenerateTexture3D(baseShapeResolution, ref baseShapeRenderTexture, UnityEngine.Experimental.Rendering.GraphicsFormat.R16G16B16A16_UNorm);
-        GenerateTexture3D(detailResolution, ref detailRenderTexture, UnityEngine.Experimental.Rendering.GraphicsFormat.R16G16B16A16_UNorm);
-
         if (_updateNoise == true)
         {
-            _updateNoise = false;
-
-            //if (displayType == TEXTURE_TYPE.BASE_SHAPE)
-            //{
-            //    if(displayChannel == TEXTURE_CHANNEL.R)
-            //    {
-            //        Generate3DPerlinWorley(baseShapeRenderTexture.height, ref baseShapeRenderTexture, TEXTURE_CHANNEL.R);
-            //    }
-            //    else
-            //    {
-            //        Generate3DWorley(baseShapeRenderTexture.height, ref baseShapeRenderTexture, displayChannel);
-            //    }
-            //}
-            //else
-            //{
-            //    Generate3DWorley(detailRenderTexture.height, ref detailRenderTexture, displayChannel);
-            //}        
-
-            //DeleteComputeBuffers();
-
             GenerateAllNoise();
         }
     }
 
     public void GenerateAllNoise()
     {
+        GenerateBaseShapeNoise();
+        GenerateDetailNoise();
+    }
+
+    public void GenerateBaseShapeNoise()
+    {
         _updateNoise = false;
         //Base Shape Texture
-        GenerateTexture3D(baseShapeResolution, ref baseShapeRenderTexture, UnityEngine.Experimental.Rendering.GraphicsFormat.R16G16B16A16_UNorm);
-        Generate3DPerlinWorley(baseShapeResolution, ref baseShapeRenderTexture, TEXTURE_CHANNEL.R,TEXTURE_TYPE.BASE_SHAPE);
-        Generate3DWorley(baseShapeResolution, ref baseShapeRenderTexture, TEXTURE_CHANNEL.G, TEXTURE_TYPE.BASE_SHAPE);
-        Generate3DWorley(baseShapeResolution, ref baseShapeRenderTexture, TEXTURE_CHANNEL.B, TEXTURE_TYPE.BASE_SHAPE);
-        Generate3DWorley(baseShapeResolution, ref baseShapeRenderTexture, TEXTURE_CHANNEL.A, TEXTURE_TYPE.BASE_SHAPE);
-        //Detail Texture
-        GenerateTexture3D(detailResolution, ref detailRenderTexture, UnityEngine.Experimental.Rendering.GraphicsFormat.R16G16B16A16_UNorm);
-        Generate3DWorley(detailResolution, ref detailRenderTexture, TEXTURE_CHANNEL.R, TEXTURE_TYPE.DETAIL);
-        Generate3DWorley(detailResolution, ref detailRenderTexture, TEXTURE_CHANNEL.G, TEXTURE_TYPE.DETAIL);
-        Generate3DWorley(detailResolution, ref detailRenderTexture, TEXTURE_CHANNEL.B, TEXTURE_TYPE.DETAIL);
+        GenerateTexture3D(baseShapeResolution, ref _baseShapeRenderTexture, UnityEngine.Experimental.Rendering.GraphicsFormat.R16G16B16A16_UNorm);
+        Generate3DPerlinWorley(baseShapeResolution, ref _baseShapeRenderTexture, TEXTURE_CHANNEL.R, TEXTURE_TYPE.BASE_SHAPE);
+        Generate3DWorley(baseShapeResolution, ref _baseShapeRenderTexture, TEXTURE_CHANNEL.G, TEXTURE_TYPE.BASE_SHAPE);
+        Generate3DWorley(baseShapeResolution, ref _baseShapeRenderTexture, TEXTURE_CHANNEL.B, TEXTURE_TYPE.BASE_SHAPE);
+        Generate3DWorley(baseShapeResolution, ref _baseShapeRenderTexture, TEXTURE_CHANNEL.A, TEXTURE_TYPE.BASE_SHAPE);
         DeleteComputeBuffers();
 
     }
 
+    public void GenerateDetailNoise()
+    {
+        _updateNoise = false;
+        //Detail Texture
+        GenerateTexture3D(detailResolution, ref _detailRenderTexture, UnityEngine.Experimental.Rendering.GraphicsFormat.R16G16B16A16_UNorm);
+        Generate3DWorley(detailResolution, ref _detailRenderTexture, TEXTURE_CHANNEL.R, TEXTURE_TYPE.DETAIL);
+        Generate3DWorley(detailResolution, ref _detailRenderTexture, TEXTURE_CHANNEL.G, TEXTURE_TYPE.DETAIL);
+        Generate3DWorley(detailResolution, ref _detailRenderTexture, TEXTURE_CHANNEL.B, TEXTURE_TYPE.DETAIL);
+        DeleteComputeBuffers();
+    }
     //Generation methods ======================================================================
-    public void Generate3DWorley(int dimensions, ref RenderTexture targetTexture, TEXTURE_CHANNEL channelToWriteTo,TEXTURE_TYPE type)
+    public void Generate3DWorley(int dimensions, ref RenderTexture targetTexture, TEXTURE_CHANNEL channelToWriteTo, TEXTURE_TYPE type)
     {
         int dim = Mathf.Max(dimensions, 8);
         if (computeShader == null)
