@@ -39,7 +39,6 @@ public class RaymarchCamera : MonoBehaviour
 
     }
 
-
     private void OnRenderImage(RenderTexture source, RenderTexture destination)
     {
         if (rayMarchMaterial == null)
@@ -47,6 +46,9 @@ public class RaymarchCamera : MonoBehaviour
             Graphics.Blit(source, destination);
             return;
         }
+
+        //GetComponent<ProceduralTextureViewer>().UpdateNoise();
+
 
         rayMarchMaterial.SetMatrix("_CamFrustum", CamFrustrumFromCam(_camera));
         rayMarchMaterial.SetMatrix("_CamToWorldMat", _camera.cameraToWorldMatrix);

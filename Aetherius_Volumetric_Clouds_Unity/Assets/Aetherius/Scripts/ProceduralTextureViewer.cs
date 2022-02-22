@@ -2,8 +2,8 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-[RequireComponent(typeof(Camera))]
-//[ExecuteInEditMode]
+//[RequireComponent(typeof(Camera))]
+[ExecuteInEditMode]
 [ImageEffectAllowedInSceneView]
 public class ProceduralTextureViewer : MonoBehaviour
 {
@@ -99,10 +99,9 @@ public class ProceduralTextureViewer : MonoBehaviour
         }
     }
 
-
     private void OnRenderImage(RenderTexture source, RenderTexture destination)
     {
-
+        Debug.Log("PreparingToUpdate...");
         UpdateNoise();
 
 
@@ -145,6 +144,7 @@ public class ProceduralTextureViewer : MonoBehaviour
     {
         if (_updateNoise == true)
         {
+            Debug.Log("Updating Noise...");
             _updateNoise = false;
 
             if (displayType == TEXTURE_TYPE.BASE_SHAPE) //We only update the texture that is being displayed as is the one being edited

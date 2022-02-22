@@ -403,7 +403,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 963194225}
-  m_Enabled: 0
+  m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: d9926736fa158f743babbd6b381f53e1, type: 3}
   m_Name: 
@@ -426,7 +426,7 @@ MonoBehaviour:
   displayPreviewShader: {fileID: 4800000, guid: 2205b0981fb20cc48a4293e9f98062fd, type: 3}
   displayTexture: 1
   displayGrayscale: 0
-  displayAllChannels: 0
+  displayAllChannels: 1
   debugDisplaySize: 1
   tileAmmount: 1
   textureSlice: 0
