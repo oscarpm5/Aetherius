@@ -443,5 +443,12 @@ public class ProceduralTextureViewer : MonoBehaviour
     {
         GenerateAllNoise();
     }
+    public void ValidateUpdate()
+    {
+        if(!updateTextureAuto)
+        {
+            _updateNoise = false;
+        }
+    }
 }
 

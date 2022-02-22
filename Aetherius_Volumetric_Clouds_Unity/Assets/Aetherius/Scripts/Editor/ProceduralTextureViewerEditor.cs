@@ -22,18 +22,25 @@ public class ProceduralTextureViewerEditor : Editor
 
     public override void OnInspectorGUI()
     {
+        bool updateTextureAuto = _myScript.updateTextureAuto;
         DrawDefaultInspector();
+
+        if (updateTextureAuto != _myScript.updateTextureAuto) //Update of bool "updateTextureAuto" variable in the default Inspector, but we dont want that variable to be below the inspector so we have to keep it there
+        {
+            _myScript.ValidateUpdate();
+        }
+
         _baseShapeResPower = (int)Mathf.Log(_myScript.baseShapeResolution, 2.0f);
         _detailResPower = (int)Mathf.Log(_myScript.detailResolution, 2.0f);
 
         using (EditorGUI.ChangeCheckScope check = new EditorGUI.ChangeCheckScope())
         {
             EditorGUILayout.BeginVertical("GroupBox");
-            EditorGUILayout.LabelField("Base Shape Noise Resolution",EditorStyles.boldLabel);
+            EditorGUILayout.LabelField("Base Shape Noise Resolution", EditorStyles.boldLabel);
             EditorGUILayout.LabelField("Pixels: " + _myScript.baseShapeResolution.ToString());
             _baseShapeResPower = EditorGUILayout.IntSlider("Power", _baseShapeResPower, 3, 9);
             _myScript.baseShapeResolution = (int)Mathf.Pow(2.0f, _baseShapeResPower);
-            
+
             if (check.changed && _myScript.updateTextureAuto) //If we changed any parameters of the resolution property, update its noise
             {
                 _myScript.GenerateBaseShapeNoise();
@@ -48,7 +55,7 @@ public class ProceduralTextureViewerEditor : Editor
             EditorGUILayout.LabelField("Pixels: " + _myScript.detailResolution.ToString());
             _detailResPower = EditorGUILayout.IntSlider("Power", _detailResPower, 3, 9);
             _myScript.detailResolution = (int)Mathf.Pow(2.0f, _detailResPower);
-            
+
             if (check.changed && _myScript.updateTextureAuto) //If we changed any parameters of the resolution property, update its noise
             {
                 _myScript.GenerateDetailNoise();
