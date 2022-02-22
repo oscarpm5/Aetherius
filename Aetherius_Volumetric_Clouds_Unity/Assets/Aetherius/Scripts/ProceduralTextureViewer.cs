@@ -3,8 +3,8 @@ using System.Collections.Generic;
 using UnityEngine;
 
 //[RequireComponent(typeof(Camera))]
-[ExecuteInEditMode]
 [ImageEffectAllowedInSceneView]
+[ExecuteInEditMode]
 public class ProceduralTextureViewer : MonoBehaviour
 {
     public enum TEXTURE_CHANNEL
@@ -38,6 +38,7 @@ public class ProceduralTextureViewer : MonoBehaviour
 
     [Range(0.0f, 1.0f)]
     public float textureSlice = 1.0f;
+    [SerializeField, HideInInspector]
     private Material _material;
     //Compute shader
     [Header("Texture Generation")]
@@ -53,9 +54,13 @@ public class ProceduralTextureViewer : MonoBehaviour
     public ImprovedPerlinSettings perlinShapeSettings;
     public WorleySettings[] worleyShapeSettings = new WorleySettings[4];
     public WorleySettings[] worleyDetailSettings = new WorleySettings[3];
+    [SerializeField, HideInInspector]
     private bool _updateNoise;
-    List<ComputeBuffer> buffersToDelete;
+    [SerializeField, HideInInspector]
+    private List<ComputeBuffer> buffersToDelete;
+    [SerializeField, HideInInspector]
     private RenderTexture _baseShapeRenderTexture = null;
+    [SerializeField, HideInInspector]
     private RenderTexture _detailRenderTexture = null;
 
     public Material material
@@ -122,11 +127,11 @@ public class ProceduralTextureViewer : MonoBehaviour
 
         Graphics.Blit(source, destination, material);
     }
-    private void OnEnable() //Called after component awakens and after a hot reload
+    public void OnEnable() //Called after component awakens and after a hot reload
     {
         GenerateAllNoise();
     }
-    private void OnDisable() //happens before a hot reload
+    public void OnDisable() //happens before a hot reload
     {
         DeleteComputeBuffers();
         ReleaseTexture(ref _baseShapeRenderTexture);
