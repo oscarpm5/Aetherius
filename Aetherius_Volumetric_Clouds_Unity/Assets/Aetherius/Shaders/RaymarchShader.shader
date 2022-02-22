@@ -18,7 +18,7 @@ Shader "Aetherius/RaymarchShader"
 			#include "UnityCG.cginc"
 
 			sampler2D _MainTex;
-
+			
 			float4x4 _CamFrustum;//Eye Space
 			float4x4 _CamToWorldMat;//Convert camera to world space
 
@@ -58,11 +58,32 @@ Shader "Aetherius/RaymarchShader"
 				return length(centre - p) - radius;
 			}
 
+			float Remap(float v, float minOrigin, float maxOrigin, float minTarget, float maxTarget)
+			{
+				return minTarget +
+					(
+					((v - minOrigin) * (maxTarget - minTarget))
+					/
+					(maxOrigin - minOrigin)
+					);
+			}
+
+			int maxSteps;
+			float maxRayDist;//In meters "Far Plane" of the raycast
+			float minCloudHeight;
+			float maxCloudHeight;
+			Texture3D<float4> baseShapeTexture;
+			Texture3D<float4> detailTexture; //TODO see if I can get around using a float3
+
+			SamplerState samplerbaseShapeTexture;
+			SamplerState samplerdetailTexture;
+
+			float baseShapeSize;
+
 			float4 Raymarching(float3 ro, float3 rd) //where ro is ray origin & rd is ray direction
 			{
 				float4 result = float4(0.0,0.0,0.0,0.0);
-				float maxSteps = 256;
-				float maxRayDist = 5;//In meters "Far Plane" of the raycast
+
 				float stepLength = maxRayDist / maxSteps; //TODO provisional, will find another solution for the stepping later
 
 				float3 currPos = ro;
@@ -71,15 +92,24 @@ Shader "Aetherius/RaymarchShader"
 				{
 					currPos = ro + rd * stepLength * currStep;
 
-					if (Sphere(float3(0.0,0.0,0.0), 0.5, currPos) <= 0.0)
+					//if (Sphere(float3(0.0,0.0,0.0), 0.5, currPos) <= 0.0)
+					//{
+					//	result.w += .025;//this is the density for now TODO change
+					//}
+					if (currPos.y >= minCloudHeight && currPos.y <= maxCloudHeight) //If inside of bouds of cloud layer
 					{
-						result.w += .025;//this is the density for now TODO change
+						float cloudHeightPercent = Remap(currPos.y, minCloudHeight, maxCloudHeight,0.0,1.0);//value between 0 & 1 showing where we are in the cloud layer
+						
+						float density = baseShapeTexture.Sample(samplerbaseShapeTexture,currPos*baseShapeSize).x;
+						
+						result.w += density*0.01;
+
 					}
 
 				}
 
 				result.w = clamp(result.w, 0.0, 1.0);//we dont want density above 1 for now (TODO visual glitch in the sun if above 1, fix this?)
-				result.rgb = float3(1.0,0.1,1.0);
+				result.rgb = float3(1.0,1.0,1.0);
 
 				return result;
 			}

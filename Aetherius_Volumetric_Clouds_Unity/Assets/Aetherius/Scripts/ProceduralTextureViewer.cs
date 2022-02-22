@@ -115,6 +115,11 @@ namespace Aetherius
             return ret;
         }
 
+        public RenderTexture GetTexture(TEXTURE_TYPE type)
+        {
+            return (type == TEXTURE_TYPE.BASE_SHAPE) ? _baseShapeRenderTexture : _detailRenderTexture;
+        }
+
         //Unity methods ===========================================================================
         private void OnRenderImage(RenderTexture source, RenderTexture destination)
         {

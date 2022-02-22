@@ -15,6 +15,12 @@ namespace Aetherius
         [SerializeField]
         private Shader _shader;
         private Material _material;
+        [Range(32, 512)]
+        public int maxSteps = 256;
+        public float maxRayDist = 500.0f;
+        public float minCloudHeight = 250.0f;
+        public float maxCloudHeight = 250.0f;
+        public float baseShapeSize = 1.0f;
 
         public Material rayMarchMaterial
         {
@@ -41,7 +47,11 @@ namespace Aetherius
             }
 
         }
-
+        private ProceduralTextureViewer noiseGen;
+        private void OnEnable()
+        {
+            noiseGen = GetComponent<ProceduralTextureViewer>();
+        }
         private void OnRenderImage(RenderTexture source, RenderTexture destination)
         {
             if (rayMarchMaterial == null)
@@ -50,13 +60,30 @@ namespace Aetherius
                 return;
             }
 
+            if(noiseGen==null)
+            {
+                noiseGen = GetComponent<ProceduralTextureViewer>();//try to get the component if it wasnt created before
+
+                if (noiseGen == null)
+                {
+                    Debug.LogWarning("Couldn't find 'ProceduralTextureViewer Component on the camera'");
+                    return;
+                }
+            }
+
             //GetComponent<ProceduralTextureViewer>().UpdateNoise();
 
 
             rayMarchMaterial.SetMatrix("_CamFrustum", CamFrustrumFromCam(_camera));
             rayMarchMaterial.SetMatrix("_CamToWorldMat", _camera.cameraToWorldMatrix);
             rayMarchMaterial.SetTexture("_MainTex", source); //input the rendered camera texture 
-
+            rayMarchMaterial.SetInt("maxSteps", maxSteps);
+            rayMarchMaterial.SetFloat("maxRayDist", maxRayDist);
+            rayMarchMaterial.SetFloat("minCloudHeight", minCloudHeight);
+            rayMarchMaterial.SetFloat("maxCloudHeight", maxCloudHeight);
+            rayMarchMaterial.SetFloat("baseShapeSize", baseShapeSize);
+            rayMarchMaterial.SetTexture("baseShapeTexture", noiseGen.GetTexture(ProceduralTextureViewer.TEXTURE_TYPE.BASE_SHAPE));
+            rayMarchMaterial.SetTexture("detailTexture", noiseGen.GetTexture(ProceduralTextureViewer.TEXTURE_TYPE.DETAIL));
             //Create a screen quad
             RenderTexture.active = destination;
             GL.PushMatrix();
