@@ -22,6 +22,7 @@ namespace Aetherius
         public float maxCloudHeight = 250.0f;
         public float baseShapeSize = 1.0f;
 
+        public Texture2D weatherMap;
         public Material rayMarchMaterial
         {
             get
@@ -84,6 +85,8 @@ namespace Aetherius
             rayMarchMaterial.SetFloat("baseShapeSize", baseShapeSize);
             rayMarchMaterial.SetTexture("baseShapeTexture", noiseGen.GetTexture(ProceduralTextureViewer.TEXTURE_TYPE.BASE_SHAPE));
             rayMarchMaterial.SetTexture("detailTexture", noiseGen.GetTexture(ProceduralTextureViewer.TEXTURE_TYPE.DETAIL));
+            rayMarchMaterial.SetTexture("weatherMapTexture", weatherMap);
+
             //Create a screen quad
             RenderTexture.active = destination;
             GL.PushMatrix();

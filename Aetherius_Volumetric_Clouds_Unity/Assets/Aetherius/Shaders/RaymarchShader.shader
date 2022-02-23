@@ -74,10 +74,10 @@ Shader "Aetherius/RaymarchShader"
 			float maxCloudHeight;
 			Texture3D<float4> baseShapeTexture;
 			Texture3D<float4> detailTexture; //TODO see if I can get around using a float3
-
+			Texture2D<float4> weatherMapTexture;
 			SamplerState samplerbaseShapeTexture;
 			SamplerState samplerdetailTexture;
-
+			SamplerState samplerweatherMapTexture;
 			float baseShapeSize;
 
 			float GetDensity(float3 currPos)
@@ -90,11 +90,16 @@ Shader "Aetherius/RaymarchShader"
 					float4 lowFreqNoise = baseShapeTexture.Sample(samplerbaseShapeTexture, currPos * baseScale * baseShapeSize);
 					float lowFreqFBM = (lowFreqNoise.g * 0.625) + (lowFreqNoise.b * 0.5) + (lowFreqNoise.a * 0.25);
 
-					cloud = Remap(lowFreqNoise.r,  lowFreqFBM-1.0, 1.0, 0.0, 1.0);
+
+					float cloudNoise = Remap(lowFreqNoise.r,  lowFreqFBM-1.0, 1.0, 0.0, 1.0);
+
+					float weatherMapCloud = weatherMapTexture.Sample(samplerweatherMapTexture,currPos.xz * baseScale * baseShapeSize);
+					cloud = saturate(Remap(cloudNoise,1.0-weatherMapCloud,1.0,0.0,1.0));
 				}
 
 				return cloud;
 			}
+
 
 			float4 Raymarching(float3 ro, float3 rd) //where ro is ray origin & rd is ray direction
 			{
@@ -109,12 +114,12 @@ Shader "Aetherius/RaymarchShader"
 					currPos = ro + rd * stepLength * currStep;
 					if (density < 1.0)
 					{
-						density += GetDensity(currPos)*0.01;
+						density += GetDensity(currPos)*0.1;
 					}
 
 				}
 
-				density = clamp(density, 0.0, 1.0);//we dont want density above 1 for now (TODO visual glitch in the sun if above 1, fix this?)
+				density = saturate(density);//we dont want density above 1 for now (TODO visual glitch in the sun if above 1, fix this?)
 
 				return float4(col,density);
 			}
