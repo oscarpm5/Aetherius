@@ -14,6 +14,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   seed: 2
   numberOfCellsAxisA: 8
-  numberOfCellsAxisB: 15
-  numberOfCellsAxisC: 29
-  persistence: 0.5
+  numberOfCellsAxisB: 18
+  numberOfCellsAxisC: 35
+  persistence: 0.428

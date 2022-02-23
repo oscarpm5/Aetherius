@@ -18,7 +18,7 @@ Shader "Aetherius/RaymarchShader"
 			#include "UnityCG.cginc"
 
 			sampler2D _MainTex;
-			
+
 			float4x4 _CamFrustum;//Eye Space
 			float4x4 _CamToWorldMat;//Convert camera to world space
 
@@ -80,38 +80,43 @@ Shader "Aetherius/RaymarchShader"
 
 			float baseShapeSize;
 
+			float GetDensity(float3 currPos)
+			{
+				float baseScale = 1 / 1000.0;
+				float cloud = 0.0;
+				if (currPos.y >= minCloudHeight && currPos.y <= maxCloudHeight) //If inside of bouds of cloud layer
+				{
+					float cloudHeightPercent = Remap(currPos.y, minCloudHeight, maxCloudHeight, 0.0, 1.0);//value between 0 & 1 showing where we are in the cloud layer
+					float4 lowFreqNoise = baseShapeTexture.Sample(samplerbaseShapeTexture, currPos * baseScale * baseShapeSize);
+					float lowFreqFBM = (lowFreqNoise.g * 0.625) + (lowFreqNoise.b * 0.5) + (lowFreqNoise.a * 0.25);
+
+					cloud = Remap(lowFreqNoise.r,  lowFreqFBM-1.0, 1.0, 0.0, 1.0);
+				}
+
+				return cloud;
+			}
+
 			float4 Raymarching(float3 ro, float3 rd) //where ro is ray origin & rd is ray direction
 			{
-				float4 result = float4(0.0,0.0,0.0,0.0);
+				float3 col = float3(1.0,1.0,1.0);
 
 				float stepLength = maxRayDist / maxSteps; //TODO provisional, will find another solution for the stepping later
 
 				float3 currPos = ro;
-
+				float density = 0.0;
 				for (int currStep = 0; currStep < maxSteps; ++currStep)
 				{
 					currPos = ro + rd * stepLength * currStep;
-
-					//if (Sphere(float3(0.0,0.0,0.0), 0.5, currPos) <= 0.0)
-					//{
-					//	result.w += .025;//this is the density for now TODO change
-					//}
-					if (currPos.y >= minCloudHeight && currPos.y <= maxCloudHeight) //If inside of bouds of cloud layer
+					if (density < 1.0)
 					{
-						float cloudHeightPercent = Remap(currPos.y, minCloudHeight, maxCloudHeight,0.0,1.0);//value between 0 & 1 showing where we are in the cloud layer
-						
-						float density = baseShapeTexture.Sample(samplerbaseShapeTexture,currPos*baseShapeSize).x;
-						
-						result.w += density*0.01;
-
+						density += GetDensity(currPos)*0.01;
 					}
 
 				}
 
-				result.w = clamp(result.w, 0.0, 1.0);//we dont want density above 1 for now (TODO visual glitch in the sun if above 1, fix this?)
-				result.rgb = float3(1.0,1.0,1.0);
+				density = clamp(density, 0.0, 1.0);//we dont want density above 1 for now (TODO visual glitch in the sun if above 1, fix this?)
 
-				return result;
+				return float4(col,density);
 			}
 
 
