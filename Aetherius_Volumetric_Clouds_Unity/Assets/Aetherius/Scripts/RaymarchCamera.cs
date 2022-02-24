@@ -24,6 +24,7 @@ namespace Aetherius
         public float weatherMapSize = 1.0f;
         [Range(0.0f,1.0f)]
         public float globalCoverage = 0.5f;
+        public float globalDensity = 1.0f;
         public Vector3 weatherMapOffset = Vector3.zero;
 
         public Texture2D weatherMap;
@@ -89,6 +90,7 @@ namespace Aetherius
             rayMarchMaterial.SetFloat("baseShapeSize", baseShapeSize);
             rayMarchMaterial.SetFloat("weatherMapSize", weatherMapSize);
             rayMarchMaterial.SetFloat("globalCoverage", globalCoverage);
+            rayMarchMaterial.SetFloat("globalDensity", globalDensity);
             rayMarchMaterial.SetVector("weatherMapOffset", weatherMapOffset);
             rayMarchMaterial.SetTexture("baseShapeTexture", noiseGen.GetTexture(ProceduralTextureViewer.TEXTURE_TYPE.BASE_SHAPE));
             rayMarchMaterial.SetTexture("detailTexture", noiseGen.GetTexture(ProceduralTextureViewer.TEXTURE_TYPE.DETAIL));

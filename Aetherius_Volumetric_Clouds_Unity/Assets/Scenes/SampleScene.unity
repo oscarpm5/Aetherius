@@ -445,15 +445,16 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _shader: {fileID: 4800000, guid: 0062334ff4afa1a42b65d127e5405941, type: 3}
-  maxSteps: 256
+  maxSteps: 512
   maxRayDist: 5000
   minCloudHeight: 400
-  maxCloudHeight: 1000
-  baseShapeSize: 0.5
+  maxCloudHeight: 800
+  baseShapeSize: 0.75
   weatherMapSize: 0.2
-  globalCoverage: 1
+  globalCoverage: 0.427
+  globalDensity: 100
   weatherMapOffset: {x: 0, y: 0, z: 2560}
-  weatherMap: {fileID: 2800000, guid: 6900cd79c684e594991f0b45e41cec4b, type: 3}
+  weatherMap: {fileID: 2800000, guid: 54ce8d32ad9bf9e44aaa2821fe6f4ab0, type: 3}
 --- !u!114 &963194230
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -491,9 +492,9 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 3d04b3037c1a4a640b7ac77a0decf1c4, type: 2}
   - {fileID: 11400000, guid: cdb03daae29d1a74f9d322db4dace868, type: 2}
   _updateNoise: 0
-  _baseShapeRenderTexture: {fileID: 1242067990}
+  _baseShapeRenderTexture: {fileID: 1944926789}
   _detailRenderTexture: {fileID: 924374330}
---- !u!84 &1242067990
+--- !u!84 &1944926789
 RenderTexture:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}

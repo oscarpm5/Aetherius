@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 536ac16a80ef54f4ab848394278c1074, type: 3}
   m_Name: Improved_Perlin_Settings_Shape_1
   m_EditorClassIdentifier: 
-  seed: 92
+  seed: 110
   numOctavesPerlin: 10
   persistencePerlin: 0.56
   lacunarityPerlin: 1.95

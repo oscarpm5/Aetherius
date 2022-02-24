@@ -81,13 +81,20 @@ Shader "Aetherius/RaymarchShader"
 			float baseShapeSize;
 			float weatherMapSize;
 			float globalCoverage;
+			float globalDensity;
 			float3 weatherMapOffset;
 
-			float ShapeAltering(float heightPercent)
+			float ShapeAltering(float heightPercent) //Round clouds towards edges (bottom & top) of the layer cloud
 			{
 				return	saturate(Remap(heightPercent, 0.0, 0.1, 0.0, 1.0))* saturate(Remap(heightPercent, 0.2, 1.0, 1.0, 0.0)); //TODO Change
 			}
 
+			float DensityAltering(float heightPercent,float weatherMapSample) //Makes Clouds have more shape at the top & be more round towards the bottom, the weather map also influences the density
+			{
+				float densityBottom = saturate(Remap(heightPercent,0.0,0.2,0.0,1.0));//Reduces density towards the bottom of the cloud
+				float densityTop = saturate(Remap(heightPercent, 0.9, 1.0, 1.0, 0.0));//
+				return heightPercent * globalDensity* weatherMapSample* densityBottom*densityTop*2.0; //2 as weatherMap *2 when weathermap > 0.5 creates higher density clouds
+			}
 
 			float GetDensity(float3 currPos)
 			{
@@ -103,10 +110,12 @@ Shader "Aetherius/RaymarchShader"
 
 					float cloudNoise = Remap(lowFreqNoise.r, -(1.0-lowFreqFBM), 1.0, 0.0, 1.0);
 					float weatherMapCloud = weatherMapTexture.Sample(samplerweatherMapTexture,(currPos.xz+weatherMapOffset.xz) * baseScale * weatherMapSize); //We sample the weather map
-					cloud = saturate(Remap(cloudNoise,1.0- globalCoverage * weatherMapCloud,1.0,0.0,1.0)); //Cloud noise is remapped into the weatherMap takin into accoun global coverage as well
-					
-					cloud = weatherMapCloud * ShapeAltering(cloudHeightPercent);//TODO DEBUGGING
+					cloud = saturate(Remap(cloudNoise* ShapeAltering(cloudHeightPercent),1.0- weatherMapCloud* globalCoverage,1.0,0.0,1.0)); //Cloud noise is remapped into the weatherMap takin into accoun global coverage as well
+					//cloud = saturate(Remap(cloudNoise,1.0-globalCoverage,1.0,0.0,1.0));//TODO DEBUGGING
+					//cloud = weatherMapCloud * ShapeAltering(cloudHeightPercent);//TODO DEBUGGING
+					cloud*= DensityAltering(cloudHeightPercent, weatherMapCloud);
 				}
+
 
 				return cloud;
 			}
