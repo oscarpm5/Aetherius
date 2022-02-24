@@ -80,7 +80,14 @@ Shader "Aetherius/RaymarchShader"
 			SamplerState samplerweatherMapTexture;
 			float baseShapeSize;
 			float weatherMapSize;
+			float globalCoverage;
 			float3 weatherMapOffset;
+
+			float ShapeAltering(float heightPercent)
+			{
+				return	saturate(Remap(heightPercent, 0.0, 0.1, 0.0, 1.0))* saturate(Remap(heightPercent, 0.2, 1.0, 1.0, 0.0)); //TODO Change
+			}
+
 
 			float GetDensity(float3 currPos)
 			{
@@ -95,14 +102,16 @@ Shader "Aetherius/RaymarchShader"
 
 
 					float cloudNoise = Remap(lowFreqNoise.r, -(1.0-lowFreqFBM), 1.0, 0.0, 1.0);
-					float weatherMapCloud = weatherMapTexture.Sample(samplerweatherMapTexture,(currPos.xz+weatherMapOffset.xz) * baseScale * weatherMapSize);
-					cloud = saturate(Remap(cloudNoise,1.0-weatherMapCloud,1.0,0.0,1.0));
+					float weatherMapCloud = weatherMapTexture.Sample(samplerweatherMapTexture,(currPos.xz+weatherMapOffset.xz) * baseScale * weatherMapSize); //We sample the weather map
+					cloud = saturate(Remap(cloudNoise,1.0- globalCoverage * weatherMapCloud,1.0,0.0,1.0)); //Cloud noise is remapped into the weatherMap takin into accoun global coverage as well
+					
+					cloud = weatherMapCloud * ShapeAltering(cloudHeightPercent);//TODO DEBUGGING
 				}
 
 				return cloud;
 			}
 
-
+			
 			float4 Raymarching(float3 ro, float3 rd) //where ro is ray origin & rd is ray direction
 			{
 				float3 col = float3(1.0,1.0,1.0);
