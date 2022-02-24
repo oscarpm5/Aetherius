@@ -21,6 +21,8 @@ namespace Aetherius
         public float minCloudHeight = 250.0f;
         public float maxCloudHeight = 250.0f;
         public float baseShapeSize = 1.0f;
+        public float weatherMapSize = 1.0f;
+        public Vector3 weatherMapOffset = Vector3.zero;
 
         public Texture2D weatherMap;
         public Material rayMarchMaterial
@@ -83,6 +85,8 @@ namespace Aetherius
             rayMarchMaterial.SetFloat("minCloudHeight", minCloudHeight);
             rayMarchMaterial.SetFloat("maxCloudHeight", maxCloudHeight);
             rayMarchMaterial.SetFloat("baseShapeSize", baseShapeSize);
+            rayMarchMaterial.SetFloat("weatherMapSize", weatherMapSize);
+            rayMarchMaterial.SetVector("weatherMapOffset", weatherMapOffset);
             rayMarchMaterial.SetTexture("baseShapeTexture", noiseGen.GetTexture(ProceduralTextureViewer.TEXTURE_TYPE.BASE_SHAPE));
             rayMarchMaterial.SetTexture("detailTexture", noiseGen.GetTexture(ProceduralTextureViewer.TEXTURE_TYPE.DETAIL));
             rayMarchMaterial.SetTexture("weatherMapTexture", weatherMap);

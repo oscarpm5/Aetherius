@@ -79,10 +79,13 @@ Shader "Aetherius/RaymarchShader"
 			SamplerState samplerdetailTexture;
 			SamplerState samplerweatherMapTexture;
 			float baseShapeSize;
+			float weatherMapSize;
+			float3 weatherMapOffset;
 
 			float GetDensity(float3 currPos)
 			{
 				float baseScale = 1 / 1000.0;
+				
 				float cloud = 0.0;
 				if (currPos.y >= minCloudHeight && currPos.y <= maxCloudHeight) //If inside of bouds of cloud layer
 				{
@@ -91,9 +94,8 @@ Shader "Aetherius/RaymarchShader"
 					float lowFreqFBM = (lowFreqNoise.g * 0.625) + (lowFreqNoise.b * 0.5) + (lowFreqNoise.a * 0.25);
 
 
-					float cloudNoise = Remap(lowFreqNoise.r,  lowFreqFBM-1.0, 1.0, 0.0, 1.0);
-
-					float weatherMapCloud = weatherMapTexture.Sample(samplerweatherMapTexture,currPos.xz * baseScale * baseShapeSize);
+					float cloudNoise = Remap(lowFreqNoise.r, -(1.0-lowFreqFBM), 1.0, 0.0, 1.0);
+					float weatherMapCloud = weatherMapTexture.Sample(samplerweatherMapTexture,(currPos.xz+weatherMapOffset.xz) * baseScale * weatherMapSize);
 					cloud = saturate(Remap(cloudNoise,1.0-weatherMapCloud,1.0,0.0,1.0));
 				}
 
