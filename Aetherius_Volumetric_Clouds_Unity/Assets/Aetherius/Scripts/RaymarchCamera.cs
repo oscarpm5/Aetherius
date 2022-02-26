@@ -15,12 +15,13 @@ namespace Aetherius
         [SerializeField]
         private Shader _shader;
         private Material _material;
-        [Range(32, 512)]
+        [Range(32, 1024)]
         public int maxSteps = 256;
         public float maxRayDist = 500.0f;
         public float minCloudHeight = 250.0f;
         public float maxCloudHeight = 250.0f;
         public float baseShapeSize = 1.0f;
+        public float detailSize = 1.0f;
         public float weatherMapSize = 1.0f;
         [Range(0.0f,1.0f)]
         public float globalCoverage = 0.5f;
@@ -88,6 +89,7 @@ namespace Aetherius
             rayMarchMaterial.SetFloat("minCloudHeight", minCloudHeight);
             rayMarchMaterial.SetFloat("maxCloudHeight", maxCloudHeight);
             rayMarchMaterial.SetFloat("baseShapeSize", baseShapeSize);
+            rayMarchMaterial.SetFloat("detailSize", detailSize);
             rayMarchMaterial.SetFloat("weatherMapSize", weatherMapSize);
             rayMarchMaterial.SetFloat("globalCoverage", globalCoverage);
             rayMarchMaterial.SetFloat("globalDensity", globalDensity);
