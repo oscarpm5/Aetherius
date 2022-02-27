@@ -15,20 +15,25 @@ namespace Aetherius
         [SerializeField]
         private Shader _shader;
         private Material _material;
+        [Header("Ray March")]
         [Range(32, 1024)]
         public int maxSteps = 256;
         public float maxRayDist = 500.0f;
-        public float minCloudHeight = 250.0f;
-        public float maxCloudHeight = 250.0f;
+       
+        [Header("Noise")]
         public float baseShapeSize = 1.0f;
         public float detailSize = 1.0f;
+        [Header("Weather Map")]
+        public Texture2D weatherMap;
         public float weatherMapSize = 1.0f;
+        public Vector3 weatherMapOffset = Vector3.zero;
+        [Header("Cloud")]
         [Range(0.0f,1.0f)]
         public float globalCoverage = 0.5f;
         public float globalDensity = 1.0f;
-        public Vector3 weatherMapOffset = Vector3.zero;
+        public float minCloudHeight = 250.0f;
+        public float maxCloudHeight = 250.0f;
 
-        public Texture2D weatherMap;
         public Material rayMarchMaterial
         {
             get
