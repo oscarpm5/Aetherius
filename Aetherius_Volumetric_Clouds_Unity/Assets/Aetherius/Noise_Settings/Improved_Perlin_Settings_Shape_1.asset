@@ -14,6 +14,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   seed: 110
   numOctavesPerlin: 10
-  persistencePerlin: 0.56
-  lacunarityPerlin: 1.95
-  gridSizePerlin: 9
+  persistencePerlin: 0.481
+  lacunarityPerlin: 3
+  gridSizePerlin: 8

@@ -12,8 +12,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 16b7d4e69fef94d45b009dd4ef698abb, type: 3}
   m_Name: Worley_Settings_Shape_2
   m_EditorClassIdentifier: 
-  seed: 2
-  numberOfCellsAxisA: 8
-  numberOfCellsAxisB: 18
-  numberOfCellsAxisC: 35
+  seed: 20
+  numberOfCellsAxisA: 10
+  numberOfCellsAxisB: 17
+  numberOfCellsAxisC: 25
   persistence: 0.428
