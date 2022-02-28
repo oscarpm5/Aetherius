@@ -19,7 +19,7 @@ namespace Aetherius
         [Range(32, 1024)]
         public int maxSteps = 256;
         public float maxRayDist = 500.0f;
-       
+
         [Header("Noise")]
         public float baseShapeSize = 1.0f;
         public float detailSize = 1.0f;
@@ -28,7 +28,8 @@ namespace Aetherius
         public float weatherMapSize = 1.0f;
         public Vector3 weatherMapOffset = Vector3.zero;
         [Header("Cloud")]
-        [Range(0.0f,1.0f)]
+        public Light sunLight;
+        [Range(0.0f, 1.0f)]
         public float globalCoverage = 0.5f;
         public float globalDensity = 1.0f;
         public float minCloudHeight = 250.0f;
@@ -64,6 +65,8 @@ namespace Aetherius
         {
             noiseGen = GetComponent<ProceduralTextureViewer>();
         }
+
+
         private void OnRenderImage(RenderTexture source, RenderTexture destination)
         {
             if (rayMarchMaterial == null)
@@ -72,7 +75,7 @@ namespace Aetherius
                 return;
             }
 
-            if(noiseGen==null)
+            if (noiseGen == null)
             {
                 noiseGen = GetComponent<ProceduralTextureViewer>();//try to get the component if it wasnt created before
 
@@ -98,6 +101,7 @@ namespace Aetherius
             rayMarchMaterial.SetFloat("weatherMapSize", weatherMapSize);
             rayMarchMaterial.SetFloat("globalCoverage", globalCoverage);
             rayMarchMaterial.SetFloat("globalDensity", globalDensity);
+            rayMarchMaterial.SetVector("sunDir", sunLight.transform.rotation * Vector3.forward);
             rayMarchMaterial.SetVector("weatherMapOffset", weatherMapOffset);
             rayMarchMaterial.SetTexture("baseShapeTexture", noiseGen.GetTexture(ProceduralTextureViewer.TEXTURE_TYPE.BASE_SHAPE));
             rayMarchMaterial.SetTexture("detailTexture", noiseGen.GetTexture(ProceduralTextureViewer.TEXTURE_TYPE.DETAIL));
