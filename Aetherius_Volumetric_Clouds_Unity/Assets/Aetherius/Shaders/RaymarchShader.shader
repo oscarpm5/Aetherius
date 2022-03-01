@@ -127,9 +127,9 @@ Shader "Aetherius/RaymarchShader"
 				return cloud;
 			}
 
-			float BeerLawEnergy(float3 currPosition)
+			float DensityTowardsLight(float3 currPosition)			
 			{
-				int iter = 6;
+				int iter = 4;
 				float accDensity = 0.0;
 				float3 currNewPos = currPosition;
 				for (int currStep = 1; currStep <= iter; ++currStep)
@@ -139,8 +139,12 @@ Shader "Aetherius/RaymarchShader"
 					accDensity += GetDensity(currNewPos);
 
 				}
-				float res = exp(-accDensity);
-				return res;
+
+				return accDensity;
+			}
+			float BeerLambertLaw(float accDensity,float absorptionCoefficient)
+			{
+				return exp(-accDensity);
 			}
 
 			float4 Raymarching(float3 ro, float3 rd) //where ro is ray origin & rd is ray direction
@@ -151,21 +155,23 @@ Shader "Aetherius/RaymarchShader"
 
 				float3 currPos = ro;
 				float density = 0.0;
-				float energy = 0.0;
+				float lightEnergy = 0.0;
 				for (int currStep = 0; currStep < maxSteps; ++currStep)
 				{
 					currPos = ro + rd * stepLength * currStep;
 					if (density < 1.0)
 					{
 						float currDensity = GetDensity(currPos);
-						density += currDensity;
-						energy += BeerLawEnergy(currPos)* currDensity;
+						if (currDensity > 0.0)
+						{
+							density += currDensity;
+							lightEnergy += BeerLambertLaw(currDensity+DensityTowardsLight(currPos), 1.0)*currDensity;
+						}
 					}
 
 				}
-
 				density = saturate(density);//we dont want density above 1 for now (TODO visual glitch in the sun if above 1, fix this?)
-				col = col * energy;
+				col = col * lightEnergy;
 				return float4(col,density);
 			}
 
