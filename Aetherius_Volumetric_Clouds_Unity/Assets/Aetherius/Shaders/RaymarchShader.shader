@@ -94,7 +94,7 @@ Shader "Aetherius/RaymarchShader"
 			float DensityAltering(float heightPercent,float weatherMapSample) //Makes Clouds have more shape at the top & be more round towards the bottom, the weather map also influences the density
 			{
 				float densityBottom = saturate(Remap(heightPercent,0.0,0.2,0.0,1.0));//Reduces density towards the bottom of the cloud
-				float densityTop = saturate(Remap(heightPercent, 0.9, 1.0, 1.0, 0.0));//
+				float densityTop = saturate(Remap(heightPercent, 0.9, 1.0, 1.0, 0.0));
 				return heightPercent * globalDensity * weatherMapSample * densityBottom * densityTop * 2.0; //2 as weatherMap *2 when weathermap > 0.5 creates higher density clouds
 			}
 
@@ -102,7 +102,7 @@ Shader "Aetherius/RaymarchShader"
 			{
 				float baseScale = 1 / 1000.0;
 
-				float cloud = 0.0;
+				float density = 0.0;
 				if (currPos.y >= minCloudHeight && currPos.y <= maxCloudHeight) //If inside of bouds of cloud layer
 				{
 					float cloudHeightPercent = Remap(currPos.y, minCloudHeight, maxCloudHeight, 0.0, 1.0);//value between 0 & 1 showing where we are in the cloud layer
@@ -112,19 +112,19 @@ Shader "Aetherius/RaymarchShader"
 					float4 lowFreqNoise = baseShapeTexture.Sample(samplerbaseShapeTexture, currPos * baseScale * baseShapeSize);
 					float lowFreqFBM = (lowFreqNoise.g * 0.625) + (lowFreqNoise.b * 0.5) + (lowFreqNoise.a * 0.25);
 					float cloudNoise = Remap(lowFreqNoise.r, -(1.0 - lowFreqFBM), 1.0, 0.0, 1.0);
-					cloud = saturate(Remap(cloudNoise * ShapeAltering(cloudHeightPercent),1.0 - (weatherMapCloud * globalCoverage),1.0,0.0,1.0)); //Cloud noise is remapped into the weatherMap takin into accoun global coverage as well
+					float cloudBase = saturate(Remap(cloudNoise * ShapeAltering(cloudHeightPercent),1.0 - (weatherMapCloud * globalCoverage),1.0,0.0,1.0)); //Cloud noise is remapped into the weatherMap takin into accoun global coverage as well
 					//Detail Shape
 					float4 highFreqNoise = detailTexture.Sample(samplerdetailTexture, currPos * baseScale * detailSize);//TODO make a detail size variable 
 					float highFreqFBM = (highFreqNoise.r * 0.625) + (highFreqNoise.g * 0.5) + (highFreqNoise.b * 0.25);
-					float detailNoise = lerp(highFreqFBM,1.0 - highFreqFBM, saturate(cloudHeightPercent * 5.0)) * 0.3 * exp(-globalCoverage * 0.67);
+					float detailNoise = lerp(highFreqFBM,1.0 - highFreqFBM, saturate(cloudHeightPercent * 5.0)) * 0.3 * exp(-globalCoverage * .65);
 
 					//Detail - Base Shape
-					cloud = saturate(Remap(cloud, detailNoise,1.0,0.0,1.0));
-					cloud *= DensityAltering(cloudHeightPercent, weatherMapCloud);
+					density = saturate(Remap(cloudBase, detailNoise,1.0,0.0,1.0));
+					density *= DensityAltering(cloudHeightPercent, weatherMapCloud);
 				}
 
 
-				return cloud;
+				return density;
 			}
 
 			float DensityTowardsLight(float3 currPosition)			
@@ -132,11 +132,12 @@ Shader "Aetherius/RaymarchShader"
 				int iter = 4;
 				float accDensity = 0.0;
 				float3 currNewPos = currPosition;
+				float stepSize = 10.0;//TODO make as variable (maybe when we have cone light samples?)
 				for (int currStep = 1; currStep <= iter; ++currStep)
 				{
-					currNewPos += -sunDir *currStep*10;
+					currNewPos += -sunDir *currStep* stepSize;
 
-					accDensity += GetDensity(currNewPos);
+					accDensity += GetDensity(currNewPos)*stepSize;
 
 				}
 
@@ -145,6 +146,12 @@ Shader "Aetherius/RaymarchShader"
 			float BeerLambertLaw(float accDensity,float absorptionCoefficient)
 			{
 				return exp(-accDensity);
+			}
+			float HenyeyGreenstein(float3 viewDir, float3 lightDir, float g) //G ranges between -1 & 1
+			{
+				float cosAngle = dot(viewDir, lightDir);//We assume they are normalized
+				float g2 = g * g;
+				return 0.07957 * ((1.0 - g2) / pow(1.0 + g2 - 2 * g *cosAngle, 1.5));
 			}
 
 			float4 Raymarching(float3 ro, float3 rd) //where ro is ray origin & rd is ray direction
@@ -161,16 +168,17 @@ Shader "Aetherius/RaymarchShader"
 					currPos = ro + rd * stepLength * currStep;
 					if (density < 1.0)
 					{
-						float currDensity = GetDensity(currPos);
+						float currDensity = GetDensity(currPos)* stepLength;
 						if (currDensity > 0.0)
 						{
 							density += currDensity;
-							lightEnergy += BeerLambertLaw(currDensity+DensityTowardsLight(currPos), 1.0)*currDensity;
+							//lightEnergy += HenyeyGreenstein(rd, sunDir,-0.9)* BeerLambertLaw(currDensity+DensityTowardsLight(currPos), 1.0)* currDensity;
+							lightEnergy += BeerLambertLaw(currDensity+DensityTowardsLight(currPos), 1.0)* currDensity;
 						}
 					}
 
 				}
-				density = saturate(density);//we dont want density above 1 for now (TODO visual glitch in the sun if above 1, fix this?)
+				//density = saturate(density);//we dont want density above 1 for now (TODO visual glitch in the sun if above 1, fix this?)
 				col = col * lightEnergy;
 				return float4(col,density);
 			}
