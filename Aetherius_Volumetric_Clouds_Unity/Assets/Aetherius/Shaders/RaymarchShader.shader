@@ -149,10 +149,16 @@ Shader "Aetherius/RaymarchShader"
 			}
 			float HenyeyGreenstein(float3 viewDir, float3 lightDir, float g) //G ranges between -1 & 1
 			{
-				float cosAngle = dot(viewDir, lightDir);//We assume they are normalized
+				float cosAngle = dot(lightDir, viewDir);//We assume they are normalized
 				float g2 = g * g;
-				return 0.07957 * ((1.0 - g2) / pow(1.0 + g2 - 2 * g *cosAngle, 1.5));
+				return ((1.0 - g2) / (4 * 3.1415*pow(1.0 + g2 - 2.0 * g *cosAngle, 1.5)));
 			}
+
+			float Powder(float density)
+			{
+				return 1.0 - exp(-density);
+			}
+
 
 			float4 Raymarching(float3 ro, float3 rd) //where ro is ray origin & rd is ray direction
 			{
@@ -171,14 +177,16 @@ Shader "Aetherius/RaymarchShader"
 						float currDensity = GetDensity(currPos)* stepLength;
 						if (currDensity > 0.0)
 						{
+							//lightEnergy += HenyeyGreenstein(rd, sunDir,-.2)* BeerLambertLaw(currDensity+DensityTowardsLight(currPos), 1.0) * Powder(currDensity)*(1.0-density);
+							lightEnergy += BeerLambertLaw(currDensity+DensityTowardsLight(currPos), 1.0) * Powder(currDensity)*(1.0-density);
 							density += currDensity;
-							//lightEnergy += HenyeyGreenstein(rd, sunDir,-0.9)* BeerLambertLaw(currDensity+DensityTowardsLight(currPos), 1.0)* currDensity;
-							lightEnergy += BeerLambertLaw(currDensity+DensityTowardsLight(currPos), 1.0)* currDensity;
+
 						}
 					}
 
 				}
-				//density = saturate(density);//we dont want density above 1 for now (TODO visual glitch in the sun if above 1, fix this?)
+				//TODO density above 1 makes banding worse somehow, fix, do we really need to clamp density?
+				density = saturate(density);//we dont want density above 1 for now (TODO visual glitch in the sun if above 1, fix this?)
 				col = col * lightEnergy;
 				return float4(col,density);
 			}
