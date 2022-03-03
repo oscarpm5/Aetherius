@@ -34,8 +34,9 @@ namespace Aetherius
         public float globalDensity = 1.0f;
         public float minCloudHeight = 250.0f;
         public float maxCloudHeight = 250.0f;
-        [Header("Lighting"),Range(0.0f,10.0f)]
+        [Header("Lighting"), Range(0.0f, 10.0f)]
         public float lightAbsorption = 1.0f;
+        List<Vector4> conekernel;
 
         public Material rayMarchMaterial
         {
@@ -88,6 +89,9 @@ namespace Aetherius
                 }
             }
 
+            if (conekernel == null)
+                conekernel = GenerateConeKernels();
+
             //GetComponent<ProceduralTextureViewer>().UpdateNoise();
 
 
@@ -111,6 +115,7 @@ namespace Aetherius
             rayMarchMaterial.SetFloat("lightAbsorption", lightAbsorption);
             rayMarchMaterial.SetFloat("lightIntensity", sunLight.intensity);
             rayMarchMaterial.SetVector("lightColor", sunLight.color);
+            rayMarchMaterial.SetVectorArray("coneKernel", conekernel);
             //Create a screen quad
             RenderTexture.active = destination;
             GL.PushMatrix();
@@ -159,6 +164,17 @@ namespace Aetherius
             frustum.SetRow(3, BL);
 
             return frustum;
+        }
+
+        private List<Vector4> GenerateConeKernels()
+        {
+            List<Vector4> newList = new List<Vector4>();
+            for (int i = 0; i < 6; ++i)
+            {
+                newList.Add(Random.insideUnitSphere);
+            }
+
+            return newList;
         }
     }
 }
