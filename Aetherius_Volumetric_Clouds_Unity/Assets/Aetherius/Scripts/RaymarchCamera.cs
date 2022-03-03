@@ -109,7 +109,8 @@ namespace Aetherius
             rayMarchMaterial.SetTexture("detailTexture", noiseGen.GetTexture(ProceduralTextureViewer.TEXTURE_TYPE.DETAIL));
             rayMarchMaterial.SetTexture("weatherMapTexture", weatherMap);
             rayMarchMaterial.SetFloat("lightAbsorption", lightAbsorption);
-
+            rayMarchMaterial.SetFloat("lightIntensity", sunLight.intensity);
+            rayMarchMaterial.SetVector("lightColor", sunLight.color);
             //Create a screen quad
             RenderTexture.active = destination;
             GL.PushMatrix();

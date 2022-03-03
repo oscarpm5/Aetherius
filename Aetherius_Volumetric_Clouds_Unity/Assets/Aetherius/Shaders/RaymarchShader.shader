@@ -86,6 +86,8 @@ Shader "Aetherius/RaymarchShader"
 			float3 weatherMapOffset;
 			float3 sunDir;
 			float lightAbsorption;
+			float lightIntensity;
+			float3 lightColor;
 
 			float ShapeAltering(float heightPercent) //Round clouds towards edges (bottom & top) of the layer cloud
 			{
@@ -184,7 +186,7 @@ Shader "Aetherius/RaymarchShader"
 							float scattering = HenyeyGreenstein(-rd, sunDir, 0.2);
 							//float beerPowder = BeerPowder(DensityTowardsLight(currPos),1.0);
 							//lightEnergy += HenyeyGreenstein(rd, sunDir,-.2)* BeerLambertLaw(currDensity+DensityTowardsLight(currPos), 1.0) * Powder(currDensity)*(1.0-density);
-							lightEnergy += absorption*scattering*  transmission* currDensity* stepLength;
+							lightEnergy += absorption*scattering*  transmission* currDensity* stepLength* lightIntensity;
 							density += currDensity*stepLength;
 							transmission *= BeerLambertLaw(currDensity*stepLength, lightAbsorption);//TODO make different light absorption parameters when on cloud or towards light	
 							
@@ -195,7 +197,7 @@ Shader "Aetherius/RaymarchShader"
 				}
 				//TODO density above 1 makes banding worse somehow, fix, do we really need to clamp density?
 				density = saturate(density);//we dont want density above 1 for now (TODO visual glitch in the sun if above 1, fix this?)
-				col = col * lightEnergy;
+				col = lightColor* lightIntensity * transmission + lightEnergy;
 				return float4(col, density);
 			}
 
