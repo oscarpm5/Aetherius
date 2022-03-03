@@ -34,6 +34,8 @@ namespace Aetherius
         public float globalDensity = 1.0f;
         public float minCloudHeight = 250.0f;
         public float maxCloudHeight = 250.0f;
+        [Header("Lighting"),Range(0.0f,10.0f)]
+        public float lightAbsorption = 1.0f;
 
         public Material rayMarchMaterial
         {
@@ -106,6 +108,7 @@ namespace Aetherius
             rayMarchMaterial.SetTexture("baseShapeTexture", noiseGen.GetTexture(ProceduralTextureViewer.TEXTURE_TYPE.BASE_SHAPE));
             rayMarchMaterial.SetTexture("detailTexture", noiseGen.GetTexture(ProceduralTextureViewer.TEXTURE_TYPE.DETAIL));
             rayMarchMaterial.SetTexture("weatherMapTexture", weatherMap);
+            rayMarchMaterial.SetFloat("lightAbsorption", lightAbsorption);
 
             //Create a screen quad
             RenderTexture.active = destination;

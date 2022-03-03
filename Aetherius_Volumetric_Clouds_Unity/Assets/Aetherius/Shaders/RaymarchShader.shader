@@ -85,6 +85,7 @@ Shader "Aetherius/RaymarchShader"
 			float globalDensity;
 			float3 weatherMapOffset;
 			float3 sunDir;
+			float lightAbsorption;
 
 			float ShapeAltering(float heightPercent) //Round clouds towards edges (bottom & top) of the layer cloud
 			{
@@ -131,13 +132,12 @@ Shader "Aetherius/RaymarchShader"
 			{
 				int iter = 4;
 				float accDensity = 0.0;
-				float3 currNewPos = currPosition;
 				float stepSize = 10.0;//TODO make as variable (maybe when we have cone light samples?)
 				for (int currStep = 1; currStep <= iter; ++currStep)
 				{
-					currNewPos += -sunDir *currStep* stepSize;
+					currPosition += -sunDir *currStep * currStep * stepSize;
 
-					accDensity += GetDensity(currNewPos)*stepSize;
+					accDensity += GetDensity(currPosition)*stepSize* currStep* currStep;
 
 				}
 
@@ -145,18 +145,20 @@ Shader "Aetherius/RaymarchShader"
 			}
 			float BeerLambertLaw(float accDensity,float absorptionCoefficient)
 			{
-				return exp(-accDensity);
+				return exp(-accDensity* absorptionCoefficient);
 			}
 			float HenyeyGreenstein(float3 viewDir, float3 lightDir, float g) //G ranges between -1 & 1
 			{
 				float cosAngle = dot(lightDir, viewDir);//We assume they are normalized
 				float g2 = g * g;
-				return ((1.0 - g2) / (4 * 3.1415*pow(1.0 + g2 - 2.0 * g *cosAngle, 1.5)));
+				return ((1.0 - g2) / pow(1.0 + g2 - 2.0 * g *cosAngle, 1.5))/ (4 * 3.1415);
 			}
 
-			float Powder(float density)
+			float BeerPowder(float density, float absorptionCoefficient)
 			{
-				return 1.0 - exp(-density);
+				float beersLaw = BeerLambertLaw(density, absorptionCoefficient);
+				float powderEffect = 1.0 - exp(-density * 2.0);
+				return 2.0* powderEffect* beersLaw;
 			}
 
 
@@ -169,17 +171,23 @@ Shader "Aetherius/RaymarchShader"
 				float3 currPos = ro;
 				float density = 0.0;
 				float lightEnergy = 0.0;
+				float transmission = 1.0;
 				for (int currStep = 0; currStep < maxSteps; ++currStep)
 				{
 					currPos = ro + rd * stepLength * currStep;
 					if (density < 1.0)
 					{
-						float currDensity = GetDensity(currPos)* stepLength;
+						float currDensity = GetDensity(currPos);
 						if (currDensity > 0.0)
 						{
+							float absorption = BeerLambertLaw(DensityTowardsLight(currPos), lightAbsorption);
+							float scattering = HenyeyGreenstein(-rd, sunDir, 0.2);
+							//float beerPowder = BeerPowder(DensityTowardsLight(currPos),1.0);
 							//lightEnergy += HenyeyGreenstein(rd, sunDir,-.2)* BeerLambertLaw(currDensity+DensityTowardsLight(currPos), 1.0) * Powder(currDensity)*(1.0-density);
-							lightEnergy += BeerLambertLaw(currDensity+DensityTowardsLight(currPos), 1.0) * Powder(currDensity)*(1.0-density);
-							density += currDensity;
+							lightEnergy += absorption*scattering*  transmission* currDensity* stepLength;
+							density += currDensity*stepLength;
+							transmission *= BeerLambertLaw(currDensity*stepLength, lightAbsorption);//TODO make different light absorption parameters when on cloud or towards light	
+							
 
 						}
 					}
@@ -188,7 +196,7 @@ Shader "Aetherius/RaymarchShader"
 				//TODO density above 1 makes banding worse somehow, fix, do we really need to clamp density?
 				density = saturate(density);//we dont want density above 1 for now (TODO visual glitch in the sun if above 1, fix this?)
 				col = col * lightEnergy;
-				return float4(col,density);
+				return float4(col, density);
 			}
 
 
