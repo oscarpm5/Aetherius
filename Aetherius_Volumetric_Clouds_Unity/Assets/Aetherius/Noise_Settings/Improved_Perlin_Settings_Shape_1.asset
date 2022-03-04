@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Improved_Perlin_Settings_Shape_1
   m_EditorClassIdentifier: 
   seed: 196
-  numOctavesPerlin: 10
-  persistencePerlin: 0.5
-  lacunarityPerlin: 2
+  numOctavesPerlin: 7
+  persistencePerlin: 0.628
+  lacunarityPerlin: 2.6
   gridSizePerlin: 4
