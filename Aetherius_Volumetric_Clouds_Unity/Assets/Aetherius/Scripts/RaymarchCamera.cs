@@ -23,6 +23,7 @@ namespace Aetherius
         [Header("Noise")]
         public float baseShapeSize = 1.0f;
         public float detailSize = 1.0f;
+        public Texture2D blueNoise;
         [Header("Weather Map")]
         public Texture2D weatherMap;
         public float weatherMapSize = 1.0f;
@@ -34,10 +35,20 @@ namespace Aetherius
         public float globalDensity = 1.0f;
         public float minCloudHeight = 250.0f;
         public float maxCloudHeight = 250.0f;
-        [Header("Lighting"), Range(0.0f, 10.0f)]
+        [Header("Lighting")]
+        [Range(0.0f, 10.0f)]
         public float lightAbsorption = 1.0f;
+        [Range(0.0f, 1.0f)]
+        public float outScatteringAmbient = 1.0f;
         List<Vector4> conekernel;
-
+        [Range(0.0f,1.0f)]
+        public float ambientMin = 0.2f;
+        [Range(0.0f, 1.0f)]
+        public float attenuationClamp = 0.2f;
+        //[Range(0.0f, 1.0f)]
+        public float silverIntesity = 0.5f;
+        //[Range(0.0f, 1.0f)]
+        public float silverExponent = 0.5f;
         public Material rayMarchMaterial
         {
             get
@@ -116,6 +127,12 @@ namespace Aetherius
             rayMarchMaterial.SetFloat("lightIntensity", sunLight.intensity);
             rayMarchMaterial.SetVector("lightColor", sunLight.color);
             rayMarchMaterial.SetVectorArray("coneKernel", conekernel);
+            rayMarchMaterial.SetFloat("osA", outScatteringAmbient);
+            rayMarchMaterial.SetFloat("ambientMin", ambientMin);
+            rayMarchMaterial.SetFloat("attenuationClamp", attenuationClamp);
+            rayMarchMaterial.SetFloat("silverIntesity", silverIntesity);
+            rayMarchMaterial.SetFloat("silverExponent", silverExponent);
+            rayMarchMaterial.SetTexture("blueNoiseTexture", blueNoise);
             //Create a screen quad
             RenderTexture.active = destination;
             GL.PushMatrix();

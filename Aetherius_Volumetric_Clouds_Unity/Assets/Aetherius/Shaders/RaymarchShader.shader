@@ -75,6 +75,8 @@ Shader "Aetherius/RaymarchShader"
 			Texture3D<float4> baseShapeTexture;
 			Texture3D<float4> detailTexture; //TODO see if I can get around using a float3
 			Texture2D<float4> weatherMapTexture;
+			Texture2D<float> blueNoiseTexture;
+			SamplerState samplerblueNoiseTexture;
 			SamplerState samplerbaseShapeTexture;
 			SamplerState samplerdetailTexture;
 			SamplerState samplerweatherMapTexture;
@@ -89,6 +91,12 @@ Shader "Aetherius/RaymarchShader"
 			float lightIntensity;
 			float3 lightColor;
 			float4 coneKernel[6];
+			float osA;
+			float ambientMin;//0 to 1
+			float attenuationClamp;//0 to 1
+
+			float silverIntesity;//0 to 1
+			float silverExponent;//0 to 1
 
 			float ShapeAltering(float heightPercent) //Round clouds towards edges (bottom & top) of the layer cloud
 			{
@@ -111,18 +119,19 @@ Shader "Aetherius/RaymarchShader"
 				{
 					float cloudHeightPercent = Remap(currPos.y, minCloudHeight, maxCloudHeight, 0.0, 1.0);//value between 0 & 1 showing where we are in the cloud layer
 					float weatherMapCloud = weatherMapTexture.Sample(samplerweatherMapTexture, (currPos.xz + weatherMapOffset.xz) * baseScale * weatherMapSize); //We sample the weather map
+					float4 lowFreqNoise = baseShapeTexture.Sample(samplerbaseShapeTexture, currPos * baseScale * baseShapeSize);
+					float4 highFreqNoise = detailTexture.Sample(samplerdetailTexture, currPos * baseScale * detailSize);//TODO make a detail size variable 
 
 					//Cloud Base shape
-					float4 lowFreqNoise = baseShapeTexture.Sample(samplerbaseShapeTexture, currPos * baseScale * baseShapeSize);
-					float lowFreqFBM = (lowFreqNoise.g * 0.625) + (lowFreqNoise.b * 0.5) + (lowFreqNoise.a * 0.25);
+					float lowFreqFBM = (lowFreqNoise.g * 0.625) + (lowFreqNoise.b * 0.25) + (lowFreqNoise.a * 0.125);
 					float cloudNoise = Remap(lowFreqNoise.r, -(1.0 - lowFreqFBM), 1.0, 0.0, 1.0);
-					float cloudBase = saturate(Remap(cloudNoise * ShapeAltering(cloudHeightPercent),1.0 - (weatherMapCloud * globalCoverage),1.0,0.0,1.0)); //Cloud noise is remapped into the weatherMap takin into accoun global coverage as well
+					
 					//Detail Shape
-					float4 highFreqNoise = detailTexture.Sample(samplerdetailTexture, currPos * baseScale * detailSize);//TODO make a detail size variable 
-					float highFreqFBM = (highFreqNoise.r * 0.625) + (highFreqNoise.g * 0.5) + (highFreqNoise.b * 0.25);
-					float detailNoise = lerp(highFreqFBM,1.0 - highFreqFBM, saturate(cloudHeightPercent * 5.0)) * 0.3 * exp(-globalCoverage * .65);
+					float highFreqFBM = (highFreqNoise.r * 0.625) + (highFreqNoise.g * 0.25) + (highFreqNoise.b * 0.125);
+					float detailNoise = lerp(highFreqFBM,1.0 - highFreqFBM, saturate(cloudHeightPercent * 5.0)) * 0.3 * exp(-globalCoverage * .75);
 
 					//Detail - Base Shape
+					float cloudBase = saturate(Remap(cloudNoise * ShapeAltering(cloudHeightPercent),1.0 - (weatherMapCloud * globalCoverage),1.0,0.0,1.0)); //Cloud noise is remapped into the weatherMap takin into accoun global coverage as well
 					density = saturate(Remap(cloudBase, detailNoise,1.0,0.0,1.0));
 					density *= DensityAltering(cloudHeightPercent, weatherMapCloud);
 				}
@@ -130,78 +139,136 @@ Shader "Aetherius/RaymarchShader"
 
 				return density;
 			}
+
 			float BeerLambertLaw(float accDensity, float absorptionCoefficient)
 			{
 				return exp(-accDensity * absorptionCoefficient);
-			}
-			float DensityTowardsLight(float3 currPosition)			
+			}			
+
+
+			float DensityTowardsLight(float3 currPosition,float cloudLayerHeight)
 			{
 				int iter = 6;
 				float accDensity = 0.0;
-				float stepSize = 5.0;//TODO make as variable (maybe when we have cone light samples?)
+				float stepSize = (cloudLayerHeight*0.5)/float(iter);//TODO make as variable (maybe when we have cone light samples?)
 				float3 startingPos = currPosition;
 				for (int currStep = 0; currStep < iter; ++currStep)
 				{
 					currPosition += -sunDir * stepSize + (stepSize* coneKernel[currStep].xyz* float(currStep));
-
-					accDensity += GetDensity(currPosition);
-
+					accDensity += GetDensity(currPosition)*stepSize;
 				}
 
-				accDensity += GetDensity(startingPos - sunDir * stepSize*6.0 +(-sunDir *stepSize *6*3));
+				accDensity += GetDensity(startingPos - sunDir * stepSize*6.0 +(-sunDir *stepSize *6*3))*stepSize;
 
 				return accDensity;
 			}
-			
-			float HenyeyGreenstein(float3 viewDir, float3 lightDir, float g) //G ranges between -1 & 1
+
+			float HenyeyGreenstein(float cosAngle, float g) //G ranges between -1 & 1
 			{
-				float cosAngle = dot(lightDir, viewDir);//We assume they are normalized
 				float g2 = g * g;
-				return ((1.0 - g2) / pow(1.0 + g2 - 2.0 * g *cosAngle, 1.5))/ (4 * 3.1415);
+				return ((1.0 - g2) / pow(1.0 + g2 - 2.0 * g * cosAngle, 1.5)) / (4 * 3.1415);
 			}
 
-			float BeerPowder(float density, float absorptionCoefficient)
+			float InScatteringExtra(float cosAngle)
 			{
-				float beersLaw = BeerLambertLaw(density, absorptionCoefficient);
-				float powderEffect = 1.0 - exp(-density * 2.0);
-				return 2.0* powderEffect* beersLaw;
+				return silverIntesity * pow(saturate(cosAngle), silverExponent);
 			}
 
+			float IOS(float cosAngle, float inS,float outS)
+			{
+				return lerp(max(HenyeyGreenstein(cosAngle, inS), InScatteringExtra(cosAngle)), HenyeyGreenstein(cosAngle, -outS),0.5);
+			}
 
-			float4 Raymarching(float3 ro, float3 rd) //where ro is ray origin & rd is ray direction
+			float Attenuation(float lightDensity, float cosAngle)
+			{
+				float prim = exp(-lightAbsorption * lightDensity);
+				float scnd = exp(-lightAbsorption * attenuationClamp) * 0.7;
+
+				float checkval = Remap(cosAngle, 0.0, 1.0, scnd, scnd * 0.5);
+				return max(checkval, prim);
+			}
+
+			//OutScatterAmbient
+			float OSa(float density,float hPercent)
+			{
+				
+				float depth= osA* pow(density, Remap(hPercent, 0.3, 0.9, 0.5, 1.0));
+				float vertical = pow(saturate(Remap(hPercent, 0.0, 0.3, 0.8, 1.0)),0.8);
+				float outScatter = depth * vertical;
+				
+				return 1.0 - saturate(outScatter);
+			}
+
+			
+
+			float4 Raymarching(float3 ro, float3 rd,float2 uv) //where ro is ray origin & rd is ray direction
 			{
 				float3 col = float3(1.0,1.0,1.0);
 
 				float stepLength = maxRayDist / maxSteps; //TODO provisional, will find another solution for the stepping later
-
-				float3 currPos = ro;
+				uv.x *= (_ScreenParams.x / _ScreenParams.y);
+				uv *= min(_ScreenParams.x, _ScreenParams.y)/ 128;//we assome blue noise has a 128 res texture
+				float3 currPos = ro + rd* stepLength * (blueNoiseTexture.Sample(samplerblueNoiseTexture, uv ) -0.5)*2.0;
 				float density = 0.0;
 				float lightEnergy = 0.0;
 				float transmission = 1.0;
+				float cosAngle = dot( -rd,sunDir);//We assume they are normalized
+
 				for (int currStep = 0; currStep < maxSteps; ++currStep)
 				{
-					currPos = ro + rd * stepLength * currStep;
 					if (density < 1.0)
 					{
 						float currDensity = GetDensity(currPos);
 						if (currDensity > 0.0)
 						{
-							float absorption = BeerLambertLaw(DensityTowardsLight(currPos), lightAbsorption);
-							float scattering = HenyeyGreenstein(-rd, sunDir, 0.2);
-							//float beerPowder = BeerPowder(DensityTowardsLight(currPos),1.0);
-							//lightEnergy += HenyeyGreenstein(rd, sunDir,-.2)* BeerLambertLaw(currDensity+DensityTowardsLight(currPos), 1.0) * Powder(currDensity)*(1.0-density);
-							lightEnergy += absorption* scattering* transmission* currDensity* stepLength* lightIntensity;
-							density += currDensity*stepLength;
-							transmission *= BeerLambertLaw(currDensity*stepLength, lightAbsorption);//TODO make different light absorption parameters when on cloud or towards light	
+
+							float cloudHeightPercent = saturate(Remap(currPos.y, minCloudHeight, maxCloudHeight, 0.0, 1.0));//value between 0 & 1 showing where we are in the cloud layer
+
+
+							//float absorption = BeerLambertLaw(DensityTowardsLight(currPos), lightAbsorption);
+							//float scattering = IOS(cosAngle, 0.2,0.1);
+							//float ambientScatter = OSa(currDensity*stepLength, cloudHeightPercent);
+
+							//lightEnergy += absorption * scattering * ambientScatter* transmission * currDensity * stepLength * lightIntensity;
+							//transmission *= BeerLambertLaw(currDensity * stepLength, lightAbsorption);//TODO make different light absorption parameters when on cloud or towards light	
 							
+							
+							float attenuation_prob = Attenuation(DensityTowardsLight(currPos, maxCloudHeight- minCloudHeight), cosAngle);
+							float ambient_out_scatter = OSa(currDensity * stepLength, cloudHeightPercent);
+							float sun_highlight = IOS(cosAngle, 0.2, 0.1);
+
+							//Deprecated
+							//attenuation_prob = BeerLambertLaw(DensityTowardsLight(currPos, maxCloudHeight - minCloudHeight), lightAbsorption);
+							//ambient_out_scatter = 1.0;
+							//sun_highlight = HenyeyGreenstein(cosAngle, 0.2);
+							//End of deprecated
+
+
+
+
+							float attenuation = attenuation_prob * sun_highlight * ambient_out_scatter;
+							attenuation = max(currDensity * stepLength* ambientMin *(1.0 -pow(saturate(currStep*stepLength / 4000), 2)), attenuation);
+							lightEnergy += attenuation* currDensity * stepLength* lightIntensity;
+							
+							
+							density += currDensity * stepLength;
 
 						}
 					}
+					currPos += rd * stepLength;
+
 
 				}
 				//TODO density above 1 makes banding worse somehow, fix, do we really need to clamp density?
 				density = saturate(density);//we dont want density above 1 for now (TODO visual glitch in the sun if above 1, fix this?)
-				col = lightColor* lightIntensity * lightEnergy;
+
+				col = lightColor*  lightEnergy;
+
+				//col = lightColor* lightIntensity * transmission + lightEnergy;
+				//col = col * lightEnergy;
+				float div = (1.0 / 2.2);
+				col = pow(col, float3(div, div, div));//Linear to gamma needed? TODO depends on the project settings i think
+
 				return float4(col, density);
 			}
 
@@ -214,9 +281,9 @@ Shader "Aetherius/RaymarchShader"
 			//col.rgb = 1 - col.rgb;
 
 			float3 rayDirection = normalize(i.ray.xyz);
-			float3 rayOrigin = _WorldSpaceCameraPos;
+			float3 rayOrigin =  _WorldSpaceCameraPos;
 
-			float4 result = Raymarching(rayOrigin, rayDirection);
+			float4 result = Raymarching(rayOrigin, rayDirection,i.uv);
 
 			return fixed4(col * (1.0 - result.w) + result.rgb * result.w,1.0); //lerp between colors of the scene & the color of the volume (TODO temporal, will have another solution later)
 

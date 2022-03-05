@@ -12,8 +12,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 536ac16a80ef54f4ab848394278c1074, type: 3}
   m_Name: Improved_Perlin_Settings_Shape_1
   m_EditorClassIdentifier: 
-  seed: 196
-  numOctavesPerlin: 7
-  persistencePerlin: 0.628
-  lacunarityPerlin: 2.6
-  gridSizePerlin: 4
+  seed: 189
+  numOctavesPerlin: 8
+  persistencePerlin: 0.447
+  lacunarityPerlin: 3.57
+  gridSizePerlin: 6
