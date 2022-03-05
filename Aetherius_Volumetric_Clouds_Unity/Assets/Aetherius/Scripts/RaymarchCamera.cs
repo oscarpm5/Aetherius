@@ -38,7 +38,7 @@ namespace Aetherius
         [Header("Lighting")]
         [Range(0.0f, 10.0f)]
         public float lightAbsorption = 1.0f;
-        [Range(0.0f, 1.0f)]
+        //[Range(0.0f, 1.0f)]
         public float outScatteringAmbient = 1.0f;
         List<Vector4> conekernel;
         [Range(0.0f,1.0f)]
@@ -49,6 +49,9 @@ namespace Aetherius
         public float silverIntesity = 0.5f;
         //[Range(0.0f, 1.0f)]
         public float silverExponent = 0.5f;
+
+        [Range(0.0f, 1.0f)]
+        public float shadowBaseLight = 0.5f;
         public Material rayMarchMaterial
         {
             get
@@ -133,6 +136,8 @@ namespace Aetherius
             rayMarchMaterial.SetFloat("silverIntesity", silverIntesity);
             rayMarchMaterial.SetFloat("silverExponent", silverExponent);
             rayMarchMaterial.SetTexture("blueNoiseTexture", blueNoise);
+            rayMarchMaterial.SetFloat("shadowBaseLight", shadowBaseLight);
+
             //Create a screen quad
             RenderTexture.active = destination;
             GL.PushMatrix();
@@ -188,7 +193,7 @@ namespace Aetherius
             List<Vector4> newList = new List<Vector4>();
             for (int i = 0; i < 6; ++i)
             {
-                newList.Add(Random.insideUnitSphere);
+                newList.Add(Random.onUnitSphere);
             }
 
             return newList;
