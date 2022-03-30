@@ -199,6 +199,11 @@ Shader "Aetherius/RaymarchShader"
 				return ((1.0 - g2) / pow(1.0 + g2 - 2.0 * g * cosAngle, 1.5)) / (4 * 3.1415);
 			}
 
+			float DoubleLobeScattering(float cosAngle, float l1, float l2,float mix)
+			{
+				return lerp(HenyeyGreenstein(cosAngle, l1), HenyeyGreenstein(cosAngle, -l2), mix);
+			}
+
 			//float InScatteringExtra(float cosAngle)
 			//{
 			//	return silverIntesity * pow(saturate(cosAngle), silverExponent);
@@ -233,20 +238,22 @@ Shader "Aetherius/RaymarchShader"
 			float LightShadowTransmittance(float3 pos,float sampleDistance)
 			{
 				int iter = 6;
-				float accDensity = 0.0;
 				float stepSize = (sampleDistance / float(iter));//TODO make as variable (maybe when we have cone light samples?)
 
 				float shadow = 1.0;
-				
-				for (int currStep = 0; currStep < iter; ++currStep)
+				float accDensity = 0.0;
+				for (int currStep = 0; currStep < iter-1; ++currStep)
 				{
 					float3 newPos = pos + currStep * stepSize * -sunDir;
 					float density = GetDensity(newPos);
 
+					accDensity += density;
 					shadow *= exp(-density* stepSize* lightAbsorption);
 				}
 
-				return shadow;
+				shadow *= exp(-GetDensity(pos+ sampleDistance *5.0*-sunDir) * stepSize * lightAbsorption);//long range sample
+
+				return shadow;//TODO can lerp powder effect here (multiplying shadow) but might not be energy conserving!
 			}
 			
 
@@ -268,14 +275,14 @@ Shader "Aetherius/RaymarchShader"
 						float currDensity = GetDensity(currPos);
 						if (currDensity > 0.0)
 						{
-							float shadow = LightShadowTransmittance(currPos,300.0f);
+							float shadow = LightShadowTransmittance(currPos,1000.0f);
 
 							float transmittance = exp(-currDensity * stepLength);
 
 							float clampedExtinction = max(currDensity, 0.0000001);
 
 
-							float3 luminance = lightColor * lightIntensity* shadow* currDensity*HenyeyGreenstein(cosAngle,0.1);
+							float3 luminance = lightColor * lightIntensity* shadow* currDensity* DoubleLobeScattering(cosAngle,0.3,0.2,0.4);
 							float3 integScatt= (luminance- luminance*transmittance)/ clampedExtinction;
 							scatteredLuminance += scatteredtransmittance * integScatt;
 

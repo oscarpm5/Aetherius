@@ -38,7 +38,7 @@ RenderSettings:
   m_ReflectionIntensity: 1
   m_CustomReflection: {fileID: 0}
   m_Sun: {fileID: 705507994}
-  m_IndirectSpecularColor: {r: 0.4468705, g: 0.4919049, b: 0.5489536, a: 1}
+  m_IndirectSpecularColor: {r: 0.45091093, g: 0.5008029, b: 0.5745228, a: 1}
   m_UseRadianceAmbientProbe: 0
 --- !u!157 &3
 LightmapSettings:
@@ -123,7 +123,7 @@ NavMeshSettings:
     debug:
       m_Flags: 0
   m_NavMeshData: {fileID: 0}
---- !u!84 &78598922
+--- !u!84 &268575586
 RenderTexture:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -137,8 +137,8 @@ RenderTexture:
   m_DownscaleFallback: 0
   m_IsAlphaChannelOptional: 0
   serializedVersion: 3
-  m_Width: 128
-  m_Height: 128
+  m_Width: 32
+  m_Height: 32
   m_AntiAliasing: 1
   m_MipCount: -1
   m_DepthFormat: 0
@@ -158,7 +158,7 @@ RenderTexture:
     m_WrapV: 0
     m_WrapW: 0
   m_Dimension: 3
-  m_VolumeDepth: 128
+  m_VolumeDepth: 32
 --- !u!1 &359574013
 GameObject:
   m_ObjectHideFlags: 0
@@ -340,13 +340,13 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 705507993}
-  m_LocalRotation: {x: -0.060921323, y: -0.84056985, z: 0.13009132, w: -0.5223094}
+  m_LocalRotation: {x: 0.008738463, y: 0.690785, z: -0.40208054, w: 0.6008919}
   m_LocalPosition: {x: 0, y: 3, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 0}
   m_RootOrder: 1
-  m_LocalEulerAnglesHint: {x: 163.6, y: -1864, z: -902}
+  m_LocalEulerAnglesHint: {x: -325.528, y: -1713.162, z: -754.854}
 --- !u!1 &963194225
 GameObject:
   m_ObjectHideFlags: 0
@@ -446,20 +446,20 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _shader: {fileID: 4800000, guid: 0062334ff4afa1a42b65d127e5405941, type: 3}
-  maxSteps: 256
+  maxSteps: 128
   maxRayDist: 10000
   baseShapeSize: 0.2
-  detailSize: 1.5
+  detailSize: 1
   blueNoise: {fileID: 2800000, guid: 0cd98530926ee344a93cf6cc4437d4f6, type: 3}
   weatherMap: {fileID: 2800000, guid: aea288de504cc2d4e8c48278fec8e39c, type: 3}
   weatherMapSize: 0.1
   weatherMapOffset: {x: 2560, y: 0, z: 2560}
   sunLight: {fileID: 705507994}
   globalCoverage: 1
-  globalDensity: 1
+  globalDensity: 0.05
   minCloudHeight: 1500
   maxCloudHeight: 4000
-  lightAbsorption: 0.04
+  lightAbsorption: 0.1
   outScatteringAmbient: 0
   ambientMin: 0.297
   attenuationClamp: 0.2
@@ -503,8 +503,8 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 3d04b3037c1a4a640b7ac77a0decf1c4, type: 2}
   - {fileID: 11400000, guid: cdb03daae29d1a74f9d322db4dace868, type: 2}
   _updateNoise: 0
-  _baseShapeRenderTexture: {fileID: 78598922}
-  _detailRenderTexture: {fileID: 1173889217}
+  _baseShapeRenderTexture: {fileID: 1575904707}
+  _detailRenderTexture: {fileID: 268575586}
 --- !u!114 &963194231
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -518,7 +518,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   targetFPS: 30
---- !u!84 &1173889217
+--- !u!84 &1575904707
 RenderTexture:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -532,8 +532,8 @@ RenderTexture:
   m_DownscaleFallback: 0
   m_IsAlphaChannelOptional: 0
   serializedVersion: 3
-  m_Width: 32
-  m_Height: 32
+  m_Width: 128
+  m_Height: 128
   m_AntiAliasing: 1
   m_MipCount: -1
   m_DepthFormat: 0
@@ -553,4 +553,4 @@ RenderTexture:
     m_WrapV: 0
     m_WrapW: 0
   m_Dimension: 3
-  m_VolumeDepth: 32
+  m_VolumeDepth: 128
