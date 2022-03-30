@@ -171,7 +171,7 @@ Shader "Aetherius/RaymarchShader"
 
 				}
 
-				accDensity += GetDensity(startingPos - sunDir * stepSize* float(iter)*3.0)*stepSize;
+				accDensity += GetDensity(startingPos - sunDir * stepSize* (float(iter)-1.0)*3.0)*stepSize;
 
 				return accDensity;
 			}
@@ -199,41 +199,59 @@ Shader "Aetherius/RaymarchShader"
 				return ((1.0 - g2) / pow(1.0 + g2 - 2.0 * g * cosAngle, 1.5)) / (4 * 3.1415);
 			}
 
-			float InScatteringExtra(float cosAngle)
-			{
-				return silverIntesity * pow(saturate(cosAngle), silverExponent);
-			}
+			//float InScatteringExtra(float cosAngle)
+			//{
+			//	return silverIntesity * pow(saturate(cosAngle), silverExponent);
+			//}
 
-			float IOS(float cosAngle, float inS,float outS)
-			{
-				return lerp(max(HenyeyGreenstein(cosAngle, inS), InScatteringExtra(cosAngle)), HenyeyGreenstein(cosAngle, -outS),0.5);
-			}
+			//float IOS(float cosAngle, float inS,float outS)
+			//{
+			//	return lerp(max(HenyeyGreenstein(cosAngle, inS), InScatteringExtra(cosAngle)), HenyeyGreenstein(cosAngle, -outS),0.2);
+			//}
 
-			float Attenuation(float lightDensity, float cosAngle)
-			{
-				float prim = exp(-lightAbsorption * lightDensity);
-				float scnd = exp(-lightAbsorption * attenuationClamp) * 0.7;
+			//float Attenuation(float lightDensity, float cosAngle)
+			//{
+			//	float prim = exp(-lightAbsorption * lightDensity);
+			//	float scnd = exp(-lightAbsorption * attenuationClamp) * 0.7;
 
-				float checkval = Remap(cosAngle, 0.0, 1.0, scnd, scnd * 0.5);
-				return max(checkval, prim);
-			}
+			//	float checkval = Remap(cosAngle, 0.0, 1.0, scnd, scnd * 0.5);
+			//	return max(checkval, prim);
+			//}
 
-			//OutScatterAmbient
-			float OSa(float density,float hPercent)
+			////OutScatterAmbient
+			//float OSa(float density,float hPercent)
+			//{
+			//	
+			//	float depth= osA* pow(density, Remap(hPercent, 0.3, 0.9, 0.5, 1.0));
+			//	float vertical = pow(saturate(Remap(hPercent, 0.0, 0.3, 0.8, 1.0)),0.8);
+			//	float outScatter = depth * vertical;
+			//	
+			//	return 1.0 - saturate(outScatter);
+			//}
+
+
+			float LightShadowTransmittance(float3 pos,float sampleDistance)
 			{
+				int iter = 6;
+				float accDensity = 0.0;
+				float stepSize = (sampleDistance / float(iter));//TODO make as variable (maybe when we have cone light samples?)
+
+				float shadow = 1.0;
 				
-				float depth= osA* pow(density, Remap(hPercent, 0.3, 0.9, 0.5, 1.0));
-				float vertical = pow(saturate(Remap(hPercent, 0.0, 0.3, 0.8, 1.0)),0.8);
-				float outScatter = depth * vertical;
-				
-				return 1.0 - saturate(outScatter);
-			}
+				for (int currStep = 0; currStep < iter; ++currStep)
+				{
+					float3 newPos = pos + currStep * stepSize * -sunDir;
+					float density = GetDensity(newPos);
 
+					shadow *= exp(-density* stepSize* lightAbsorption);
+				}
+
+				return shadow;
+			}
 			
 
-			float4 Raymarching(float3 ro, float3 rd,float2 uv) //where ro is ray origin & rd is ray direction
+			float3 Raymarching(float3 col,float3 ro, float3 rd,float2 uv) //where ro is ray origin & rd is ray direction
 			{
-				float3 col = float3(1.0,1.0,1.0);
 
 				float stepLength = maxRayDist / maxSteps; //TODO provisional, will find another solution for the stepping later
 				uv.x *= (_ScreenParams.x / _ScreenParams.y);
@@ -242,46 +260,57 @@ Shader "Aetherius/RaymarchShader"
 				float3 currPos = ro + rd* stepLength * (blueNoiseTexture.Sample(samplerblueNoiseTexture, uv ) -0.5)*2.0;
 				float cosAngle = dot( -rd,sunDir);//We assume they are normalized
 				
-				float density = 0.0;
-				float lightEnergy = 0.0;
-				float transmittance = 1.0;
+				float3 scatteredLuminance = float3(0.0, 0.0, 0.0);
+				float scatteredtransmittance = 1.0;
 				for (int currStep = 0; currStep < maxSteps; ++currStep)
 				{
-					if (density < 1.0)
-					{
+					
 						float currDensity = GetDensity(currPos);
 						if (currDensity > 0.0)
 						{
+							float shadow = LightShadowTransmittance(currPos,300.0f);
+
+							float transmittance = exp(-currDensity * stepLength);
+
+							float clampedExtinction = max(currDensity, 0.0000001);
+
+
+							float3 luminance = lightColor * lightIntensity* shadow* currDensity*HenyeyGreenstein(cosAngle,0.1);
+							float3 integScatt= (luminance- luminance*transmittance)/ clampedExtinction;
+							scatteredLuminance += scatteredtransmittance * integScatt;
+
+							scatteredtransmittance *= transmittance;
 							//float densityTowardsLight = DensityTowardsLightCone(currPos,.5);
-							float densityTowardsLight = DensityTowardsLight(currPos);
-							float absorption = BeerLambertLaw(densityTowardsLight, lightAbsorption);
+							//float densityTowardsLight = DensityTowardsLight(currPos);
+							//float absorption = BeerLambertLaw(densityTowardsLight, lightAbsorption);
 							
 
-							float attenuation = Attenuation(densityTowardsLight,cosAngle);
+							//float attenuation = Attenuation(densityTowardsLight,cosAngle);
 							
-							float inOutScattering =IOS(cosAngle,0.3,0.2);
+							/*float inOutScattering =IOS(cosAngle,0.3,0.2);
 							float ambientScatter = OSa(density, GetCloudLayerHeight(currPos.y, minCloudHeight, maxCloudHeight));
-							float beerPowder = 2.0 * absorption * PowderEffect(densityTowardsLight, lightAbsorption);
+							float beerPowder = 2.0 * absorption * PowderEffect(densityTowardsLight, lightAbsorption);*/
 
 
-							lightEnergy += attenuation * inOutScattering * ambientScatter *currDensity * stepLength* transmittance;
+							/*lightEnergy += attenuation * inOutScattering * ambientScatter *currDensity * stepLength* transmittance;
 							transmittance *= BeerLambertLaw(currDensity * stepLength, lightAbsorption);
-							density += currDensity * stepLength;
+							density += currDensity * stepLength;*/
 						}
-					}
+					
 					currPos += rd * stepLength;
 				}
 				//TODO density above 1 makes banding worse somehow, fix, do we really need to clamp density?
-				density = saturate(density);//we dont want density above 1 for now (TODO visual glitch in the sun if above 1, fix this?)
+				//density = saturate(density);//we dont want density above 1 for now (TODO visual glitch in the sun if above 1, fix this?)
 
-				col = lightColor* lightEnergy*lightIntensity;
+				//col = lightColor* lightEnergy*lightIntensity;
 
 				//col = lightColor* lightIntensity * transmission + lightEnergy;
 				//col = col * lightEnergy;
-				float div = (1.0 / 2.2);
-				col = pow(col, float3(div, div, div));//Linear to gamma needed? TODO depends on the project settings i think
+				//float div = (1.0 / 2.2);
+				//col = pow(col, float3(div, div, div));//Linear to gamma needed? TODO depends on the project settings i think
 
-				return float4(col, density);
+				col = scatteredtransmittance * col + scatteredLuminance;
+				return float3(col);
 			}
 
 
@@ -295,9 +324,9 @@ Shader "Aetherius/RaymarchShader"
 			float3 rayDirection = normalize(i.ray.xyz);
 			float3 rayOrigin =  _WorldSpaceCameraPos;
 
-			float4 result = Raymarching(rayOrigin, rayDirection,i.uv);
+			float3 result = Raymarching(col,rayOrigin, rayDirection,i.uv);
 
-			return fixed4(col * (1.0 - result.w) + result.rgb * result.w,1.0); //lerp between colors of the scene & the color of the volume (TODO temporal, will have another solution later)
+			return fixed4(result ,1.0); //lerp between colors of the scene & the color of the volume (TODO temporal, will have another solution later)
 
 			}
 ENDCG
