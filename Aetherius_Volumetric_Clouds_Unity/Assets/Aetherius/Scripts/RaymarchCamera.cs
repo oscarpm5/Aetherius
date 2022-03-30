@@ -129,11 +129,28 @@ namespace Aetherius
             rayMarchMaterial.SetFloat("lightAbsorption", lightAbsorption);
             rayMarchMaterial.SetFloat("lightIntensity", sunLight.intensity);
 
-            Color []c= new Color[1];
-            Vector3 []dirs= new Vector3[1];
-            dirs[0] = sunLight.transform.rotation * Vector3.back;
+
+
+            Color []c= new Color[6];
+            Vector3 []dirs= new Vector3[6];
+            dirs[0] = sunLight.transform.rotation * Vector3.forward;
+            dirs[1] = sunLight.transform.rotation * Vector3.back;
+            dirs[2] = sunLight.transform.rotation * Vector3.right;
+            dirs[3] = sunLight.transform.rotation * Vector3.left;
+            dirs[4] = sunLight.transform.rotation * Vector3.up;
+            dirs[5] = sunLight.transform.rotation * Vector3.down;
+
             RenderSettings.ambientProbe.Evaluate(dirs, c);
-            rayMarchMaterial.SetVector("lightColor", c[0].gamma +sunLight.color.gamma* c[0].gamma);
+            Color ambientCol= new Color(0.0f,0.0f,0.0f);
+            for (int i = 0; i < c.Length; i++)
+            {
+                ambientCol += c[i];
+            }
+
+            ambientCol /= (float)c.Length;
+
+            rayMarchMaterial.SetVector("lightColor", sunLight.color);
+            rayMarchMaterial.SetVector("ambientColor", ambientCol);
             rayMarchMaterial.SetVectorArray("coneKernel", conekernel);
             rayMarchMaterial.SetFloat("osA", outScatteringAmbient);
             rayMarchMaterial.SetFloat("ambientMin", ambientMin);

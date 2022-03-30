@@ -81,6 +81,7 @@ Shader "Aetherius/RaymarchShader"
 			float lightAbsorption;
 			float lightIntensity;
 			float3 lightColor;
+			float3 ambientColor;
 			float4 coneKernel[6];
 			float osA;
 			float ambientMin;//0 to 1
@@ -236,7 +237,7 @@ Shader "Aetherius/RaymarchShader"
 
 				float stepLength = maxRayDist / maxSteps; //TODO provisional, will find another solution for the stepping later
 				uv.x *= (_ScreenParams.x / _ScreenParams.y);
-				uv *= min(_ScreenParams.x, _ScreenParams.y)/ 128;//we assome blue noise has a 128 res texture
+				uv *= min(_ScreenParams.x, _ScreenParams.y)/ 128;//we assume blue noise has a 128 res texture
 				
 				float3 currPos = ro + rd* stepLength * (blueNoiseTexture.Sample(samplerblueNoiseTexture, uv ) -0.5)*2.0;
 				float cosAngle = dot( -rd,sunDir);//We assume they are normalized
