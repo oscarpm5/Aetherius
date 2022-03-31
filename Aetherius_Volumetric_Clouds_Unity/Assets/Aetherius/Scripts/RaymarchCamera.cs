@@ -35,6 +35,13 @@ namespace Aetherius
         public float globalDensity = 1.0f;
         public float minCloudHeight = 250.0f;
         public float maxCloudHeight = 250.0f;
+        public AnimationCurve densityCurve = new AnimationCurve(
+            new Keyframe[3] {
+                new Keyframe(0.0f,0.0f,14.5f,14.5f),
+                new Keyframe(0.2f,1.0f,0.15f,0.15f),
+                new Keyframe(1.0f,0.0f,-3.0f,-3.0f)}
+            );
+
         [Header("Lighting")]
         [Range(0.0f, 10.0f)]
         public float lightAbsorption = 1.0f;
@@ -220,5 +227,24 @@ namespace Aetherius
 
             return newList;
         }
+
+        private void OnValidate()
+        {
+            List<float> fTest = DensityGradientLutFromCurve(ref densityCurve, 256);
+
+        }
+
+        private List<float> DensityGradientLutFromCurve(ref AnimationCurve curve, int samples)
+        {
+            List<float> retList = new List<float>(samples);
+
+            for (int i = 0; i < samples; ++i)
+            {
+                retList.Add(curve.Evaluate(1.0f / samples));
+            }
+            return retList;
+        }
     }
+
+    
 }
