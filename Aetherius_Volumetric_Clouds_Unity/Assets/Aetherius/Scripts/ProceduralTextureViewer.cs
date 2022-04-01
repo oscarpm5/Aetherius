@@ -186,7 +186,9 @@ namespace Aetherius
             computeShader.SetFloat("persistenceWorley", currSettings.persistence); //less than 1
             computeShader.SetVector("channelToWriteTo", GetChannelMask(channelToWriteTo));
 
-            computeShader.Dispatch(currKernel, dim / 8, dim / 8, dim / 8); //Image size divided by the thread size of each group
+            DispatchComputeShader(ref computeShader, currKernel, new Vector3Int(dim, dim, dim));
+
+            //computeShader.Dispatch(currKernel, dim / 8, dim / 8, dim / 8); //Image size divided by the thread size of each group
 
         }
         void Generate3DPerlinWorley(int dimensions, ref RenderTexture targetTexture, TEXTURE_CHANNEL channelToWriteTo, TEXTURE_TYPE type)
@@ -232,8 +234,7 @@ namespace Aetherius
             computeShader.SetInt("textureSizeP", dim);
             computeShader.SetVector("channelToWriteTo", GetChannelMask(channelToWriteTo));
 
-            computeShader.Dispatch(currKernel, dim / 8, dim / 8, dim / 8); //Image size divided by the thread size of each group
-
+            DispatchComputeShader(ref computeShader, currKernel,new Vector3Int(dim,dim,dim));
 
         }
         public void GenerateAllNoise()
@@ -409,7 +410,17 @@ namespace Aetherius
             toDeleteList = null;
         }
 
-        
+        public static bool DispatchComputeShader(ref ComputeShader toDispatch,int kernelIndex, Vector3Int textureDimensions)
+        {
+            if (toDispatch == null)
+                return false;
+
+            uint[] kernelGroupSizes= new uint[3];
+            toDispatch.GetKernelThreadGroupSizes(kernelIndex,out kernelGroupSizes[0], out kernelGroupSizes[1], out kernelGroupSizes[2]);
+            toDispatch.Dispatch(kernelIndex,textureDimensions.x/(int)kernelGroupSizes[0], textureDimensions.y /(int)kernelGroupSizes[1], textureDimensions.z / (int)kernelGroupSizes[2]); //Image size divided by the thread size of each group
+
+            return true;
+        }
 
         //Textures ================================================================================
         //returns ture if a texture has been created
@@ -451,7 +462,6 @@ namespace Aetherius
             }
         }
 
-
         public static bool GenerateRenderTexture(int texResolution, ref RenderTexture myTexture, TEXTURE_DIMENSIONS dimensions, UnityEngine.Experimental.Rendering.GraphicsFormat format,FilterMode filterMode = FilterMode.Trilinear)
         {
             bool isNewlyCreated = false;
@@ -486,6 +496,7 @@ namespace Aetherius
                 }
 
                 myTexture.filterMode = filterMode;
+                
                 myTexture.wrapMode = TextureWrapMode.Repeat;
                 myTexture.graphicsFormat = format;
                 myTexture.Create();

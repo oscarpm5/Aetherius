@@ -12,6 +12,13 @@ namespace Aetherius
     {
         private Camera _cam;
 
+        public ComputeShader computeShader = null;
+        public RenderTexture densityGradientTex;
+        [SerializeField, HideInInspector]
+        private List<ComputeBuffer> toDeleteCompBuffers;
+        [SerializeField,HideInInspector]
+        private bool updateCompute;
+
         [SerializeField]
         private Shader _shader;
         private Material _material;
@@ -88,6 +95,7 @@ namespace Aetherius
         private void OnEnable()
         {
             noiseGen = GetComponent<ProceduralTextureViewer>();
+            UpdateGradientLUTs();
         }
 
 
@@ -110,11 +118,15 @@ namespace Aetherius
                 }
             }
 
+
+
             if (conekernel == null)
                 conekernel = GenerateConeKernels();
 
             //GetComponent<ProceduralTextureViewer>().UpdateNoise();
 
+
+            //UpdateGradientLUTs();
 
             rayMarchMaterial.SetMatrix("_CamFrustum", CamFrustrumFromCam(_camera));
             rayMarchMaterial.SetMatrix("_CamToWorldMat", _camera.cameraToWorldMatrix);
@@ -230,8 +242,38 @@ namespace Aetherius
 
         private void OnValidate()
         {
-            List<float> fTest = DensityGradientLutFromCurve(ref densityCurve, 256);
+            SendGradientUpdate();
+            
+        }
 
+        public void UpdateGradientLUTs()
+        {
+            if (!updateCompute)
+                return;
+
+            updateCompute = false;
+            List<float> fTest = DensityGradientLutFromCurve(ref densityCurve, 256);
+            for (int i = 0; i < fTest.Count; i++)
+            {
+                Debug.Log(fTest[i].ToString());
+
+            }
+
+            if (computeShader != null)
+            {
+                ProceduralTextureViewer.GenerateRenderTexture(
+                    fTest.Count, ref densityGradientTex, ProceduralTextureViewer.TEXTURE_DIMENSIONS.TEX_2D,
+                    UnityEngine.Experimental.Rendering.GraphicsFormat.R16G16B16A16_UNorm,FilterMode.Bilinear);
+
+
+                int kernel = computeShader.FindKernel("GenerateDensityLUT");
+                Debug.Log(kernel.ToString());
+                ProceduralTextureViewer.CreateComputeBuffer(ref toDeleteCompBuffers, ref computeShader, sizeof(float), fTest.ToArray(), "densityPoints", "GenerateDensityLUT");
+                computeShader.SetTexture(kernel, "densityGradientTexture", densityGradientTex);
+                computeShader.SetInt("gradientSize", fTest.Count);
+                ProceduralTextureViewer.DispatchComputeShader(ref computeShader, kernel, new Vector3Int(256, 256, 256));
+                ProceduralTextureViewer.DeleteComputeBuffers(ref toDeleteCompBuffers);
+            }
         }
 
         private List<float> DensityGradientLutFromCurve(ref AnimationCurve curve, int samples)
@@ -240,11 +282,35 @@ namespace Aetherius
 
             for (int i = 0; i < samples; ++i)
             {
-                retList.Add(curve.Evaluate(1.0f / samples));
+                retList.Add(curve.Evaluate(i* (1.0f / samples)));
             }
             return retList;
         }
+
+        public void OnDisable() //happens before a hot reload
+        {
+            CleanUp();
+        }
+
+
+
+        public void OnApplicationQuit()
+        {
+            CleanUp();
+        }
+
+        void CleanUp()
+        {
+            ProceduralTextureViewer.ReleaseTexture(ref densityGradientTex);
+        }
+
+        public void SendGradientUpdate()
+        {
+            updateCompute = true;
+        }
+
     }
+
 
     
 }

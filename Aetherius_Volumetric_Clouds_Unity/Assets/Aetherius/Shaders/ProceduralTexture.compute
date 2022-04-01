@@ -223,10 +223,14 @@ void InitializeTexture(uint3 id : SV_DispatchThreadID)
 }
 
 
-RWTexture2D<float3> densityGradientTexture;
+RWTexture2D<float4> densityGradientTexture;
+StructuredBuffer<float> densityPoints;
+int gradientSize;
 
 [numthreads(8,8,1)]
 void GenerateDensityLUT(uint3 id : SV_DispatchThreadID)
 {
-    densityGradientTexture[id.xy]= float3(0.0,0.0,0.0);
+    
+    float density =densityPoints[id.y];
+    densityGradientTexture[id.xy]= float4(density,density,density,1.0);
 }
