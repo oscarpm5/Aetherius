@@ -67,10 +67,12 @@ Shader "Aetherius/RaymarchShader"
 			Texture3D<float4> detailTexture; //TODO see if I can get around using a float3
 			Texture2D<float4> weatherMapTexture;
 			Texture2D<float> blueNoiseTexture;
+			Texture2D<float4> densityGradientTexture;
 			SamplerState samplerblueNoiseTexture;
 			SamplerState samplerbaseShapeTexture;
 			SamplerState samplerdetailTexture;
 			SamplerState samplerweatherMapTexture;
+			SamplerState samplerdensityGradientTexture;
 			float baseShapeSize;
 			float detailSize;
 			float weatherMapSize;
@@ -93,9 +95,13 @@ Shader "Aetherius/RaymarchShader"
 
 			float DensityAltering(float heightPercent) //Makes Clouds have more shape at the top & be more round towards the bottom, the weather map also influences the density
 			{
+				/*
 				float densityBottom = saturate(Remap(heightPercent,0.0,0.1,0.0,1.0));//Reduces density towards the bottom of the cloud
 				float densityTop = saturate(Remap(heightPercent, 0.2, 1.0, 1.0, 0.0));
 				return   densityBottom * densityTop; 
+				*/
+
+				return saturate(densityGradientTexture.Sample(samplerdensityGradientTexture,float2(0.5,heightPercent)).r);//TODO make 256 a variable
 			}
 
 			//value between 0 & 1 showing where we are in the cloud layer
@@ -116,7 +122,7 @@ Shader "Aetherius/RaymarchShader"
 
 					float weatherMapCloud = weatherMapTexture.Sample(samplerweatherMapTexture, (currPos.xz + weatherMapOffset.xz)* baseScale * weatherMapSize); //We sample the weather map
 					float4 lowFreqNoise = baseShapeTexture.Sample(samplerbaseShapeTexture, currPos * baseScale * baseShapeSize);
-					float4 highFreqNoise = detailTexture.Sample(samplerdetailTexture, currPos * baseScale * detailSize);//TODO make a detail size variable 
+					float4 highFreqNoise = detailTexture.Sample(samplerdetailTexture, currPos * baseScale * detailSize);
 
 					//Cloud Base shape
 					float lowFreqFBM = (lowFreqNoise.g * 0.625) + (lowFreqNoise.b * 0.25) + (lowFreqNoise.a * 0.125);

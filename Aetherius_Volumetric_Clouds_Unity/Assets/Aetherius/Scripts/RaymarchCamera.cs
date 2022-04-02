@@ -10,7 +10,7 @@ namespace Aetherius
     [ExecuteInEditMode]
     public class RaymarchCamera : MonoBehaviour
     {
-        
+
         private Camera _cam;
         [SerializeField]
         public ComputeShader computeShader = null;
@@ -18,12 +18,10 @@ namespace Aetherius
         public RenderTexture densityGradientTex;
         [SerializeField, HideInInspector]
         private List<ComputeBuffer> toDeleteCompBuffers;
-        [SerializeField]
-        public static bool updateCompute;
 
         [SerializeField]
         private Shader _shader;
-        [SerializeField,HideInInspector]
+        [SerializeField, HideInInspector]
         private Material _material;
         [Header("Ray March")]
         [Range(32, 1024)]
@@ -58,7 +56,7 @@ namespace Aetherius
         //[Range(0.0f, 1.0f)]
         public float outScatteringAmbient = 1.0f;
         List<Vector4> conekernel;
-        [Range(0.0f,1.0f)]
+        [Range(0.0f, 1.0f)]
         public float ambientMin = 0.2f;
         [Range(0.0f, 1.0f)]
         public float attenuationClamp = 0.2f;
@@ -100,7 +98,7 @@ namespace Aetherius
             noiseGen = GetComponent<ProceduralTextureViewer>();
             //UpdateGradientLUTs();
             UnityEditor.EditorApplication.update += EditorUpdate;
-            
+
         }
 
 
@@ -155,8 +153,8 @@ namespace Aetherius
 
 
 
-            Color []c= new Color[6];
-            Vector3 []dirs= new Vector3[6];
+            Color[] c = new Color[6];
+            Vector3[] dirs = new Vector3[6];
             dirs[0] = sunLight.transform.rotation * Vector3.forward;
             dirs[1] = sunLight.transform.rotation * Vector3.back;
             dirs[2] = sunLight.transform.rotation * Vector3.right;
@@ -165,7 +163,7 @@ namespace Aetherius
             dirs[5] = sunLight.transform.rotation * Vector3.down;
 
             RenderSettings.ambientProbe.Evaluate(dirs, c);
-            Color ambientCol= new Color(0.0f,0.0f,0.0f);
+            Color ambientCol = new Color(0.0f, 0.0f, 0.0f);
             for (int i = 0; i < c.Length; i++)
             {
                 ambientCol += c[i];
@@ -183,6 +181,7 @@ namespace Aetherius
             rayMarchMaterial.SetFloat("silverExponent", silverExponent);
             rayMarchMaterial.SetTexture("blueNoiseTexture", blueNoise);
             rayMarchMaterial.SetFloat("shadowBaseLight", shadowBaseLight);
+            rayMarchMaterial.SetTexture("densityGradientTexture", densityGradientTex);
 
             //Create a screen quad
             RenderTexture.active = destination;
@@ -245,14 +244,13 @@ namespace Aetherius
             return newList;
         }
 
-        private void OnValidate()
-        {
-            SendGradientUpdate();
-        }
+
+
+
 
         public void UpdateGradientLUTs()
         {
-           
+
             List<float> fTest = DensityGradientLutFromCurve(ref densityCurve, 256);
             //for (int i = 0; i < fTest.Count; i++)
             //{
@@ -264,7 +262,7 @@ namespace Aetherius
             {
                 ProceduralTextureViewer.GenerateRenderTexture(
                     fTest.Count, ref densityGradientTex, ProceduralTextureViewer.TEXTURE_DIMENSIONS.TEX_2D,
-                    UnityEngine.Experimental.Rendering.GraphicsFormat.R16G16B16A16_UNorm,FilterMode.Bilinear);
+                    UnityEngine.Experimental.Rendering.GraphicsFormat.R16G16B16A16_UNorm, FilterMode.Bilinear);
 
 
                 int kernel = computeShader.FindKernel("GenerateDensityLUT");
@@ -283,7 +281,7 @@ namespace Aetherius
 
             for (int i = 0; i < samples; ++i)
             {
-                retList.Add(curve.Evaluate(i* (1.0f / samples)));
+                retList.Add(curve.Evaluate(i * (1.0f / samples)));
             }
             return retList;
         }
@@ -306,32 +304,21 @@ namespace Aetherius
             ProceduralTextureViewer.ReleaseTexture(ref densityGradientTex);
         }
 
-        public void SendGradientUpdate()
-        {
-            updateCompute = true;
-        }
 
         private void EditorUpdate()
         {
 
-            //Debug.Log(updateCompute.ToString() + this.ToString());
-            //if (updateCompute == false)
-            //{
-            //    Debug.Log("ITS FALSE!" + this.ToString());
-            //}
-            //else
-            //{
-            //    updateCompute = false;
-            //    Debug.Log("Updating LUTs..." + this.ToString());
-            //    UpdateGradientLUTs();
-            //}
+
 
         }
-        private void Update()
+        private void Awake()
         {
+            Debug.Log("Updating LUTs..." + this.ToString());
+            UpdateGradientLUTs();
+
         }
     }
 
 
-    
+
 }
