@@ -6,11 +6,11 @@ namespace Aetherius
 {
 
     [RequireComponent(typeof(Camera))]
-    [ExecuteInEditMode]
     [ImageEffectAllowedInSceneView]
+    [ExecuteInEditMode]
     public class RaymarchCamera : MonoBehaviour
     {
-        [SerializeField,HideInInspector]
+        
         private Camera _cam;
         [SerializeField]
         public ComputeShader computeShader = null;
