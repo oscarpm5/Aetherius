@@ -10,17 +10,20 @@ namespace Aetherius
     [ImageEffectAllowedInSceneView]
     public class RaymarchCamera : MonoBehaviour
     {
+        [SerializeField,HideInInspector]
         private Camera _cam;
-
+        [SerializeField]
         public ComputeShader computeShader = null;
+        [SerializeField]
         public RenderTexture densityGradientTex;
         [SerializeField, HideInInspector]
         private List<ComputeBuffer> toDeleteCompBuffers;
-        [SerializeField,HideInInspector]
-        private bool updateCompute;
+        [SerializeField]
+        public static bool updateCompute;
 
         [SerializeField]
         private Shader _shader;
+        [SerializeField,HideInInspector]
         private Material _material;
         [Header("Ray March")]
         [Range(32, 1024)]
@@ -95,7 +98,9 @@ namespace Aetherius
         private void OnEnable()
         {
             noiseGen = GetComponent<ProceduralTextureViewer>();
-            UpdateGradientLUTs();
+            //UpdateGradientLUTs();
+            UnityEditor.EditorApplication.update += EditorUpdate;
+            
         }
 
 
@@ -243,21 +248,17 @@ namespace Aetherius
         private void OnValidate()
         {
             SendGradientUpdate();
-            
         }
 
         public void UpdateGradientLUTs()
         {
-            if (!updateCompute)
-                return;
-
-            updateCompute = false;
+           
             List<float> fTest = DensityGradientLutFromCurve(ref densityCurve, 256);
-            for (int i = 0; i < fTest.Count; i++)
-            {
-                Debug.Log(fTest[i].ToString());
+            //for (int i = 0; i < fTest.Count; i++)
+            //{
+            //    Debug.Log(fTest[i].ToString());
 
-            }
+            //}
 
             if (computeShader != null)
             {
@@ -267,7 +268,7 @@ namespace Aetherius
 
 
                 int kernel = computeShader.FindKernel("GenerateDensityLUT");
-                Debug.Log(kernel.ToString());
+                //Debug.Log(kernel.ToString());
                 ProceduralTextureViewer.CreateComputeBuffer(ref toDeleteCompBuffers, ref computeShader, sizeof(float), fTest.ToArray(), "densityPoints", "GenerateDensityLUT");
                 computeShader.SetTexture(kernel, "densityGradientTexture", densityGradientTex);
                 computeShader.SetInt("gradientSize", fTest.Count);
@@ -290,6 +291,7 @@ namespace Aetherius
         public void OnDisable() //happens before a hot reload
         {
             CleanUp();
+            UnityEditor.EditorApplication.update -= EditorUpdate;
         }
 
 
@@ -309,6 +311,25 @@ namespace Aetherius
             updateCompute = true;
         }
 
+        private void EditorUpdate()
+        {
+
+            //Debug.Log(updateCompute.ToString() + this.ToString());
+            //if (updateCompute == false)
+            //{
+            //    Debug.Log("ITS FALSE!" + this.ToString());
+            //}
+            //else
+            //{
+            //    updateCompute = false;
+            //    Debug.Log("Updating LUTs..." + this.ToString());
+            //    UpdateGradientLUTs();
+            //}
+
+        }
+        private void Update()
+        {
+        }
     }
 
 
