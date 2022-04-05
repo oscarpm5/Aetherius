@@ -12,10 +12,7 @@ namespace Aetherius
     {
 
         private Camera _cam;
-        [SerializeField]
-        public ComputeShader computeShader = null;
-        [SerializeField]
-        public RenderTexture densityGradientTex;
+       
         [SerializeField, HideInInspector]
         private List<ComputeBuffer> toDeleteCompBuffers;
 
@@ -96,9 +93,6 @@ namespace Aetherius
         private void OnEnable()
         {
             noiseGen = GetComponent<ProceduralTextureViewer>();
-            //UpdateGradientLUTs();
-            UnityEditor.EditorApplication.update += EditorUpdate;
-
         }
 
 
@@ -150,7 +144,7 @@ namespace Aetherius
             rayMarchMaterial.SetTexture("weatherMapTexture", weatherMap);
             rayMarchMaterial.SetFloat("lightAbsorption", lightAbsorption);
             rayMarchMaterial.SetFloat("lightIntensity", sunLight.intensity);
-
+            CreateLUTBuffer(256,ref densityCurve, "densityCurveBuffer");
 
 
             Color[] c = new Color[6];
@@ -181,7 +175,6 @@ namespace Aetherius
             rayMarchMaterial.SetFloat("silverExponent", silverExponent);
             rayMarchMaterial.SetTexture("blueNoiseTexture", blueNoise);
             rayMarchMaterial.SetFloat("shadowBaseLight", shadowBaseLight);
-            rayMarchMaterial.SetTexture("densityGradientTexture", densityGradientTex);
 
             //Create a screen quad
             RenderTexture.active = destination;
@@ -207,7 +200,7 @@ namespace Aetherius
 
 
 
-
+            ProceduralTextureViewer.DeleteComputeBuffers(ref toDeleteCompBuffers);
         }
 
 
@@ -243,36 +236,13 @@ namespace Aetherius
 
             return newList;
         }
+    
 
-
-
-
-
-        public void UpdateGradientLUTs()
+        void CreateLUTBuffer(int samples, ref AnimationCurve curve,string name)
         {
-
-            List<float> fTest = DensityGradientLutFromCurve(ref densityCurve, 256);
-            //for (int i = 0; i < fTest.Count; i++)
-            //{
-            //    Debug.Log(fTest[i].ToString());
-
-            //}
-
-            if (computeShader != null)
-            {
-                ProceduralTextureViewer.GenerateRenderTexture(
-                    fTest.Count, ref densityGradientTex, ProceduralTextureViewer.TEXTURE_DIMENSIONS.TEX_2D,
-                    UnityEngine.Experimental.Rendering.GraphicsFormat.R16G16B16A16_UNorm, FilterMode.Bilinear);
-
-
-                int kernel = computeShader.FindKernel("GenerateDensityLUT");
-                //Debug.Log(kernel.ToString());
-                ProceduralTextureViewer.CreateComputeBuffer(ref toDeleteCompBuffers, ref computeShader, sizeof(float), fTest.ToArray(), "densityPoints", "GenerateDensityLUT");
-                computeShader.SetTexture(kernel, "densityGradientTexture", densityGradientTex);
-                computeShader.SetInt("gradientSize", fTest.Count);
-                ProceduralTextureViewer.DispatchComputeShader(ref computeShader, kernel, new Vector3Int(256, 256, 256));
-                ProceduralTextureViewer.DeleteComputeBuffers(ref toDeleteCompBuffers);
-            }
+            List<float> fTest = DensityGradientLutFromCurve(ref curve, samples);
+            ComputeBuffer newBuff = ProceduralTextureViewer.CreateComputeBuffer(ref toDeleteCompBuffers, sizeof(float), fTest.ToArray());
+            rayMarchMaterial.SetBuffer(name, newBuff);
         }
 
         private List<float> DensityGradientLutFromCurve(ref AnimationCurve curve, int samples)
@@ -289,7 +259,6 @@ namespace Aetherius
         public void OnDisable() //happens before a hot reload
         {
             CleanUp();
-            UnityEditor.EditorApplication.update -= EditorUpdate;
         }
 
 
@@ -301,22 +270,10 @@ namespace Aetherius
 
         void CleanUp()
         {
-            ProceduralTextureViewer.ReleaseTexture(ref densityGradientTex);
+            
         }
 
 
-        private void EditorUpdate()
-        {
-
-
-
-        }
-        private void Awake()
-        {
-            Debug.Log("Updating LUTs..." + this.ToString());
-            UpdateGradientLUTs();
-
-        }
     }
 
 

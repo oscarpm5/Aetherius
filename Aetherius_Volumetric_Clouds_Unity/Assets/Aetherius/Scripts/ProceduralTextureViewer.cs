@@ -386,6 +386,18 @@ namespace Aetherius
 
         //Compute Buffers =========================================================================
         
+        public static ComputeBuffer CreateComputeBuffer(ref List<ComputeBuffer> toDeleteList, int dataStride, System.Array data)
+        {
+            ComputeBuffer newBuffer = new ComputeBuffer(data.Length, dataStride, ComputeBufferType.Structured);
+            newBuffer.SetData(data);
+
+            if (toDeleteList == null)
+                toDeleteList = new List<ComputeBuffer>();
+
+            toDeleteList.Add(newBuffer);
+            return newBuffer;
+        }
+
         public static ComputeBuffer CreateComputeBuffer(ref List<ComputeBuffer> toDeleteList,ref ComputeShader compShader, int dataStride, System.Array data, string bufferName, string kernelName)
         {
             ComputeBuffer newBuffer = new ComputeBuffer(data.Length, dataStride, ComputeBufferType.Structured);

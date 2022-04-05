@@ -67,12 +67,10 @@ Shader "Aetherius/RaymarchShader"
 			Texture3D<float4> detailTexture; //TODO see if I can get around using a float3
 			Texture2D<float4> weatherMapTexture;
 			Texture2D<float> blueNoiseTexture;
-			Texture2D<float4> densityGradientTexture;
 			SamplerState samplerblueNoiseTexture;
 			SamplerState samplerbaseShapeTexture;
 			SamplerState samplerdetailTexture;
 			SamplerState samplerweatherMapTexture;
-			SamplerState samplerdensityGradientTexture;
 			float baseShapeSize;
 			float detailSize;
 			float weatherMapSize;
@@ -93,6 +91,8 @@ Shader "Aetherius/RaymarchShader"
 			float silverExponent;//0 to 1
 			float shadowBaseLight;//0 to 1
 
+			StructuredBuffer<float> densityCurveBuffer;
+
 			float DensityAltering(float heightPercent) //Makes Clouds have more shape at the top & be more round towards the bottom, the weather map also influences the density
 			{
 				/*
@@ -100,8 +100,18 @@ Shader "Aetherius/RaymarchShader"
 				float densityTop = saturate(Remap(heightPercent, 0.2, 1.0, 1.0, 0.0));
 				return   densityBottom * densityTop; 
 				*/
-
-				return saturate(densityGradientTexture.Sample(samplerdensityGradientTexture,float2(0.5,heightPercent)).r);//TODO make 256 a variable
+				
+				uint numStructs;
+				uint stride;
+				densityCurveBuffer.GetDimensions(numStructs, stride);
+				
+				uint maxN = 256;
+				uint dU = heightPercent * maxN;
+				uint dUbefore = max(0, dU - 1);
+				uint dUafter = min(dU + 1, maxN);
+				float d = (densityCurveBuffer[dUbefore] + densityCurveBuffer[dU] + densityCurveBuffer[dUafter])/3.0;
+				return d;
+				
 			}
 
 			//value between 0 & 1 showing where we are in the cloud layer
