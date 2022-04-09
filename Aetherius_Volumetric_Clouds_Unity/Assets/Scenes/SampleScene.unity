@@ -123,42 +123,6 @@ NavMeshSettings:
     debug:
       m_Flags: 0
   m_NavMeshData: {fileID: 0}
---- !u!84 &268575586
-RenderTexture:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_Name: 
-  m_ImageContentsHash:
-    serializedVersion: 2
-    Hash: 00000000000000000000000000000000
-  m_ForcedFallbackFormat: 4
-  m_DownscaleFallback: 0
-  m_IsAlphaChannelOptional: 0
-  serializedVersion: 3
-  m_Width: 32
-  m_Height: 32
-  m_AntiAliasing: 1
-  m_MipCount: -1
-  m_DepthFormat: 0
-  m_ColorFormat: 24
-  m_MipMap: 0
-  m_GenerateMips: 1
-  m_SRGB: 0
-  m_UseDynamicScale: 0
-  m_BindMS: 0
-  m_EnableCompatibleFormat: 1
-  m_TextureSettings:
-    serializedVersion: 2
-    m_FilterMode: 2
-    m_Aniso: 1
-    m_MipBias: 0
-    m_WrapU: 0
-    m_WrapV: 0
-    m_WrapW: 0
-  m_Dimension: 3
-  m_VolumeDepth: 32
 --- !u!1 &359574013
 GameObject:
   m_ObjectHideFlags: 0
@@ -254,6 +218,42 @@ Transform:
   m_Father: {fileID: 0}
   m_RootOrder: 2
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!84 &502802218
+RenderTexture:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: 
+  m_ImageContentsHash:
+    serializedVersion: 2
+    Hash: 00000000000000000000000000000000
+  m_ForcedFallbackFormat: 4
+  m_DownscaleFallback: 0
+  m_IsAlphaChannelOptional: 0
+  serializedVersion: 3
+  m_Width: 128
+  m_Height: 128
+  m_AntiAliasing: 1
+  m_MipCount: -1
+  m_DepthFormat: 0
+  m_ColorFormat: 24
+  m_MipMap: 0
+  m_GenerateMips: 1
+  m_SRGB: 0
+  m_UseDynamicScale: 0
+  m_BindMS: 0
+  m_EnableCompatibleFormat: 1
+  m_TextureSettings:
+    serializedVersion: 2
+    m_FilterMode: 2
+    m_Aniso: 1
+    m_MipBias: 0
+    m_WrapU: 0
+    m_WrapV: 0
+    m_WrapW: 0
+  m_Dimension: 3
+  m_VolumeDepth: 128
 --- !u!1 &705507993
 GameObject:
   m_ObjectHideFlags: 0
@@ -445,15 +445,31 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d9926736fa158f743babbd6b381f53e1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  mode: 0
+  simple:
+    baseShapeSize: 0.21
+    detailSize: 2
+    globalCoverage: 1
+    globalDensity: 0.05
+    weatherMap: {fileID: 0}
+    weatherMapSize: 0.1
+    weatherMapOffset: {x: 0, y: 0, z: 0}
+  advanced:
+    baseShapeSize: 0.2
+    detailSize: 1.5
+    globalCoverage: 0.5
+    globalDensity: 0.01
+    weatherMap: {fileID: 0}
+    weatherMapSize: 0.1
+    weatherMapOffset: {x: 0, y: 0, z: 0}
   _shader: {fileID: 4800000, guid: 0062334ff4afa1a42b65d127e5405941, type: 3}
+  _material: {fileID: 0}
   maxSteps: 128
   maxRayDist: 10000
-  baseShapeSize: 0.2
-  detailSize: 1
   blueNoise: {fileID: 2800000, guid: 0cd98530926ee344a93cf6cc4437d4f6, type: 3}
-  weatherMap: {fileID: 2800000, guid: aea288de504cc2d4e8c48278fec8e39c, type: 3}
+  weatherMap: {fileID: 2800000, guid: 6900cd79c684e594991f0b45e41cec4b, type: 3}
   minCloudHeight: 1000
-  maxCloudHeight: 4000
+  maxCloudHeight: 8000
   densityCurve:
     serializedVersion: 2
     m_Curve:
@@ -497,10 +513,6 @@ MonoBehaviour:
     m_PostInfinity: 2
     m_RotationOrder: 4
   sunLight: {fileID: 705507994}
-  globalCoverage: 1
-  globalDensity: 0.05
-  minCloudHeight: 1500
-  maxCloudHeight: 4000
   lightAbsorption: 0.1
   outScatteringAmbient: 0
   ambientMin: 0.297
@@ -545,8 +557,8 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 3d04b3037c1a4a640b7ac77a0decf1c4, type: 2}
   - {fileID: 11400000, guid: cdb03daae29d1a74f9d322db4dace868, type: 2}
   _updateNoise: 0
-  _baseShapeRenderTexture: {fileID: 1575904707}
-  _detailRenderTexture: {fileID: 268575586}
+  _baseShapeRenderTexture: {fileID: 502802218}
+  _detailRenderTexture: {fileID: 1611084992}
 --- !u!114 &963194231
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -560,7 +572,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   targetFPS: 30
---- !u!84 &1575904707
+--- !u!84 &1611084992
 RenderTexture:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -595,4 +607,4 @@ RenderTexture:
     m_WrapV: 0
     m_WrapW: 0
   m_Dimension: 3
-  m_VolumeDepth: 128
+  m_VolumeDepth: 32
