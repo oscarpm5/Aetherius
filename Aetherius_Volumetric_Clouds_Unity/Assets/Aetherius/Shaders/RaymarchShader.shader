@@ -167,7 +167,7 @@ Shader "Aetherius/RaymarchShader"
 
 					//Cloud Base shape
 					float lowFreqFBM = (lowFreqNoise.g * 0.625) + (lowFreqNoise.b * 0.25) + (lowFreqNoise.a * 0.125);
-					float cloudNoiseBase = saturate(Remap(lowFreqNoise.r, lowFreqFBM-1.0, 1.0, 0.0, 1.0));
+					float cloudNoiseBase = saturate(Remap(lowFreqNoise.r, 0.0, 1.0, lowFreqFBM, 1.0));
 					cloudNoiseBase *= DensityAltering(cloudHeightPercent, weatherMapCloud.g);
 
 					//Coverage
@@ -180,9 +180,9 @@ Shader "Aetherius/RaymarchShader"
 					detailNoise *= 0.35 * exp(-globalCoverage * 0.75);
 
 					//Detail - Base Shape
-					float finalCloud = saturate(Remap(baseCloudWithCoverage, detailNoise, 1.0, 0.0, 1.0));
+					float finalCloud = saturate(Remap(baseCloudWithCoverage, detailNoise, 1.0,0.0, 1.0));
 					
-					density = finalCloud* globalDensity;
+					density = finalCloud * globalDensity;
 				}
 
 
