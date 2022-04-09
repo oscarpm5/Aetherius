@@ -4,7 +4,7 @@ Shader "Aetherius/RaymarchShader"
 	{
 		_MainTex("Texture", 2D) = "white" {}
 	}
-	SubShader
+		SubShader
 	{
 		// No culling or depth
 		Cull Off ZWrite Off ZTest Always
@@ -93,25 +93,58 @@ Shader "Aetherius/RaymarchShader"
 
 			StructuredBuffer<float> densityCurveBuffer;
 
-			float DensityAltering(float heightPercent) //Makes Clouds have more shape at the top & be more round towards the bottom, the weather map also influences the density
+			int mode;
+
+			float DensityAlteringSimple(float heightPercent,float weatherMapCloudType)
 			{
-				/*
-				float densityBottom = saturate(Remap(heightPercent,0.0,0.1,0.0,1.0));//Reduces density towards the bottom of the cloud
-				float densityTop = saturate(Remap(heightPercent, 0.2, 1.0, 1.0, 0.0));
-				return   densityBottom * densityTop; 
-				*/
+				float densityBottom = 0.0;//Reduces density towards the bottom of the cloud
+				float densityTop = 0.0;//Reduces density towards the top of the cloud
 				
+				if (weatherMapCloudType < 0.33) //Stratus
+				{
+					densityBottom = Remap(heightPercent, 0.0, 0.1, 0.0, 1.0);
+					densityTop = Remap(heightPercent, 0.2, 0.3, 1.0, 0.0);
+				}
+				else if (weatherMapCloudType < 0.66)
+				{
+					densityBottom = Remap(heightPercent, 0.0, 0.2, 0.0, 1.0);
+				densityTop = Remap(heightPercent, 0.4, 0.7, 1.0, 0.0);
+				}
+				else
+				{
+					densityBottom = Remap(heightPercent, 0.0, 0.15, 0.0, 1.0);
+					densityTop = Remap(heightPercent, 0.7, 0.9, 1.0, 0.0);
+				}
+				
+				
+
+				return  saturate(densityBottom) * saturate(densityTop);
+			}
+
+			float DensityAlteringAdvanced(float heightPercent)
+			{
 				uint numStructs;
 				uint stride;
 				densityCurveBuffer.GetDimensions(numStructs, stride);
-				
+
 				uint maxN = 256;
 				uint dU = heightPercent * maxN;
 				uint dUbefore = max(0, dU - 1);
 				uint dUafter = min(dU + 1, maxN);
-				float d = (densityCurveBuffer[dUbefore] + densityCurveBuffer[dU] + densityCurveBuffer[dUafter])/3.0;
-				return d;
-				
+
+				return  (densityCurveBuffer[dUbefore] + densityCurveBuffer[dU] + densityCurveBuffer[dUafter]) / 3.0;
+			}
+
+			float DensityAltering(float heightPercent,float weatherMapCloudType) //Makes Clouds have more shape at the top & be more round towards the bottom, the weather map also influences the density
+			{
+				if (mode == 0)//Simple mode
+				{
+					return DensityAlteringSimple(heightPercent, weatherMapCloudType);
+				}
+
+				//Advanced mode
+				return DensityAlteringAdvanced(heightPercent);
+
 			}
 
 			//value between 0 & 1 showing where we are in the cloud layer
@@ -130,30 +163,30 @@ Shader "Aetherius/RaymarchShader"
 					float cloudHeightPercent = GetCloudLayerHeight(currPos.y, minCloudHeight, maxCloudHeight);//value between 0 & 1 showing where we are in the cloud layer
 
 
-					float weatherMapCloud = weatherMapTexture.Sample(samplerweatherMapTexture, (currPos.xz + weatherMapOffset.xz)* baseScale * weatherMapSize); //We sample the weather map
+					float4 weatherMapCloud = weatherMapTexture.Sample(samplerweatherMapTexture, (currPos.xz + weatherMapOffset.xz) * baseScale * weatherMapSize); //We sample the weather map (r coverage,g type)
 					float4 lowFreqNoise = baseShapeTexture.Sample(samplerbaseShapeTexture, currPos * baseScale * baseShapeSize);
 					float4 highFreqNoise = detailTexture.Sample(samplerdetailTexture, currPos * baseScale * detailSize);
 
 					//Cloud Base shape
 					float lowFreqFBM = (lowFreqNoise.g * 0.625) + (lowFreqNoise.b * 0.25) + (lowFreqNoise.a * 0.125);
-					float cloudNoise = saturate(Remap(lowFreqNoise.r, -(1.0 - lowFreqFBM), 1.0, 0.0, 1.0));					
-					cloudNoise *= DensityAltering(cloudHeightPercent);
+					float cloudNoise = saturate(Remap(lowFreqNoise.r, -(1.0 - lowFreqFBM), 1.0, 0.0, 1.0));
+					cloudNoise *= DensityAltering(cloudHeightPercent, weatherMapCloud.g);
 
 					//Coverage
-					float baseCloudWithCoverage = Remap(cloudNoise,1.0- weatherMapCloud*globalCoverage,1.0,0.0,1.0);
-					baseCloudWithCoverage *= weatherMapCloud;
+					float baseCloudWithCoverage = Remap(cloudNoise,1.0 - weatherMapCloud.r * globalCoverage,1.0,0.0,1.0);
+					baseCloudWithCoverage *= weatherMapCloud.r;
 
 					////Detail Shape
 					float highFreqFBM = (highFreqNoise.r * 0.625) + (highFreqNoise.g * 0.25) + (highFreqNoise.b * 0.125);
 					float detailNoise = saturate(lerp(highFreqFBM,1.0 - highFreqFBM, saturate(cloudHeightPercent * 10.0)));
 
 					////Detail - Base Shape
-					float finalCloud = saturate(Remap(baseCloudWithCoverage, detailNoise*0.2,1.0,0.0,1.0));
+					float finalCloud = saturate(Remap(baseCloudWithCoverage, detailNoise * 0.2,1.0,0.0,1.0));
 					//float cloudBase = saturate(Remap(cloudNoise * ShapeAltering(cloudHeightPercent),1.0 - (weatherMapCloud * globalCoverage),1.0,0.0,1.0)); //Cloud noise is remapped into the weatherMap takin into accoun global coverage as well
 					//density = saturate(Remap(cloudBase, detailNoise,1.0,0.0,1.0));
 					////density *= DensityAltering(cloudHeightPercent, weatherMapCloud);
 
-					density = finalCloud*globalDensity;
+					density = finalCloud * globalDensity;
 				}
 
 
@@ -163,8 +196,8 @@ Shader "Aetherius/RaymarchShader"
 			float BeerLambertLaw(float accDensity, float absorptionCoefficient)
 			{
 				float ret = exp(-accDensity * absorptionCoefficient);
-				return shadowBaseLight + ret* (1.0-shadowBaseLight);
-			}			
+				return shadowBaseLight + ret * (1.0 - shadowBaseLight);
+			}
 
 			float PowderEffect(float accDensity, float absorptionCoefficient)
 			{
@@ -177,17 +210,17 @@ Shader "Aetherius/RaymarchShader"
 			{
 				int iter = 6;
 				float accDensity = 0.0;
-				float stepSize = (float(maxCloudHeight - minCloudHeight) *0.5)/float(iter);//TODO make as variable (maybe when we have cone light samples?)
+				float stepSize = (float(maxCloudHeight - minCloudHeight) * 0.5) / float(iter);//TODO make as variable (maybe when we have cone light samples?)
 				float3 startingPos = currPosition;
-				
+
 				for (int currStep = 0; currStep < iter; ++currStep)
 				{
 					currPosition += -sunDir * stepSize;
-					accDensity += GetDensity(currPosition)*stepSize;
+					accDensity += GetDensity(currPosition) * stepSize;
 
 				}
 
-				accDensity += GetDensity(startingPos - sunDir * stepSize* float(iter)*3.0)*stepSize;
+				accDensity += GetDensity(startingPos - sunDir * stepSize * float(iter) * 3.0) * stepSize;
 
 				return accDensity;
 			}
@@ -200,11 +233,11 @@ Shader "Aetherius/RaymarchShader"
 				float3 startingPos = currPosition;
 				for (int currStep = 0; currStep < iter; ++currStep)
 				{
-					currPosition += -sunDir * stepSize + (stepSize * coneKernel[currStep].xyz * float(currStep)* coneWidthScale);
+					currPosition += -sunDir * stepSize + (stepSize * coneKernel[currStep].xyz * float(currStep) * coneWidthScale);
 					accDensity += GetDensity(currPosition) * stepSize;
 				}
 
-				accDensity += GetDensity(startingPos - sunDir * stepSize * 6.0 + (-sunDir * stepSize * 6 * 3* coneWidthScale)) * stepSize;
+				accDensity += GetDensity(startingPos - sunDir * stepSize * 6.0 + (-sunDir * stepSize * 6 * 3 * coneWidthScale)) * stepSize;
 
 				return accDensity;
 			}
@@ -237,15 +270,15 @@ Shader "Aetherius/RaymarchShader"
 			//OutScatterAmbient
 			float OSa(float density,float hPercent)
 			{
-				
-				float depth= osA* pow(density, Remap(hPercent, 0.3, 0.9, 0.5, 1.0));
+
+				float depth = osA * pow(density, Remap(hPercent, 0.3, 0.9, 0.5, 1.0));
 				float vertical = pow(saturate(Remap(hPercent, 0.0, 0.3, 0.8, 1.0)),0.8);
 				float outScatter = depth * vertical;
-				
+
 				return 1.0 - saturate(outScatter);
 			}
 
-			
+
 
 			float4 Raymarching(float3 ro, float3 rd,float2 uv) //where ro is ray origin & rd is ray direction
 			{
@@ -253,11 +286,11 @@ Shader "Aetherius/RaymarchShader"
 
 				float stepLength = maxRayDist / maxSteps; //TODO provisional, will find another solution for the stepping later
 				uv.x *= (_ScreenParams.x / _ScreenParams.y);
-				uv *= min(_ScreenParams.x, _ScreenParams.y)/ 128;//we assume blue noise has a 128 res texture
-				
-				float3 currPos = ro + rd* stepLength * (blueNoiseTexture.Sample(samplerblueNoiseTexture, uv ) -0.5)*2.0;
-				float cosAngle = dot( -rd,sunDir);//We assume they are normalized
-				
+				uv *= min(_ScreenParams.x, _ScreenParams.y) / 128;//we assume blue noise has a 128 res texture
+
+				float3 currPos = ro + rd * stepLength * (blueNoiseTexture.Sample(samplerblueNoiseTexture, uv) - 0.5) * 2.0;
+				float cosAngle = dot(-rd,sunDir);//We assume they are normalized
+
 				float density = 0.0;
 				float lightEnergy = 0.0;
 				float transmittance = 1.0;
@@ -271,16 +304,16 @@ Shader "Aetherius/RaymarchShader"
 							//float densityTowardsLight = DensityTowardsLightCone(currPos,.5);
 							float densityTowardsLight = DensityTowardsLight(currPos);
 							float absorption = BeerLambertLaw(densityTowardsLight, lightAbsorption);
-							
+
 
 							float attenuation = Attenuation(densityTowardsLight,cosAngle);
-							
-							float inOutScattering =IOS(cosAngle,0.3,0.2);
+
+							float inOutScattering = IOS(cosAngle,0.3,0.2);
 							float ambientScatter = OSa(density, GetCloudLayerHeight(currPos.y, minCloudHeight, maxCloudHeight));
 							float beerPowder = 2.0 * absorption * PowderEffect(densityTowardsLight, lightAbsorption);
 
 
-							lightEnergy += attenuation * inOutScattering * ambientScatter *currDensity * stepLength* transmittance;
+							lightEnergy += attenuation * inOutScattering * ambientScatter * currDensity * stepLength * transmittance;
 							transmittance *= BeerLambertLaw(currDensity * stepLength, lightAbsorption);
 							density += currDensity * stepLength;
 						}
@@ -290,7 +323,7 @@ Shader "Aetherius/RaymarchShader"
 				//TODO density above 1 makes banding worse somehow, fix, do we really need to clamp density?
 				density = saturate(density);//we dont want density above 1 for now (TODO visual glitch in the sun if above 1, fix this?)
 
-				col = lightColor* lightEnergy*lightIntensity;
+				col = lightColor * lightEnergy * lightIntensity;
 
 				//col = lightColor* lightIntensity * transmission + lightEnergy;
 				//col = col * lightEnergy;
@@ -309,7 +342,7 @@ Shader "Aetherius/RaymarchShader"
 			//col.rgb = 1 - col.rgb;
 
 			float3 rayDirection = normalize(i.ray.xyz);
-			float3 rayOrigin =  _WorldSpaceCameraPos;
+			float3 rayOrigin = _WorldSpaceCameraPos;
 
 			float4 result = Raymarching(rayOrigin, rayDirection,i.uv);
 
