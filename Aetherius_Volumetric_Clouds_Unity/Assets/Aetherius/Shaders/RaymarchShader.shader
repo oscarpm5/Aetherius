@@ -117,7 +117,7 @@ Shader "Aetherius/RaymarchShader"
 				}
 				
 				
-
+				
 				return  saturate(densityBottom) * saturate(densityTop);
 			}
 
@@ -160,33 +160,29 @@ Shader "Aetherius/RaymarchShader"
 				float density = 0.0;
 				if (currPos.y >= minCloudHeight && currPos.y <= maxCloudHeight) //If inside of bouds of cloud layer
 				{
-					float cloudHeightPercent = GetCloudLayerHeight(currPos.y, minCloudHeight, maxCloudHeight);//value between 0 & 1 showing where we are in the cloud layer
-
-
+					float cloudHeightPercent = GetCloudLayerHeight(currPos.y, minCloudHeight, maxCloudHeight);//value between 0 & 1 showing where we are in the cloud 
 					float4 weatherMapCloud = weatherMapTexture.Sample(samplerweatherMapTexture, (currPos.xz + weatherMapOffset.xz) * baseScale * weatherMapSize); //We sample the weather map (r coverage,g type)
 					float4 lowFreqNoise = baseShapeTexture.Sample(samplerbaseShapeTexture, currPos * baseScale * baseShapeSize);
 					float4 highFreqNoise = detailTexture.Sample(samplerdetailTexture, currPos * baseScale * detailSize);
 
 					//Cloud Base shape
 					float lowFreqFBM = (lowFreqNoise.g * 0.625) + (lowFreqNoise.b * 0.25) + (lowFreqNoise.a * 0.125);
-					float cloudNoise = saturate(Remap(lowFreqNoise.r, -(1.0 - lowFreqFBM), 1.0, 0.0, 1.0));
-					cloudNoise *= DensityAltering(cloudHeightPercent, weatherMapCloud.g);
+					float cloudNoiseBase = saturate(Remap(lowFreqNoise.r, lowFreqFBM-1.0, 1.0, 0.0, 1.0));
+					cloudNoiseBase *= DensityAltering(cloudHeightPercent, weatherMapCloud.g);
 
 					//Coverage
-					float baseCloudWithCoverage = Remap(cloudNoise,1.0 - weatherMapCloud.r * globalCoverage,1.0,0.0,1.0);
+					float baseCloudWithCoverage = saturate(Remap(cloudNoiseBase,1.0 - (weatherMapCloud.r*globalCoverage),1.0,0.0,1.0));
 					baseCloudWithCoverage *= weatherMapCloud.r;
 
 					////Detail Shape
 					float highFreqFBM = (highFreqNoise.r * 0.625) + (highFreqNoise.g * 0.25) + (highFreqNoise.b * 0.125);
-					float detailNoise = saturate(lerp(highFreqFBM,1.0 - highFreqFBM, saturate(cloudHeightPercent * 10.0)));
+					float detailNoise = lerp(highFreqFBM,1.0- highFreqFBM,saturate(cloudHeightPercent *5.0));
+					detailNoise *= 0.35 * exp(-globalCoverage * 0.75);
 
-					////Detail - Base Shape
-					float finalCloud = saturate(Remap(baseCloudWithCoverage, detailNoise * 0.2,1.0,0.0,1.0));
-					//float cloudBase = saturate(Remap(cloudNoise * ShapeAltering(cloudHeightPercent),1.0 - (weatherMapCloud * globalCoverage),1.0,0.0,1.0)); //Cloud noise is remapped into the weatherMap takin into accoun global coverage as well
-					//density = saturate(Remap(cloudBase, detailNoise,1.0,0.0,1.0));
-					////density *= DensityAltering(cloudHeightPercent, weatherMapCloud);
-
-					density = finalCloud * globalDensity;
+					//Detail - Base Shape
+					float finalCloud = saturate(Remap(baseCloudWithCoverage, detailNoise, 1.0, 0.0, 1.0));
+					
+					density = finalCloud* globalDensity;
 				}
 
 
