@@ -4,44 +4,75 @@ using UnityEngine;
 
 namespace Aetherius
 {
+    [System.Serializable]
+    public struct CloudShape
+    {
+        public float baseShapeSize; //Advanced
+        public float detailSize; //Advanced
+        public float globalCoverage; //Advanced
+        public float globalDensity; //Advanced
+
+        public Texture2D weatherMap; //Advanced -> TODO when we have weather map generation
+        public float weatherMapSize; //Advanced
+        public Vector3 weatherMapOffset; //Always display
+
+    }
 
     [RequireComponent(typeof(Camera))]
-    [ExecuteInEditMode]
     [ImageEffectAllowedInSceneView]
+    [ExecuteInEditMode]
     public class RaymarchCamera : MonoBehaviour
     {
+        public enum CLOUD_CONTROL
+        {
+            SIMPLE,
+            ADVANCED
+        }
+
         private Camera _cam;
+
+        public CLOUD_CONTROL mode= CLOUD_CONTROL.SIMPLE;
+
+
+        public CloudShape simple;
+        public CloudShape advanced;
+
+        [SerializeField, HideInInspector]
+        private List<ComputeBuffer> toDeleteCompBuffers;
 
         [SerializeField]
         private Shader _shader;
+        [SerializeField, HideInInspector]
         private Material _material;
         [Header("Ray March")]
         [Range(32, 1024)]
         public int maxSteps = 256;
         public float maxRayDist = 500.0f;
 
-        [Header("Noise")]
-        public float baseShapeSize = 1.0f;
-        public float detailSize = 1.0f;
         public Texture2D blueNoise;
         [Header("Weather Map")]
         public Texture2D weatherMap;
-        public float weatherMapSize = 1.0f;
-        public Vector3 weatherMapOffset = Vector3.zero;
+        
         [Header("Cloud")]
-        public Light sunLight;
-        [Range(0.0f, 1.0f)]
-        public float globalCoverage = 0.5f;
-        public float globalDensity = 1.0f;
         public float minCloudHeight = 250.0f;
         public float maxCloudHeight = 250.0f;
+
+        [HideInInspector]
+        public AnimationCurve densityCurve = new AnimationCurve(
+            new Keyframe[3] {
+                new Keyframe(0.0f,0.0f,14.5f,14.5f),
+                new Keyframe(0.2f,1.0f,0.15f,0.15f),
+                new Keyframe(1.0f,0.0f,-3.0f,-3.0f)}
+            );
+
         [Header("Lighting")]
+        public Light sunLight;
         [Range(0.0f, 10.0f)]
         public float lightAbsorption = 1.0f;
         //[Range(0.0f, 1.0f)]
         public float outScatteringAmbient = 1.0f;
         List<Vector4> conekernel;
-        [Range(0.0f,1.0f)]
+        [Range(0.0f, 1.0f)]
         public float ambientMin = 0.2f;
         [Range(0.0f, 1.0f)]
         public float attenuationClamp = 0.2f;
@@ -52,6 +83,19 @@ namespace Aetherius
 
         [Range(0.0f, 1.0f)]
         public float shadowBaseLight = 0.5f;
+        
+        public CloudShape currentShape
+        {
+            get
+            {
+                if(mode == CLOUD_CONTROL.SIMPLE)
+                {
+                    return simple;
+                }
+                return advanced;
+            }
+        }
+        
         public Material rayMarchMaterial
         {
             get
@@ -81,6 +125,12 @@ namespace Aetherius
         private void OnEnable()
         {
             noiseGen = GetComponent<ProceduralTextureViewer>();
+            SetShapeParams(ref simple);
+
+            if(advanced.globalDensity==0.0f) //We use density as a flag to know whether it has been initialized -> TODO find a better way
+            {
+                SetShapeParams(ref advanced);
+            }
         }
 
 
@@ -103,11 +153,15 @@ namespace Aetherius
                 }
             }
 
+
+
             if (conekernel == null)
                 conekernel = GenerateConeKernels();
 
             //GetComponent<ProceduralTextureViewer>().UpdateNoise();
 
+
+            //UpdateGradientLUTs();
 
             rayMarchMaterial.SetMatrix("_CamFrustum", CamFrustrumFromCam(_camera));
             rayMarchMaterial.SetMatrix("_CamToWorldMat", _camera.cameraToWorldMatrix);
@@ -116,13 +170,13 @@ namespace Aetherius
             rayMarchMaterial.SetFloat("maxRayDist", maxRayDist);
             rayMarchMaterial.SetFloat("minCloudHeight", minCloudHeight);
             rayMarchMaterial.SetFloat("maxCloudHeight", maxCloudHeight);
-            rayMarchMaterial.SetFloat("baseShapeSize", baseShapeSize);
-            rayMarchMaterial.SetFloat("detailSize", detailSize);
-            rayMarchMaterial.SetFloat("weatherMapSize", weatherMapSize);
-            rayMarchMaterial.SetFloat("globalCoverage", globalCoverage);
-            rayMarchMaterial.SetFloat("globalDensity", globalDensity);
+            rayMarchMaterial.SetFloat("baseShapeSize", currentShape.baseShapeSize);
+            rayMarchMaterial.SetFloat("detailSize", currentShape.detailSize);
+            rayMarchMaterial.SetFloat("weatherMapSize", currentShape.weatherMapSize);
+            rayMarchMaterial.SetFloat("globalCoverage", currentShape.globalCoverage);
+            rayMarchMaterial.SetFloat("globalDensity", currentShape.globalDensity);
             rayMarchMaterial.SetVector("sunDir", sunLight.transform.rotation * Vector3.forward);
-            rayMarchMaterial.SetVector("weatherMapOffset", weatherMapOffset);
+            rayMarchMaterial.SetVector("weatherMapOffset", currentShape.weatherMapOffset);
             rayMarchMaterial.SetTexture("baseShapeTexture", noiseGen.GetTexture(ProceduralTextureViewer.TEXTURE_TYPE.BASE_SHAPE));
             rayMarchMaterial.SetTexture("detailTexture", noiseGen.GetTexture(ProceduralTextureViewer.TEXTURE_TYPE.DETAIL));
             rayMarchMaterial.SetTexture("weatherMapTexture", weatherMap);
@@ -130,9 +184,8 @@ namespace Aetherius
             rayMarchMaterial.SetFloat("lightIntensity", sunLight.intensity);
 
 
-
-            Color []c= new Color[6];
-            Vector3 []dirs= new Vector3[6];
+            Color[] c = new Color[6];
+            Vector3[] dirs = new Vector3[6];
             dirs[0] = sunLight.transform.rotation * Vector3.forward;
             dirs[1] = sunLight.transform.rotation * Vector3.back;
             dirs[2] = sunLight.transform.rotation * Vector3.right;
@@ -141,7 +194,7 @@ namespace Aetherius
             dirs[5] = sunLight.transform.rotation * Vector3.down;
 
             RenderSettings.ambientProbe.Evaluate(dirs, c);
-            Color ambientCol= new Color(0.0f,0.0f,0.0f);
+            Color ambientCol = new Color(0.0f, 0.0f, 0.0f);
             for (int i = 0; i < c.Length; i++)
             {
                 ambientCol += c[i];
@@ -159,6 +212,11 @@ namespace Aetherius
             rayMarchMaterial.SetFloat("silverExponent", silverExponent);
             rayMarchMaterial.SetTexture("blueNoiseTexture", blueNoise);
             rayMarchMaterial.SetFloat("shadowBaseLight", shadowBaseLight);
+
+            rayMarchMaterial.SetInt("mode",(int)mode);
+
+            CreateLUTBuffer(256, ref densityCurve, "densityCurveBuffer");
+
 
             //Create a screen quad
             RenderTexture.active = destination;
@@ -184,7 +242,7 @@ namespace Aetherius
 
 
 
-
+            ProceduralTextureViewer.DeleteComputeBuffers(ref toDeleteCompBuffers);
         }
 
 
@@ -220,5 +278,57 @@ namespace Aetherius
 
             return newList;
         }
+    
+
+        void CreateLUTBuffer(int samples, ref AnimationCurve curve,string name)
+        {
+            List<float> fTest = DensityGradientLutFromCurve(ref curve, samples);
+            ComputeBuffer newBuff = ProceduralTextureViewer.CreateComputeBuffer(ref toDeleteCompBuffers, sizeof(float), fTest.ToArray());
+            rayMarchMaterial.SetBuffer(name, newBuff);
+        }
+
+        private List<float> DensityGradientLutFromCurve(ref AnimationCurve curve, int samples)
+        {
+            List<float> retList = new List<float>(samples);
+
+            for (int i = 0; i < samples; ++i)
+            {
+                retList.Add(curve.Evaluate(i * (1.0f / samples)));
+            }
+            return retList;
+        }
+
+        public void OnDisable() //happens before a hot reload
+        {
+            CleanUp();
+        }
+
+
+
+        public void OnApplicationQuit()
+        {
+            CleanUp();
+        }
+
+        void CleanUp()
+        {
+            
+        }
+
+        void SetShapeParams(ref CloudShape myShape)//TODO in the future it will generate parameters from a preset
+        {
+            myShape.baseShapeSize = 0.2f;
+            myShape.detailSize = 1.5f;
+            myShape.globalCoverage = 0.5f;
+            myShape.globalDensity = 0.01f;
+            //myShape.weatherMap = GenerateWeatherMap() //TODO
+            //myShape.weatherMapOffset = Vector3.zero; -> expose this always
+            myShape.weatherMapSize = 0.1f;
+        }
+
+
     }
+
+
+
 }

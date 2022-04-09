@@ -426,13 +426,13 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 963194225}
-  m_LocalRotation: {x: 0, y: 0.4636053, z: 0, w: 0.8860419}
+  m_LocalRotation: {x: -0.13394703, y: 0.45827714, z: 0.070085354, w: 0.87585866}
   m_LocalPosition: {x: -2, y: 1, z: -2}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 0}
   m_RootOrder: 0
-  m_LocalEulerAnglesHint: {x: 0, y: 55.24, z: 0}
+  m_LocalEulerAnglesHint: {x: -17.39, y: 55.24, z: 0}
 --- !u!114 &963194229
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -452,8 +452,50 @@ MonoBehaviour:
   detailSize: 1
   blueNoise: {fileID: 2800000, guid: 0cd98530926ee344a93cf6cc4437d4f6, type: 3}
   weatherMap: {fileID: 2800000, guid: aea288de504cc2d4e8c48278fec8e39c, type: 3}
-  weatherMapSize: 0.1
-  weatherMapOffset: {x: 2560, y: 0, z: 2560}
+  minCloudHeight: 1000
+  maxCloudHeight: 4000
+  densityCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: -0.0027656555
+      value: 0
+      inSlope: Infinity
+      outSlope: 13.742594
+      tangentMode: 69
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0.33333334
+    - serializedVersion: 3
+      time: 0.06840825
+      value: 0.97811407
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    - serializedVersion: 3
+      time: 0.28639644
+      value: 0.40633646
+      inSlope: -0.94968927
+      outSlope: -0.5729273
+      tangentMode: 65
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    - serializedVersion: 3
+      time: 1
+      value: -0.0025064955
+      inSlope: -0.5729273
+      outSlope: 0
+      tangentMode: 69
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
   sunLight: {fileID: 705507994}
   globalCoverage: 1
   globalDensity: 0.05
@@ -484,7 +526,7 @@ MonoBehaviour:
   displayTexture: 0
   displayGrayscale: 1
   displayAllChannels: 0
-  debugDisplaySize: 0.56
+  debugDisplaySize: 0.49
   tileAmmount: 1
   textureSlice: 0
   _material: {fileID: 0}
@@ -532,8 +574,8 @@ RenderTexture:
   m_DownscaleFallback: 0
   m_IsAlphaChannelOptional: 0
   serializedVersion: 3
-  m_Width: 128
-  m_Height: 128
+  m_Width: 32
+  m_Height: 32
   m_AntiAliasing: 1
   m_MipCount: -1
   m_DepthFormat: 0

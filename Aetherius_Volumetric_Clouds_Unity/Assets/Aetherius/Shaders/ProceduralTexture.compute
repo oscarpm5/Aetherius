@@ -2,6 +2,7 @@
 #pragma kernel Worley3DTextureWithPoints
 #pragma kernel PerlinWorley3DTexture
 #pragma kernel InitializeTexture
+#pragma kernel GenerateDensityLUT
 
 // Create a RenderTexture with enableRandomWrite flag and set it
 // with cs.SetTexture
@@ -219,4 +220,17 @@ void PerlinWorley3DTexture(uint3 id : SV_DispatchThreadID)
 void InitializeTexture(uint3 id : SV_DispatchThreadID)
 {
     Result3D[id.xyz]=float4(0.0,0.0,0.0,1.0);
+}
+
+
+RWTexture2D<float4> densityGradientTexture;
+StructuredBuffer<float> densityPoints;
+int gradientSize;
+
+[numthreads(8,8,1)]
+void GenerateDensityLUT(uint3 id : SV_DispatchThreadID)
+{
+    
+    float density =densityPoints[id.y];
+    densityGradientTexture[id.xy]= float4(density,density,density,1.0);
 }
