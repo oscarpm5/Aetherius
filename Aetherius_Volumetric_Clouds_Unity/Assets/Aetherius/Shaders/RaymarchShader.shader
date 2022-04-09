@@ -95,12 +95,46 @@ Shader "Aetherius/RaymarchShader"
 
 			int mode;
 
+			float DensityGradient(float heightPercent, float4 parameters)
+			{
+				return saturate(Remap(heightPercent, parameters.x, parameters.y, 0.0, 1.0)) * saturate(Remap(heightPercent, parameters.z, parameters.w, 1.0, 0.0));
+			}
+
 			float DensityAlteringSimple(float heightPercent,float weatherMapCloudType)
 			{
+				
+				
+				float4 stratus = float4(0.0, 0.1, 0.2, 0.3);
+				float4 stratocumulus = float4(0.0, 0.2, 0.4, 0.6);
+				float4 cumulus = float4(0.0, 0.1, 0.8, 1.0);
+
+				/*
+					float4 stratus = float4(0.0, 0.1, 0.2, 0.3);
+				float4 stratocumulus = float4(0.0, 0.2, 0.4, 0.7);
+				float4 cumulus = float4(0.0, 0.15, 0.7, 0.9);
+				*/
+
+				float mixPercent = frac(weatherMapCloudType * 2.0);
+				float ret = 1.0;
+
+				if (weatherMapCloudType < 0.5)//mix between stratus & stratocumulus
+				{
+					ret= lerp(DensityGradient(heightPercent, stratus), DensityGradient(heightPercent, stratocumulus), mixPercent);
+				}
+				else //mix between stratocumulus & cumulus
+				{
+					ret= lerp(DensityGradient(heightPercent, stratocumulus), DensityGradient(heightPercent, cumulus), mixPercent);
+				}
+
+				
+
+				return ret;
+
+				/*
 				float densityBottom = 0.0;//Reduces density towards the bottom of the cloud
 				float densityTop = 0.0;//Reduces density towards the top of the cloud
-				
-				if (weatherMapCloudType < 0.33) //Stratus
+
+				if (weatherMapCloudType < 0.33)
 				{
 					densityBottom = Remap(heightPercent, 0.0, 0.1, 0.0, 1.0);
 					densityTop = Remap(heightPercent, 0.2, 0.3, 1.0, 0.0);
@@ -118,21 +152,19 @@ Shader "Aetherius/RaymarchShader"
 				
 				
 				
-				return  saturate(densityBottom) * saturate(densityTop);
+				return  saturate(densityBottom) * saturate(densityTop);*/
 			}
 
 			float DensityAlteringAdvanced(float heightPercent)
 			{
-				uint numStructs;
-				uint stride;
-				densityCurveBuffer.GetDimensions(numStructs, stride);
+				//uint numStructs;
+				//uint stride;
+				//densityCurveBuffer.GetDimensions(numStructs, stride);
 
 				uint maxN = 256;
-				uint dU = heightPercent * maxN;
-				uint dUbefore = max(0, dU - 1);
-				uint dUafter = min(dU + 1, maxN);
+				
 
-				return  (densityCurveBuffer[dUbefore] + densityCurveBuffer[dU] + densityCurveBuffer[dUafter]) / 3.0;
+				return  densityCurveBuffer[heightPercent * maxN];
 			}
 
 			float DensityAltering(float heightPercent,float weatherMapCloudType) //Makes Clouds have more shape at the top & be more round towards the bottom, the weather map also influences the density

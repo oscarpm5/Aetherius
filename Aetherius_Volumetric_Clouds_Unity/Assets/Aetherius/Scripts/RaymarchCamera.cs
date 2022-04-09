@@ -122,7 +122,7 @@ namespace Aetherius
 
         }
         private ProceduralTextureViewer noiseGen;
-        private void OnEnable()
+        private void Awake()
         {
             noiseGen = GetComponent<ProceduralTextureViewer>();
             SetShapeParams(ref simple);

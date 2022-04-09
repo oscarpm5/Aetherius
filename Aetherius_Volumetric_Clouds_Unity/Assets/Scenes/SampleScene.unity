@@ -218,42 +218,6 @@ Transform:
   m_Father: {fileID: 0}
   m_RootOrder: 2
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!84 &693031584
-RenderTexture:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_Name: 
-  m_ImageContentsHash:
-    serializedVersion: 2
-    Hash: 00000000000000000000000000000000
-  m_ForcedFallbackFormat: 4
-  m_DownscaleFallback: 0
-  m_IsAlphaChannelOptional: 0
-  serializedVersion: 3
-  m_Width: 128
-  m_Height: 128
-  m_AntiAliasing: 1
-  m_MipCount: -1
-  m_DepthFormat: 0
-  m_ColorFormat: 24
-  m_MipMap: 0
-  m_GenerateMips: 1
-  m_SRGB: 0
-  m_UseDynamicScale: 0
-  m_BindMS: 0
-  m_EnableCompatibleFormat: 1
-  m_TextureSettings:
-    serializedVersion: 2
-    m_FilterMode: 2
-    m_Aniso: 1
-    m_MipBias: 0
-    m_WrapU: 0
-    m_WrapV: 0
-    m_WrapW: 0
-  m_Dimension: 3
-  m_VolumeDepth: 128
 --- !u!1 &705507993
 GameObject:
   m_ObjectHideFlags: 0
@@ -347,6 +311,42 @@ Transform:
   m_Father: {fileID: 0}
   m_RootOrder: 1
   m_LocalEulerAnglesHint: {x: 9.32, y: -1546.2, z: 0}
+--- !u!84 &927637661
+RenderTexture:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: 
+  m_ImageContentsHash:
+    serializedVersion: 2
+    Hash: 00000000000000000000000000000000
+  m_ForcedFallbackFormat: 4
+  m_DownscaleFallback: 0
+  m_IsAlphaChannelOptional: 0
+  serializedVersion: 3
+  m_Width: 32
+  m_Height: 32
+  m_AntiAliasing: 1
+  m_MipCount: -1
+  m_DepthFormat: 0
+  m_ColorFormat: 24
+  m_MipMap: 0
+  m_GenerateMips: 1
+  m_SRGB: 0
+  m_UseDynamicScale: 0
+  m_BindMS: 0
+  m_EnableCompatibleFormat: 1
+  m_TextureSettings:
+    serializedVersion: 2
+    m_FilterMode: 2
+    m_Aniso: 1
+    m_MipBias: 0
+    m_WrapU: 0
+    m_WrapV: 0
+    m_WrapW: 0
+  m_Dimension: 3
+  m_VolumeDepth: 32
 --- !u!1 &963194225
 GameObject:
   m_ObjectHideFlags: 0
@@ -445,69 +445,150 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d9926736fa158f743babbd6b381f53e1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  mode: 1
+  mode: 0
   simple:
-    baseShapeSize: 0.25
-    detailSize: 2
-    globalCoverage: 1
-    globalDensity: 0.1
+    baseShapeSize: 0.1
+    detailSize: 0.75
+    globalCoverage: 0.5
+    globalDensity: 0.01
     weatherMap: {fileID: 0}
-    weatherMapSize: 0.1
-    weatherMapOffset: {x: 0, y: 0, z: 0}
+    weatherMapSize: 0.01
+    weatherMapOffset: {x: 20000, y: 0, z: -30000}
   advanced:
-    baseShapeSize: 0.25
-    detailSize: 2
-    globalCoverage: 1
-    globalDensity: 0.1
+    baseShapeSize: 0.1
+    detailSize: 0.75
+    globalCoverage: 0.75
+    globalDensity: 0.01
     weatherMap: {fileID: 0}
-    weatherMapSize: 0.1
-    weatherMapOffset: {x: 0, y: 0, z: 0}
+    weatherMapSize: 0.01
+    weatherMapOffset: {x: -20000, y: 0, z: 0}
   _shader: {fileID: 4800000, guid: 0062334ff4afa1a42b65d127e5405941, type: 3}
   _material: {fileID: 0}
-  maxSteps: 278
-  maxRayDist: 9997
+  maxSteps: 59
+  maxRayDist: 40000
   blueNoise: {fileID: 2800000, guid: 0cd98530926ee344a93cf6cc4437d4f6, type: 3}
-  weatherMap: {fileID: 2800000, guid: 44283601c26b53641b3157d655a7a163, type: 3}
+  weatherMap: {fileID: 2800000, guid: 63f405e5da22ca04b926102db7483cc0, type: 3}
   minCloudHeight: 1000
-  maxCloudHeight: 4000
+  maxCloudHeight: 8000
   densityCurve:
     serializedVersion: 2
     m_Curve:
     - serializedVersion: 3
       time: -0.0027656555
       value: 0
-      inSlope: Infinity
-      outSlope: 13.742594
-      tangentMode: 69
+      inSlope: 48.812336
+      outSlope: 48.812336
+      tangentMode: 0
       weightedMode: 0
       inWeight: 0
-      outWeight: 0.33333334
+      outWeight: 0.07965519
     - serializedVersion: 3
-      time: 0.06840825
-      value: 0.97811407
-      inSlope: 0
-      outSlope: 0
+      time: 0.06408939
+      value: 0.99941796
+      inSlope: -0.10416922
+      outSlope: -0.10416922
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 1
+    - serializedVersion: 3
+      time: 0.13652644
+      value: 0.5790996
+      inSlope: -1.2140347
+      outSlope: -1.2140347
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.3128331
+    - serializedVersion: 3
+      time: 0.17348298
+      value: 0.7038081
+      inSlope: 1.2459711
+      outSlope: 1.2459711
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.6026837
+    - serializedVersion: 3
+      time: 0.21542194
+      value: 0.6667961
+      inSlope: 1.1621579
+      outSlope: 1.1621579
       tangentMode: 0
       weightedMode: 0
       inWeight: 0.33333334
       outWeight: 0.33333334
     - serializedVersion: 3
-      time: 0.7522778
-      value: 0.60866797
-      inSlope: -0.94968927
-      outSlope: -2.4671767
-      tangentMode: 65
+      time: 0.27551764
+      value: 0.8595132
+      inSlope: 0.17331767
+      outSlope: 0.17331767
+      tangentMode: 0
       weightedMode: 0
       inWeight: 0.33333334
       outWeight: 0.33333334
     - serializedVersion: 3
-      time: 1
-      value: -0.0025064955
-      inSlope: -2.4671767
-      outSlope: 0
-      tangentMode: 69
+      time: 0.31573024
+      value: 0.74449706
+      inSlope: 2.9741058
+      outSlope: 2.9741058
+      tangentMode: 0
       weightedMode: 0
       inWeight: 0.33333334
+      outWeight: 0.33333334
+    - serializedVersion: 3
+      time: 0.34427696
+      value: 0.97159886
+      inSlope: 0.07739159
+      outSlope: 0.07739159
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 1
+    - serializedVersion: 3
+      time: 0.43888366
+      value: 0.73336166
+      inSlope: -1.2921934
+      outSlope: -1.2921934
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    - serializedVersion: 3
+      time: 0.5096451
+      value: 0.7994187
+      inSlope: -0.02930986
+      outSlope: -0.02930986
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 1
+    - serializedVersion: 3
+      time: 0.5717639
+      value: 0.62775946
+      inSlope: 3.2439997
+      outSlope: 3.2439997
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    - serializedVersion: 3
+      time: 0.59053665
+      value: 0.78377265
+      inSlope: 4.874452
+      outSlope: 4.874452
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.08163423
+    - serializedVersion: 3
+      time: 1
+      value: 0.011958837
+      inSlope: -3.18735
+      outSlope: -3.18735
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.11919784
       outWeight: 0
     m_PreInfinity: 2
     m_PostInfinity: 2
@@ -557,8 +638,8 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 3d04b3037c1a4a640b7ac77a0decf1c4, type: 2}
   - {fileID: 11400000, guid: cdb03daae29d1a74f9d322db4dace868, type: 2}
   _updateNoise: 0
-  _baseShapeRenderTexture: {fileID: 693031584}
-  _detailRenderTexture: {fileID: 1611880145}
+  _baseShapeRenderTexture: {fileID: 1129477439}
+  _detailRenderTexture: {fileID: 927637661}
 --- !u!114 &963194231
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -572,7 +653,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   targetFPS: 30
---- !u!84 &1611880145
+--- !u!84 &1129477439
 RenderTexture:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -586,8 +667,8 @@ RenderTexture:
   m_DownscaleFallback: 0
   m_IsAlphaChannelOptional: 0
   serializedVersion: 3
-  m_Width: 32
-  m_Height: 32
+  m_Width: 128
+  m_Height: 128
   m_AntiAliasing: 1
   m_MipCount: -1
   m_DepthFormat: 0
@@ -607,4 +688,4 @@ RenderTexture:
     m_WrapV: 0
     m_WrapW: 0
   m_Dimension: 3
-  m_VolumeDepth: 32
+  m_VolumeDepth: 128
