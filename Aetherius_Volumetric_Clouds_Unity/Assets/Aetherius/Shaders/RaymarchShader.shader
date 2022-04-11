@@ -95,6 +95,88 @@ Shader "Aetherius/RaymarchShader"
 
 			int mode;
 
+			float3 planetAtmos;
+
+
+			float2 GetAtmosphereIntersection(float3 ro,float3 rd,float3 sphO, float r)//returns -1 when no intersection has been found
+			{
+
+				float t = dot(sphO - ro,rd);
+				float3 p = ro + rd * t;
+				float y = length(sphO - t);
+
+				float t0 = -1.0;
+				float t1 = -1.0;
+
+				if (y < r)
+				{
+					float x = sqrt(r * r - y * y);
+					t0 = t - x;
+					if (t0 < 0.0)
+						t0 = -1.0;
+
+					t1 = t + x;
+					if (t1 < 0.0)
+						t1 = -1.0;
+				}
+
+				return float2(t0, t1);
+			}
+
+			//outputs a ro + the length of the ray, returns false if no intersection has been found
+			bool GetRayAtmosphere(float3 camPos,float3 rd,out float3 rayOrigin, out float rayLength)
+			{
+				float3 planetO = float3(0.0, planetAtmos.x,0.0);
+				float d = length(camPos - planetO);//distance btween camera and the planet center
+
+				float2 innerAtmT = GetAtmosphereIntersection(camPos, rd, planetO, planetAtmos.y);
+				float2 outerAtmT = GetAtmosphereIntersection(camPos, rd, planetO, planetAtmos.z);
+
+				if (d * d < planetAtmos.y * planetAtmos.y)//if camera is under the atmosphere
+				{
+					rayOrigin = camPos + rd * innerAtmT.y;//second hit as 1st will always be behind camera in this case
+					rayLength = outerAtmT.y - innerAtmT.y;//second hit as 1st will always be behind camera in this case
+
+					return true;
+				}
+
+				if (d * d < planetAtmos.z * planetAtmos.z) //if camera is inside the atmosphere
+				{
+					float innerAtmIntersection = min(innerAtmT.x, innerAtmT.y);//only care about first intersection as we are outside the sphere
+					rayOrigin = camPos;
+
+					if (innerAtmIntersection != -1.0)
+					{
+						rayLength = innerAtmIntersection;
+						return true;
+					}
+
+					rayLength = outerAtmT.y;//only care about 2nd intersection as 1s will always be behind camera
+
+					return true;
+				}
+
+				//If camera is above atmosphere
+
+				if (max(outerAtmT.x, outerAtmT.y) == -1.0)
+					return false;//No hit!
+
+				float innerAtmIntersection = min(innerAtmT.x, innerAtmT.y);//only care about first intersection as we are outside the sphere
+
+				if (innerAtmIntersection != -1.0) //if there is an intersection with the innerAtm shell
+				{
+					rayOrigin = camPos + rd * outerAtmT.x;
+					rayLength = innerAtmIntersection - outerAtmT.x;
+					return true;
+				}
+
+				rayOrigin = camPos + rd * outerAtmT.x;
+				rayLength = outerAtmT.y;
+				return true;
+
+			}
+
+
 			float DensityGradient(float heightPercent, float4 parameters)
 			{
 				return saturate(Remap(heightPercent, parameters.x, parameters.y, 0.0, 1.0)) * saturate(Remap(heightPercent, parameters.z, parameters.w, 1.0, 0.0));
@@ -102,8 +184,8 @@ Shader "Aetherius/RaymarchShader"
 
 			float DensityAlteringSimple(float heightPercent,float weatherMapCloudType)
 			{
-				
-				
+
+
 				float4 stratus = float4(0.0, 0.1, 0.2, 0.3);
 				float4 stratocumulus = float4(0.0, 0.2, 0.4, 0.6);
 				float4 cumulus = float4(0.0, 0.1, 0.8, 1.0);
@@ -119,14 +201,14 @@ Shader "Aetherius/RaymarchShader"
 
 				if (weatherMapCloudType < 0.5)//mix between stratus & stratocumulus
 				{
-					ret= lerp(DensityGradient(heightPercent, stratus), DensityGradient(heightPercent, stratocumulus), mixPercent);
+					ret = lerp(DensityGradient(heightPercent, stratus), DensityGradient(heightPercent, stratocumulus), mixPercent);
 				}
 				else //mix between stratocumulus & cumulus
 				{
-					ret= lerp(DensityGradient(heightPercent, stratocumulus), DensityGradient(heightPercent, cumulus), mixPercent);
+					ret = lerp(DensityGradient(heightPercent, stratocumulus), DensityGradient(heightPercent, cumulus), mixPercent);
 				}
 
-				
+
 
 				return ret;
 
@@ -149,9 +231,9 @@ Shader "Aetherius/RaymarchShader"
 					densityBottom = Remap(heightPercent, 0.0, 0.15, 0.0, 1.0);
 					densityTop = Remap(heightPercent, 0.7, 0.9, 1.0, 0.0);
 				}
-				
-				
-				
+
+
+
 				return  saturate(densityBottom) * saturate(densityTop);*/
 			}
 
@@ -162,7 +244,7 @@ Shader "Aetherius/RaymarchShader"
 				//densityCurveBuffer.GetDimensions(numStructs, stride);
 
 				uint maxN = 256;
-				
+
 
 				return  densityCurveBuffer[heightPercent * maxN];
 			}
@@ -180,9 +262,19 @@ Shader "Aetherius/RaymarchShader"
 			}
 
 			//value between 0 & 1 showing where we are in the cloud layer
-			float GetCloudLayerHeight(float currentYPos, float cloudMin, float cloudMax)
+			float GetCloudLayerHeightPlane(float currentYPos, float cloudMin, float cloudMax)
 			{
-				return saturate((currentYPos - cloudMin) / (cloudMax - cloudMin));
+				return saturate((currentYPos - cloudMin) / (cloudMax - cloudMin));//Plane height
+
+			}
+
+			//value between 0 & 1 showing where we are in the cloud layer
+			float GetCloudLayerHeightSphere(float3 currentPos)
+			{
+				float dFromCenter = length(currentPos - float3(0.0, planetAtmos.x, 0.0));
+
+				return GetCloudLayerHeightPlane(dFromCenter,planetAtmos.y,planetAtmos.z);
+
 			}
 
 			float GetDensity(float3 currPos)
@@ -192,7 +284,7 @@ Shader "Aetherius/RaymarchShader"
 				float density = 0.0;
 				if (currPos.y >= minCloudHeight && currPos.y <= maxCloudHeight) //If inside of bouds of cloud layer
 				{
-					float cloudHeightPercent = GetCloudLayerHeight(currPos.y, minCloudHeight, maxCloudHeight);//value between 0 & 1 showing where we are in the cloud 
+					float cloudHeightPercent = GetCloudLayerHeightPlane(currPos.y, minCloudHeight, maxCloudHeight);//value between 0 & 1 showing where we are in the cloud 
 					float4 weatherMapCloud = weatherMapTexture.Sample(samplerweatherMapTexture, (currPos.xz + weatherMapOffset.xz) * baseScale * weatherMapSize); //We sample the weather map (r coverage,g type)
 					float4 lowFreqNoise = baseShapeTexture.Sample(samplerbaseShapeTexture, currPos * baseScale * baseShapeSize);
 					float4 highFreqNoise = detailTexture.Sample(samplerdetailTexture, currPos * baseScale * detailSize);
@@ -203,17 +295,17 @@ Shader "Aetherius/RaymarchShader"
 					cloudNoiseBase *= DensityAltering(cloudHeightPercent, weatherMapCloud.g);
 
 					//Coverage
-					float baseCloudWithCoverage = saturate(Remap(cloudNoiseBase,1.0 - (weatherMapCloud.r*globalCoverage),1.0,0.0,1.0));
+					float baseCloudWithCoverage = saturate(Remap(cloudNoiseBase,1.0 - (weatherMapCloud.r * globalCoverage),1.0,0.0,1.0));
 					baseCloudWithCoverage *= weatherMapCloud.r;
 
 					////Detail Shape
 					float highFreqFBM = (highFreqNoise.r * 0.625) + (highFreqNoise.g * 0.25) + (highFreqNoise.b * 0.125);
-					float detailNoise = lerp(highFreqFBM,1.0- highFreqFBM,saturate(cloudHeightPercent *5.0));
+					float detailNoise = lerp(highFreqFBM,1.0 - highFreqFBM,saturate(cloudHeightPercent * 5.0));
 					detailNoise *= 0.35 * exp(-globalCoverage * 0.75);
 
 					//Detail - Base Shape
 					float finalCloud = saturate(Remap(baseCloudWithCoverage, detailNoise, 1.0,0.0, 1.0));
-					
+
 					density = finalCloud * globalDensity;
 				}
 
@@ -337,7 +429,7 @@ Shader "Aetherius/RaymarchShader"
 							float attenuation = Attenuation(densityTowardsLight,cosAngle);
 
 							float inOutScattering = IOS(cosAngle,0.3,0.2);
-							float ambientScatter = OSa(density, GetCloudLayerHeight(currPos.y, minCloudHeight, maxCloudHeight));
+							float ambientScatter = OSa(density, GetCloudLayerHeightPlane(currPos.y, minCloudHeight, maxCloudHeight));
 							float beerPowder = 2.0 * absorption * PowderEffect(densityTowardsLight, lightAbsorption);
 
 

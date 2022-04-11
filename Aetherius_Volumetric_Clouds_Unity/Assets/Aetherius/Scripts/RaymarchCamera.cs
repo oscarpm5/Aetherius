@@ -54,8 +54,9 @@ namespace Aetherius
         public Texture2D weatherMap;
         
         [Header("Cloud")]
-        public float minCloudHeight = 250.0f;
-        public float maxCloudHeight = 250.0f;
+        public int planetRadiusKm = 6371;
+        public float minCloudHeightMeters = 1000.0f;
+        public float maxCloudHeightMeters = 8000.0f;
 
         [HideInInspector]
         public AnimationCurve densityCurve = new AnimationCurve(
@@ -64,6 +65,7 @@ namespace Aetherius
                 new Keyframe(0.2f,1.0f,0.15f,0.15f),
                 new Keyframe(1.0f,0.0f,-3.0f,-3.0f)}
             );
+
 
         [Header("Lighting")]
         public Light sunLight;
@@ -168,8 +170,8 @@ namespace Aetherius
             rayMarchMaterial.SetTexture("_MainTex", source); //input the rendered camera texture 
             rayMarchMaterial.SetInt("maxSteps", maxSteps);
             rayMarchMaterial.SetFloat("maxRayDist", maxRayDist);
-            rayMarchMaterial.SetFloat("minCloudHeight", minCloudHeight);
-            rayMarchMaterial.SetFloat("maxCloudHeight", maxCloudHeight);
+            rayMarchMaterial.SetFloat("minCloudHeight", minCloudHeightMeters);
+            rayMarchMaterial.SetFloat("maxCloudHeight", maxCloudHeightMeters);
             rayMarchMaterial.SetFloat("baseShapeSize", currentShape.baseShapeSize);
             rayMarchMaterial.SetFloat("detailSize", currentShape.detailSize);
             rayMarchMaterial.SetFloat("weatherMapSize", currentShape.weatherMapSize);
@@ -214,6 +216,9 @@ namespace Aetherius
             rayMarchMaterial.SetFloat("shadowBaseLight", shadowBaseLight);
 
             rayMarchMaterial.SetInt("mode",(int)mode);
+
+            int planetRadiusMeters = planetRadiusKm * 1000;
+            rayMarchMaterial.SetVector("planetAtmos", new Vector3(-planetRadiusMeters, planetRadiusMeters + minCloudHeightMeters, planetRadiusMeters + maxCloudHeightMeters));//Center of the planet, radius of min cloud sphere, radius of max cloud sphere
 
             CreateLUTBuffer(256, ref densityCurve, "densityCurveBuffer");
 
