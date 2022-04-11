@@ -414,15 +414,40 @@ Shader "Aetherius/RaymarchShader"
 				return 1.0 - saturate(outScatter);
 			}
 
+			int CalculateStepsForRay(float3 rd)
+			{
+				float3 planetOrigin = float3(0.0,planetAtmos.x,0.0);
+				float3 camPos = _WorldSpaceCameraPos;
+
+				float planetNorm = normalize(camPos-planetOrigin);
+
+				float d = abs(dot(planetNorm, rd));
+
+				return lerp(128, 64, d);
+
+			}
+
+			float CalculateMaxRayDist(float rayLength)
+			{
+				return min(sqrt(planetAtmos.z * planetAtmos.z - planetAtmos.x * planetAtmos.x), rayLength);
+			}
 
 
 			float4 Raymarching(bool isAtmosRay,float3 ro, float3 rd,float maxRayLength,float2 uv) //where ro is ray origin & rd is ray direction
 			{
 				float3 col = float3(1.0,1.0,1.0);
 
-				float stepLength = maxRayDist / maxSteps; //TODO provisional, will find another solution for the stepping later
+				uint blueNoiseW;
+				uint blueNoiseH;
+				blueNoiseTexture.GetDimensions(blueNoiseW, blueNoiseH);
+
+				const int maxStepsRay = CalculateStepsForRay(rd);
+				float stepLength = CalculateMaxRayDist(maxRayLength) / maxStepsRay; 
 				uv.x *= (_ScreenParams.x / _ScreenParams.y);
-				uv *= min(_ScreenParams.x, _ScreenParams.y) / 128;//we assume blue noise has a 128 res texture
+				uv *= min(_ScreenParams.x, _ScreenParams.y) / blueNoiseW;
+
+				
+
 
 				float3 currPos = ro + rd * stepLength * (blueNoiseTexture.Sample(samplerblueNoiseTexture, uv) - 0.5) * 2.0;
 				float cosAngle = dot(-rd,sunDir);//We assume they are normalized
@@ -430,7 +455,8 @@ Shader "Aetherius/RaymarchShader"
 				float density = 0.0;
 				float lightEnergy = 0.0;
 				float transmittance = 1.0;
-				for (int currStep = 0; currStep < maxSteps; ++currStep)
+
+				[loop]for (int currStep = 0; currStep < maxStepsRay ; ++currStep)
 				{
 					if (density < 1.0 && isAtmosRay)//TODO why cant atmos ray be out of here?
 					{
