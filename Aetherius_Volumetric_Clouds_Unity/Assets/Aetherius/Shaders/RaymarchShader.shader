@@ -103,7 +103,7 @@ Shader "Aetherius/RaymarchShader"
 
 				float t = dot(sphO - ro,rd);
 				float3 p = ro + rd * t;
-				float y = length(sphO - t);
+				float y = length(sphO - p);
 
 				float t0 = -1.0;
 				float t1 = -1.0;
@@ -131,16 +131,22 @@ Shader "Aetherius/RaymarchShader"
 
 				float2 innerAtmT = GetAtmosphereIntersection(camPos, rd, planetO, planetAtmos.y);
 				float2 outerAtmT = GetAtmosphereIntersection(camPos, rd, planetO, planetAtmos.z);
+				float2 groundT = GetAtmosphereIntersection(camPos, rd, planetO, -planetAtmos.x);
 
-				if (d * d < planetAtmos.y * planetAtmos.y)//if camera is under the atmosphere
+				if (d < planetAtmos.y)//if camera is under the atmosphere
 				{
 					rayOrigin = camPos + rd * innerAtmT.y;//second hit as 1st will always be behind camera in this case
 					rayLength = outerAtmT.y - innerAtmT.y;//second hit as 1st will always be behind camera in this case
 
+					if (max(groundT.x, groundT.y) != -1.0 )
+					{
+						return false;
+					}
+
 					return true;
 				}
 
-				if (d * d < planetAtmos.z * planetAtmos.z) //if camera is inside the atmosphere
+				if (d < planetAtmos.z) //if camera is inside the atmosphere
 				{
 					float innerAtmIntersection = min(innerAtmT.x, innerAtmT.y);//only care about first intersection as we are outside the sphere
 					rayOrigin = camPos;
@@ -282,9 +288,8 @@ Shader "Aetherius/RaymarchShader"
 				float baseScale = 1 / 1000.0;
 
 				float density = 0.0;
-				if (currPos.y >= minCloudHeight && currPos.y <= maxCloudHeight) //If inside of bouds of cloud layer
-				{
-					float cloudHeightPercent = GetCloudLayerHeightPlane(currPos.y, minCloudHeight, maxCloudHeight);//value between 0 & 1 showing where we are in the cloud 
+				
+					float cloudHeightPercent = GetCloudLayerHeightSphere(currPos);//value between 0 & 1 showing where we are in the cloud 
 					float4 weatherMapCloud = weatherMapTexture.Sample(samplerweatherMapTexture, (currPos.xz + weatherMapOffset.xz) * baseScale * weatherMapSize); //We sample the weather map (r coverage,g type)
 					float4 lowFreqNoise = baseShapeTexture.Sample(samplerbaseShapeTexture, currPos * baseScale * baseShapeSize);
 					float4 highFreqNoise = detailTexture.Sample(samplerdetailTexture, currPos * baseScale * detailSize);
@@ -307,7 +312,7 @@ Shader "Aetherius/RaymarchShader"
 					float finalCloud = saturate(Remap(baseCloudWithCoverage, detailNoise, 1.0,0.0, 1.0));
 
 					density = finalCloud * globalDensity;
-				}
+				
 
 
 				return density;
@@ -400,7 +405,7 @@ Shader "Aetherius/RaymarchShader"
 
 
 
-			float4 Raymarching(float3 ro, float3 rd,float2 uv) //where ro is ray origin & rd is ray direction
+			float4 Raymarching(bool isAtmosRay,float3 ro, float3 rd,float maxRayLength,float2 uv) //where ro is ray origin & rd is ray direction
 			{
 				float3 col = float3(1.0,1.0,1.0);
 
@@ -416,7 +421,7 @@ Shader "Aetherius/RaymarchShader"
 				float transmittance = 1.0;
 				for (int currStep = 0; currStep < maxSteps; ++currStep)
 				{
-					if (density < 1.0)
+					if (density < 1.0 && isAtmosRay)//TODO why cant atmos ray be out of here?
 					{
 						float currDensity = GetDensity(currPos);
 						if (currDensity > 0.0)
@@ -429,7 +434,7 @@ Shader "Aetherius/RaymarchShader"
 							float attenuation = Attenuation(densityTowardsLight,cosAngle);
 
 							float inOutScattering = IOS(cosAngle,0.3,0.2);
-							float ambientScatter = OSa(density, GetCloudLayerHeightPlane(currPos.y, minCloudHeight, maxCloudHeight));
+							float ambientScatter = OSa(density, GetCloudLayerHeightSphere(currPos));
 							float beerPowder = 2.0 * absorption * PowderEffect(densityTowardsLight, lightAbsorption);
 
 
@@ -463,8 +468,10 @@ Shader "Aetherius/RaymarchShader"
 
 			float3 rayDirection = normalize(i.ray.xyz);
 			float3 rayOrigin = _WorldSpaceCameraPos;
+			float t = 0.0;
+			bool isAtmosRay = GetRayAtmosphere(_WorldSpaceCameraPos, rayDirection, rayOrigin, t);
 
-			float4 result = Raymarching(rayOrigin, rayDirection,i.uv);
+			float4 result = Raymarching(isAtmosRay,rayOrigin, rayDirection,t,i.uv);
 
 			return fixed4(col * (1.0 - result.w) + result.rgb * result.w,1.0); //lerp between colors of the scene & the color of the volume (TODO temporal, will have another solution later)
 
