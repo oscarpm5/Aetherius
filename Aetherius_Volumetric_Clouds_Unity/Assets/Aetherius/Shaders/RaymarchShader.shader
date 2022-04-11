@@ -100,22 +100,33 @@ Shader "Aetherius/RaymarchShader"
 
 			float2 GetAtmosphereIntersection(float3 ro,float3 rd,float3 sphO, float r)//returns -1 when no intersection has been found
 			{
-
-				float t = dot(sphO - ro,rd);
-				float3 p = ro + rd * t;
-				float y = length(sphO - p);
-
 				float t0 = -1.0;
 				float t1 = -1.0;
 
-				if (y < r)
+				float t = dot(sphO - ro,rd);
+				
+				float3 p = ro + rd * t;
+				float y = length(sphO - p);
+
+				
+
+				if (y <= r)
 				{
 					float x = sqrt(r * r - y * y);
 					t0 = t - x;
+					t1 = t + x;
+
+					if (t0 > t1)
+					{
+						float aux = t0;
+						t0 = t1;
+						t1 = aux;
+					}
+
+
 					if (t0 < 0.0)
 						t0 = -1.0;
 
-					t1 = t + x;
 					if (t1 < 0.0)
 						t1 = -1.0;
 				}
