@@ -96,7 +96,9 @@ Shader "Aetherius/RaymarchShader"
 			int mode;
 
 			float3 planetAtmos;
-
+			float3 windDir;
+			float baseShapeWindMult;
+			float detailShapeWindMult;
 
 			float2 GetAtmosphereIntersection(float3 ro,float3 rd,float3 sphO, float r)//returns -1 when no intersection has been found
 			{
@@ -104,11 +106,11 @@ Shader "Aetherius/RaymarchShader"
 				float t1 = -1.0;
 
 				float t = dot(sphO - ro,rd);
-				
+
 				float3 p = ro + rd * t;
 				float y = length(sphO - p);
 
-				
+
 
 				if (y <= r)
 				{
@@ -149,7 +151,7 @@ Shader "Aetherius/RaymarchShader"
 					rayOrigin = camPos + rd * innerAtmT.y;//second hit as 1st will always be behind camera in this case
 					rayLength = outerAtmT.y - innerAtmT.y;//second hit as 1st will always be behind camera in this case
 
-					if (max(groundT.x, groundT.y) != -1.0 )
+					if (max(groundT.x, groundT.y) != -1.0)
 					{
 						return false;
 					}
@@ -299,11 +301,12 @@ Shader "Aetherius/RaymarchShader"
 				float baseScale = 1 / 1000.0;
 
 				float density = 0.0;
-				
+				float fTime = _Time;
+				float3 windOffset = -windDir * float3(fTime, fTime, fTime);
 					float cloudHeightPercent = GetCloudLayerHeightSphere(currPos);//value between 0 & 1 showing where we are in the cloud 
-					float4 weatherMapCloud = weatherMapTexture.Sample(samplerweatherMapTexture, (currPos.xz + weatherMapOffset.xz) * baseScale * weatherMapSize); //We sample the weather map (r coverage,g type)
-					float4 lowFreqNoise = baseShapeTexture.Sample(samplerbaseShapeTexture, currPos * baseScale * baseShapeSize);
-					float4 highFreqNoise = detailTexture.Sample(samplerdetailTexture, currPos * baseScale * detailSize);
+					float4 weatherMapCloud = weatherMapTexture.Sample(samplerweatherMapTexture, (currPos.xz * baseScale * weatherMapSize)+windOffset.xz); //We sample the weather map (r coverage,g type)
+					float4 lowFreqNoise = baseShapeTexture.Sample(samplerbaseShapeTexture, (currPos * baseScale * baseShapeSize)+windOffset*baseShapeWindMult);
+					float4 highFreqNoise = detailTexture.Sample(samplerdetailTexture, (currPos * baseScale * detailSize)+windOffset*detailShapeWindMult);
 
 					//Cloud Base shape
 					float lowFreqFBM = (lowFreqNoise.g * 0.625) + (lowFreqNoise.b * 0.25) + (lowFreqNoise.a * 0.125);
@@ -323,7 +326,7 @@ Shader "Aetherius/RaymarchShader"
 					float finalCloud = saturate(Remap(baseCloudWithCoverage, detailNoise, 1.0,0.0, 1.0));
 
 					density = finalCloud * globalDensity;
-				
+
 
 
 				return density;
@@ -419,7 +422,7 @@ Shader "Aetherius/RaymarchShader"
 				float3 planetOrigin = float3(0.0,planetAtmos.x,0.0);
 				float3 camPos = _WorldSpaceCameraPos;
 
-				float planetNorm = normalize(camPos-planetOrigin);
+				float planetNorm = normalize(camPos - planetOrigin);
 
 				float d = abs(dot(planetNorm, rd));
 
@@ -442,11 +445,11 @@ Shader "Aetherius/RaymarchShader"
 				blueNoiseTexture.GetDimensions(blueNoiseW, blueNoiseH);
 
 				const int maxStepsRay = CalculateStepsForRay(rd);
-				float stepLength = CalculateMaxRayDist(maxRayLength) / maxStepsRay; 
+				float stepLength = CalculateMaxRayDist(maxRayLength) / maxStepsRay;
 				uv.x *= (_ScreenParams.x / _ScreenParams.y);
 				uv *= min(_ScreenParams.x, _ScreenParams.y) / blueNoiseW;
 
-				
+
 
 
 				float3 currPos = ro + rd * stepLength * (blueNoiseTexture.Sample(samplerblueNoiseTexture, uv) - 0.5) * 2.0;
@@ -456,7 +459,7 @@ Shader "Aetherius/RaymarchShader"
 				float lightEnergy = 0.0;
 				float transmittance = 1.0;
 
-				[loop]for (int currStep = 0; currStep < maxStepsRay ; ++currStep)
+				[loop] for (int currStep = 0; currStep < maxStepsRay; ++currStep)
 				{
 					if (density < 1.0 && isAtmosRay)//TODO why cant atmos ray be out of here?
 					{
