@@ -60,6 +60,7 @@ namespace Aetherius
         public Vector3 windDirection = new Vector3(0.01f, 0.05f,0.005f);
         public float baseShapeWindMult = 1.5f;
         public float detailShapeWindMult = 3.0f;
+        public float skewAmmount = 1.0f;
         [HideInInspector]
         public AnimationCurve densityCurve = new AnimationCurve(
             new Keyframe[3] {
@@ -220,7 +221,7 @@ namespace Aetherius
             rayMarchMaterial.SetVector("windDir", windDirection);
             rayMarchMaterial.SetFloat("baseShapeWindMult", baseShapeWindMult);
             rayMarchMaterial.SetFloat("detailShapeWindMult", detailShapeWindMult);
-
+            rayMarchMaterial.SetFloat("skewAmmount", skewAmmount);
             
             rayMarchMaterial.SetInt("mode",(int)mode);
 

@@ -99,6 +99,7 @@ Shader "Aetherius/RaymarchShader"
 			float3 windDir;
 			float baseShapeWindMult;
 			float detailShapeWindMult;
+			float skewAmmount;
 
 			float2 GetAtmosphereIntersection(float3 ro,float3 rd,float3 sphO, float r)//returns -1 when no intersection has been found
 			{
@@ -301,31 +302,32 @@ Shader "Aetherius/RaymarchShader"
 				float baseScale = 1 / 1000.0;
 
 				float density = 0.0;
+				float cloudHeightPercent = GetCloudLayerHeightSphere(currPos);//value between 0 & 1 showing where we are in the cloud 
 				float fTime = _Time;
-				float3 windOffset = -windDir * float3(fTime, fTime, fTime);
-					float cloudHeightPercent = GetCloudLayerHeightSphere(currPos);//value between 0 & 1 showing where we are in the cloud 
-					float4 weatherMapCloud = weatherMapTexture.Sample(samplerweatherMapTexture, (currPos.xz * baseScale * weatherMapSize)+windOffset.xz); //We sample the weather map (r coverage,g type)
-					float4 lowFreqNoise = baseShapeTexture.Sample(samplerbaseShapeTexture, (currPos * baseScale * baseShapeSize)+windOffset*baseShapeWindMult);
-					float4 highFreqNoise = detailTexture.Sample(samplerdetailTexture, (currPos * baseScale * detailSize)+windOffset*detailShapeWindMult);
+				float3 windOffset = -windDir * float3(fTime, fTime, fTime);//TODO make this & skewk consistent around the globe
+				currPos += -normalize(windDir) * float3(1.0,0.0,1.0) * cloudHeightPercent * cloudHeightPercent * 100 * skewAmmount;
+				float4 weatherMapCloud = weatherMapTexture.Sample(samplerweatherMapTexture, (currPos.xz * baseScale * weatherMapSize) + windOffset.xz); //We sample the weather map (r coverage,g type)
+				float4 lowFreqNoise = baseShapeTexture.Sample(samplerbaseShapeTexture, (currPos * baseScale * baseShapeSize) + windOffset * baseShapeWindMult);
+				float4 highFreqNoise = detailTexture.Sample(samplerdetailTexture, (currPos * baseScale * detailSize) + windOffset * detailShapeWindMult);
 
-					//Cloud Base shape
-					float lowFreqFBM = (lowFreqNoise.g * 0.625) + (lowFreqNoise.b * 0.25) + (lowFreqNoise.a * 0.125);
-					float cloudNoiseBase = saturate(Remap(lowFreqNoise.r, 0.0, 1.0, lowFreqFBM, 1.0));
-					cloudNoiseBase *= DensityAltering(cloudHeightPercent, weatherMapCloud.g);
+				//Cloud Base shape
+				float lowFreqFBM = (lowFreqNoise.g * 0.625) + (lowFreqNoise.b * 0.25) + (lowFreqNoise.a * 0.125);
+				float cloudNoiseBase = saturate(Remap(lowFreqNoise.r, 0.0, 1.0, lowFreqFBM, 1.0));
+				cloudNoiseBase *= DensityAltering(cloudHeightPercent, weatherMapCloud.g);
 
-					//Coverage
-					float baseCloudWithCoverage = saturate(Remap(cloudNoiseBase,1.0 - (weatherMapCloud.r * globalCoverage),1.0,0.0,1.0));
-					baseCloudWithCoverage *= weatherMapCloud.r;
+				//Coverage
+				float baseCloudWithCoverage = saturate(Remap(cloudNoiseBase,1.0 - (weatherMapCloud.r * globalCoverage),1.0,0.0,1.0));
+				baseCloudWithCoverage *= weatherMapCloud.r;
 
-					////Detail Shape
-					float highFreqFBM = (highFreqNoise.r * 0.625) + (highFreqNoise.g * 0.25) + (highFreqNoise.b * 0.125);
-					float detailNoise = lerp(highFreqFBM,1.0 - highFreqFBM,saturate(cloudHeightPercent * 5.0));
-					detailNoise *= 0.35 * exp(-globalCoverage * 0.75);
+				////Detail Shape
+				float highFreqFBM = (highFreqNoise.r * 0.625) + (highFreqNoise.g * 0.25) + (highFreqNoise.b * 0.125);
+				float detailNoise = lerp(highFreqFBM,1.0 - highFreqFBM,saturate(cloudHeightPercent * 5.0));
+				detailNoise *= 0.35 * exp(-globalCoverage * 0.75);
 
-					//Detail - Base Shape
-					float finalCloud = saturate(Remap(baseCloudWithCoverage, detailNoise, 1.0,0.0, 1.0));
+				//Detail - Base Shape
+				float finalCloud = saturate(Remap(baseCloudWithCoverage, detailNoise, 1.0,0.0, 1.0));
 
-					density = finalCloud * globalDensity;
+				density = finalCloud * globalDensity;
 
 
 
