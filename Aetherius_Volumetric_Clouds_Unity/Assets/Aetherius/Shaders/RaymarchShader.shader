@@ -101,6 +101,9 @@ Shader "Aetherius/RaymarchShader"
 			float detailShapeWindMult;
 			float skewAmmount;
 
+			bool cumulusHorizon;
+			float2 cumulusHorizonGradient;
+
 			float2 GetAtmosphereIntersection(float3 ro,float3 rd,float3 sphO, float r)//returns -1 when no intersection has been found
 			{
 				float t0 = -1.0;
@@ -202,7 +205,7 @@ Shader "Aetherius/RaymarchShader"
 				return saturate(Remap(heightPercent, parameters.x, parameters.y, 0.0, 1.0)) * saturate(Remap(heightPercent, parameters.z, parameters.w, 1.0, 0.0));
 			}
 
-			float DensityAlteringSimple(float heightPercent,float weatherMapCloudType)
+			float DensityAlteringSimple(float heightPercent,float weatherMapCloudType, float distance)
 			{
 
 
@@ -216,16 +219,24 @@ Shader "Aetherius/RaymarchShader"
 				float4 cumulus = float4(0.0, 0.15, 0.7, 0.9);
 				*/
 
-				float mixPercent = frac(weatherMapCloudType * 2.0);
+				float cloudType = weatherMapCloudType;
+
+				if (cumulusHorizon==true)
+				{
+					cloudType = max(weatherMapCloudType, saturate(Remap(distance, cumulusHorizonGradient.x, cumulusHorizonGradient.y,0.0,1.0)));
+					//cloudType = 1.0;
+				}
+
+				
 				float ret = 1.0;
 
-				if (weatherMapCloudType < 0.5)//mix between stratus & stratocumulus
+				if (cloudType < 0.5)//mix between stratus & stratocumulus
 				{
-					ret = lerp(DensityGradient(heightPercent, stratus), DensityGradient(heightPercent, stratocumulus), mixPercent);
+					ret = lerp(DensityGradient(heightPercent, stratus), DensityGradient(heightPercent, stratocumulus), (cloudType*2.0));
 				}
 				else //mix between stratocumulus & cumulus
 				{
-					ret = lerp(DensityGradient(heightPercent, stratocumulus), DensityGradient(heightPercent, cumulus), mixPercent);
+					ret = lerp(DensityGradient(heightPercent, stratocumulus), DensityGradient(heightPercent, cumulus), (cloudType -0.5)*2.0);
 				}
 
 
@@ -269,11 +280,11 @@ Shader "Aetherius/RaymarchShader"
 				return  densityCurveBuffer[heightPercent * maxN];
 			}
 
-			float DensityAltering(float heightPercent,float weatherMapCloudType) //Makes Clouds have more shape at the top & be more round towards the bottom, the weather map also influences the density
+			float DensityAltering(float heightPercent,float weatherMapCloudType,float distance) //Makes Clouds have more shape at the top & be more round towards the bottom, the weather map also influences the density
 			{
 				if (mode == 0)//Simple mode
 				{
-					return DensityAlteringSimple(heightPercent, weatherMapCloudType);
+					return DensityAlteringSimple(heightPercent, weatherMapCloudType, distance);
 				}
 
 				//Advanced mode
@@ -300,7 +311,7 @@ Shader "Aetherius/RaymarchShader"
 			float GetDensity(float3 currPos)
 			{
 				float baseScale = 1 / 1000.0;
-
+				float3 initialPos = currPos;
 				float density = 0.0;
 				float cloudHeightPercent = GetCloudLayerHeightSphere(currPos);//value between 0 & 1 showing where we are in the cloud 
 				float fTime = _Time;
@@ -313,7 +324,7 @@ Shader "Aetherius/RaymarchShader"
 				//Cloud Base shape
 				float lowFreqFBM = (lowFreqNoise.g * 0.625) + (lowFreqNoise.b * 0.25) + (lowFreqNoise.a * 0.125);
 				float cloudNoiseBase = saturate(Remap(lowFreqNoise.r, 0.0, 1.0, lowFreqFBM, 1.0));
-				cloudNoiseBase *= DensityAltering(cloudHeightPercent, weatherMapCloud.g);
+				cloudNoiseBase *= DensityAltering(cloudHeightPercent, weatherMapCloud.g,length(initialPos.xz - _WorldSpaceCameraPos.xz));
 
 				//Coverage
 				float baseCloudWithCoverage = saturate(Remap(cloudNoiseBase,1.0 - (weatherMapCloud.r * globalCoverage),1.0,0.0,1.0));

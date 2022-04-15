@@ -31,7 +31,7 @@ namespace Aetherius
 
         private Camera _cam;
 
-        public CLOUD_CONTROL mode= CLOUD_CONTROL.SIMPLE;
+        public CLOUD_CONTROL mode = CLOUD_CONTROL.SIMPLE;
 
 
         public CloudShape simple;
@@ -52,12 +52,16 @@ namespace Aetherius
         public Texture2D blueNoise;
         [Header("Weather Map")]
         public Texture2D weatherMap;
-        
+        [HideInInspector]
+        public bool cumulusHorizon = false;
+        [HideInInspector]
+        public Vector2 cumulusHorizonGradient;
+
         [Header("Cloud")]
         public int planetRadiusKm = 6371;
         public float minCloudHeightMeters = 1000.0f;
         public float maxCloudHeightMeters = 8000.0f;
-        public Vector3 windDirection = new Vector3(0.01f, 0.05f,0.005f);
+        public Vector3 windDirection = new Vector3(0.01f, 0.05f, 0.005f);
         public float baseShapeWindMult = 1.5f;
         public float detailShapeWindMult = 3.0f;
         public float skewAmmount = 1.0f;
@@ -88,19 +92,19 @@ namespace Aetherius
 
         [Range(0.0f, 1.0f)]
         public float shadowBaseLight = 0.5f;
-        
+
         public CloudShape currentShape
         {
             get
             {
-                if(mode == CLOUD_CONTROL.SIMPLE)
+                if (mode == CLOUD_CONTROL.SIMPLE)
                 {
                     return simple;
                 }
                 return advanced;
             }
         }
-        
+
         public Material rayMarchMaterial
         {
             get
@@ -132,7 +136,7 @@ namespace Aetherius
             noiseGen = GetComponent<ProceduralTextureViewer>();
             SetShapeParams(ref simple);
 
-            if(advanced.globalDensity==0.0f) //We use density as a flag to know whether it has been initialized -> TODO find a better way
+            if (advanced.globalDensity == 0.0f) //We use density as a flag to know whether it has been initialized -> TODO find a better way
             {
                 SetShapeParams(ref advanced);
             }
@@ -222,11 +226,14 @@ namespace Aetherius
             rayMarchMaterial.SetFloat("baseShapeWindMult", baseShapeWindMult);
             rayMarchMaterial.SetFloat("detailShapeWindMult", detailShapeWindMult);
             rayMarchMaterial.SetFloat("skewAmmount", skewAmmount);
-            
-            rayMarchMaterial.SetInt("mode",(int)mode);
+
+            rayMarchMaterial.SetInt("mode", (int)mode);
 
             int planetRadiusMeters = planetRadiusKm * 1000;
             rayMarchMaterial.SetVector("planetAtmos", new Vector3(-planetRadiusMeters, planetRadiusMeters + minCloudHeightMeters, planetRadiusMeters + maxCloudHeightMeters));//Center of the planet, radius of min cloud sphere, radius of max cloud sphere
+            rayMarchMaterial.SetInt("cumulusHorizon", cumulusHorizon ? 1 : 0);
+            rayMarchMaterial.SetVector("cumulusHorizonGradient", cumulusHorizonGradient);
+
 
             CreateLUTBuffer(256, ref densityCurve, "densityCurveBuffer");
 
@@ -291,9 +298,9 @@ namespace Aetherius
 
             return newList;
         }
-    
 
-        void CreateLUTBuffer(int samples, ref AnimationCurve curve,string name)
+
+        void CreateLUTBuffer(int samples, ref AnimationCurve curve, string name)
         {
             List<float> fTest = DensityGradientLutFromCurve(ref curve, samples);
             ComputeBuffer newBuff = ProceduralTextureViewer.CreateComputeBuffer(ref toDeleteCompBuffers, sizeof(float), fTest.ToArray());
@@ -325,7 +332,7 @@ namespace Aetherius
 
         void CleanUp()
         {
-            
+
         }
 
         void SetShapeParams(ref CloudShape myShape)//TODO in the future it will generate parameters from a preset

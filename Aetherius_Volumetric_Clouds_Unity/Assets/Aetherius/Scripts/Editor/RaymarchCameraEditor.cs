@@ -28,7 +28,13 @@ namespace Aetherius
             {
                 case RaymarchCamera.CLOUD_CONTROL.SIMPLE:
                     {
-                        
+                        _myScript.cumulusHorizon = EditorGUILayout.ToggleLeft(new GUIContent("Cumulus Horizon","Option to make more epic cloudscapes, making the clouds toward the horizon appear more imposing"), _myScript.cumulusHorizon);
+                        if (_myScript.cumulusHorizon==true)
+                        {
+                            _myScript.cumulusHorizonGradient = EditorGUILayout.Vector2Field(new GUIContent("Start / End cumulus",
+                                "Distance in meters of the start and end of the cumulus gradient from the camera towards the horizon"),
+                                _myScript.cumulusHorizonGradient);
+                        }
                     }
                     break;
                 case RaymarchCamera.CLOUD_CONTROL.ADVANCED:
