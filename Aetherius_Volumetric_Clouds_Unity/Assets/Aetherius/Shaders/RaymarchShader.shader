@@ -104,6 +104,8 @@ Shader "Aetherius/RaymarchShader"
 			bool cumulusHorizon;
 			float2 cumulusHorizonGradient;
 
+			sampler2D _CameraDepthTexture;
+
 			float2 GetAtmosphereIntersection(float3 ro,float3 rd,float3 sphO, float r)//returns -1 when no intersection has been found
 			{
 				float t0 = -1.0;
@@ -448,8 +450,17 @@ Shader "Aetherius/RaymarchShader"
 				return min(sqrt(planetAtmos.z * planetAtmos.z - planetAtmos.x * planetAtmos.x), rayLength);
 			}
 
+			bool IsPosVisible(float3 pos,float maxDepth,bool isMaxDepth)
+			{
+				if (isMaxDepth)
+					return true;
 
-			float4 Raymarching(bool isAtmosRay,float3 ro, float3 rd,float maxRayLength,float2 uv) //where ro is ray origin & rd is ray direction
+				float3 distFromCamVec = (pos - _WorldSpaceCameraPos);
+				float distFromCamSq = dot(distFromCamVec, distFromCamVec);
+				return distFromCamSq <= maxDepth * maxDepth;
+			}
+
+			float4 Raymarching(bool isAtmosRay,float3 ro, float3 rd,float maxRayLength,float2 uv,float maxDepth,bool isMaxDepth) //where ro is ray origin & rd is ray direction
 			{
 				float3 col = float3(1.0,1.0,1.0);
 
@@ -474,7 +485,9 @@ Shader "Aetherius/RaymarchShader"
 
 				[loop] for (int currStep = 0; currStep < maxStepsRay; ++currStep)
 				{
-					if (density < 1.0 && isAtmosRay)//TODO why cant atmos ray be out of here?
+				
+
+					if (density < 1.0 && isAtmosRay && IsPosVisible(currPos, maxDepth,isMaxDepth))//TODO why cant atmos ray be out of here?
 					{
 						float currDensity = GetDensity(currPos);
 						if (currDensity > 0.0)
@@ -516,16 +529,21 @@ Shader "Aetherius/RaymarchShader"
 			fixed4 frag(v2f i) : SV_Target
 			{
 				fixed3 col = tex2D(_MainTex, i.uv);
-			// just invert the colors
-			//col.rgb = 1 - col.rgb;
-
+			float depth = tex2D(_CameraDepthTexture,i.uv);
+			float linearDepth = Linear01Depth(depth);//depth 0,1
+			float depthMeters = _ProjectionParams.z* linearDepth;
+			float4 posView = float4(i.ray * depthMeters, 1.0);
+			float3 posWorld = mul(unity_CameraToWorld, posView).xyz;
+			depthMeters = length(posWorld - _WorldSpaceCameraPos);//depth in meters
+			
 			float3 rayDirection = normalize(i.ray.xyz);
 			float3 rayOrigin = _WorldSpaceCameraPos;
 			float t = 0.0;
+
+			
 			bool isAtmosRay = GetRayAtmosphere(_WorldSpaceCameraPos, rayDirection, rayOrigin, t);
 
-			float4 result = Raymarching(isAtmosRay,rayOrigin, rayDirection,t,i.uv);
-
+			float4 result = Raymarching(isAtmosRay,rayOrigin, rayDirection,t,i.uv, depthMeters,linearDepth>=1.0);
 			return fixed4(col * (1.0 - result.w) + result.rgb * result.w,1.0); //lerp between colors of the scene & the color of the volume (TODO temporal, will have another solution later)
 
 			}

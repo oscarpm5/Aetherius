@@ -318,6 +318,11 @@ namespace Aetherius
             return retList;
         }
 
+        private void OnEnable()
+        {
+            _camera.depthTextureMode = DepthTextureMode.Depth;
+        }
+
         public void OnDisable() //happens before a hot reload
         {
             CleanUp();
