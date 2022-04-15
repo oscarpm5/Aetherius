@@ -327,7 +327,8 @@ Shader "Aetherius/RaymarchShader"
 							float clampedExtinction = max(currDensity, 0.0000001);
 
 
-							float3 luminance = lightColor * lightIntensity* shadow* currDensity* DoubleLobeScattering(cosAngle,0.3,0.2,0.4);
+							float3 luminance = lightColor * lightIntensity* shadow* currDensity* DoubleLobeScattering(cosAngle,0.3,0.2,0.4)+  
+								(1.0 - shadow) * currDensity * ambientColor;//This is not correct?
 							float3 integScatt= (luminance- luminance*transmittance)/ clampedExtinction;
 							scatteredLuminance += scatteredtransmittance * integScatt;
 
