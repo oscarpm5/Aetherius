@@ -312,16 +312,15 @@ Shader "Aetherius/RaymarchShader"
 
 			float GetDensity(float3 currPos)
 			{
-				float baseScale = 1 / 1000.0;
 				float3 initialPos = currPos;
 				float density = 0.0;
 				float cloudHeightPercent = GetCloudLayerHeightSphere(currPos);//value between 0 & 1 showing where we are in the cloud 
 				float fTime = _Time;
 				float3 windOffset = -windDir * float3(fTime, fTime, fTime);//TODO make this & skewk consistent around the globe
 				float3 skewPos = currPos -normalize(windDir)  * cloudHeightPercent * cloudHeightPercent * 100 * skewAmmount;
-				float4 weatherMapCloud = weatherMapTexture.Sample(samplerweatherMapTexture, (skewPos.xz * baseScale * weatherMapSize) + windOffset.xz); //We sample the weather map (r coverage,g type)
-				float4 lowFreqNoise = baseShapeTexture.Sample(samplerbaseShapeTexture, (currPos * baseScale * baseShapeSize) + windOffset * baseShapeWindMult);
-				float4 highFreqNoise = detailTexture.Sample(samplerdetailTexture, (currPos * baseScale * detailSize) + windOffset * detailShapeWindMult);
+				float4 weatherMapCloud = weatherMapTexture.Sample(samplerweatherMapTexture, (skewPos.xz / weatherMapSize) + windOffset.xz); //We sample the weather map (r coverage,g type)
+				float4 lowFreqNoise = baseShapeTexture.Sample(samplerbaseShapeTexture, (currPos / baseShapeSize) + windOffset * baseShapeWindMult);
+				float4 highFreqNoise = detailTexture.Sample(samplerdetailTexture, (currPos / detailSize) + windOffset * detailShapeWindMult);
 
 				//Cloud Base shape
 				float lowFreqFBM = (lowFreqNoise.g * 0.625) + (lowFreqNoise.b * 0.25) + (lowFreqNoise.a * 0.125);
