@@ -342,13 +342,13 @@ namespace Aetherius
 
         void SetShapeParams(ref CloudShape myShape)//TODO in the future it will generate parameters from a preset
         {
-            myShape.baseShapeSize = 0.2f;
-            myShape.detailSize = 1.5f;
+            myShape.baseShapeSize = 10000.0f;
+            myShape.detailSize = 1500.0f;
             myShape.globalCoverage = 0.5f;
             myShape.globalDensity = 0.01f;
             //myShape.weatherMap = GenerateWeatherMap() //TODO
             //myShape.weatherMapOffset = Vector3.zero; -> expose this always
-            myShape.weatherMapSize = 0.1f;
+            myShape.weatherMapSize = 36000.0f;
         }
 
 
