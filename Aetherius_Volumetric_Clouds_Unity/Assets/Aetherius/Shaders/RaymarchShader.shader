@@ -318,8 +318,8 @@ Shader "Aetherius/RaymarchShader"
 				float cloudHeightPercent = GetCloudLayerHeightSphere(currPos);//value between 0 & 1 showing where we are in the cloud 
 				float fTime = _Time;
 				float3 windOffset = -windDir * float3(fTime, fTime, fTime);//TODO make this & skewk consistent around the globe
-				currPos += -normalize(windDir) * float3(1.0,0.0,1.0) * cloudHeightPercent * cloudHeightPercent * 100 * skewAmmount;
-				float4 weatherMapCloud = weatherMapTexture.Sample(samplerweatherMapTexture, (currPos.xz * baseScale * weatherMapSize) + windOffset.xz); //We sample the weather map (r coverage,g type)
+				float3 skewPos = currPos -normalize(windDir)  * cloudHeightPercent * cloudHeightPercent * 100 * skewAmmount;
+				float4 weatherMapCloud = weatherMapTexture.Sample(samplerweatherMapTexture, (skewPos.xz * baseScale * weatherMapSize) + windOffset.xz); //We sample the weather map (r coverage,g type)
 				float4 lowFreqNoise = baseShapeTexture.Sample(samplerbaseShapeTexture, (currPos * baseScale * baseShapeSize) + windOffset * baseShapeWindMult);
 				float4 highFreqNoise = detailTexture.Sample(samplerdetailTexture, (currPos * baseScale * detailSize) + windOffset * detailShapeWindMult);
 
