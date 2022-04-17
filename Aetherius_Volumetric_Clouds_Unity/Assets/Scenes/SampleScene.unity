@@ -218,6 +218,42 @@ Transform:
   m_Father: {fileID: 0}
   m_RootOrder: 4
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!84 &283789566
+RenderTexture:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: 
+  m_ImageContentsHash:
+    serializedVersion: 2
+    Hash: 00000000000000000000000000000000
+  m_ForcedFallbackFormat: 4
+  m_DownscaleFallback: 0
+  m_IsAlphaChannelOptional: 0
+  serializedVersion: 3
+  m_Width: 128
+  m_Height: 128
+  m_AntiAliasing: 1
+  m_MipCount: -1
+  m_DepthFormat: 0
+  m_ColorFormat: 24
+  m_MipMap: 0
+  m_GenerateMips: 1
+  m_SRGB: 0
+  m_UseDynamicScale: 0
+  m_BindMS: 0
+  m_EnableCompatibleFormat: 1
+  m_TextureSettings:
+    serializedVersion: 2
+    m_FilterMode: 2
+    m_Aniso: 1
+    m_MipBias: 0
+    m_WrapU: 0
+    m_WrapV: 0
+    m_WrapW: 0
+  m_Dimension: 3
+  m_VolumeDepth: 128
 --- !u!1 &359574013
 GameObject:
   m_ObjectHideFlags: 0
@@ -342,7 +378,7 @@ Light:
   m_Type: 1
   m_Shape: 0
   m_Color: {r: 1, g: 1, b: 1, a: 1}
-  m_Intensity: 10
+  m_Intensity: 1
   m_Range: 10
   m_SpotAngle: 30
   m_InnerSpotAngle: 21.80208
@@ -508,15 +544,15 @@ MonoBehaviour:
   simple:
     baseShapeSize: 10000
     detailSize: 1500
-    globalCoverage: 0.38
+    globalCoverage: 0.5
     globalDensity: 0.01
     weatherMap: {fileID: 0}
     weatherMapSize: 36000
     weatherMapOffset: {x: 0, y: 0, z: 0}
   advanced:
-    baseShapeSize: 5000
-    detailSize: 1500
-    globalCoverage: 0.5
+    baseShapeSize: 10000
+    detailSize: 1000
+    globalCoverage: 0.38
     globalDensity: 0.01
     weatherMap: {fileID: 0}
     weatherMapSize: 36000
@@ -527,12 +563,13 @@ MonoBehaviour:
   maxRayDist: 100000
   blueNoise: {fileID: 2800000, guid: 0cd98530926ee344a93cf6cc4437d4f6, type: 3}
   weatherMap: {fileID: 2800000, guid: 54ce8d32ad9bf9e44aaa2821fe6f4ab0, type: 3}
+  windDisplacesWeatherMap: 0
   cumulusHorizon: 1
   cumulusHorizonGradient: {x: 18000, y: 36000}
   planetRadiusKm: 6371
   minCloudHeightMeters: 1000
   maxCloudHeightMeters: 8000
-  windDirection: {x: 0.01, y: 0.05, z: 0.005}
+  windDirection: {x: 0.01, y: 0.025, z: 0.005}
   baseShapeWindMult: 1.5
   detailShapeWindMult: 3
   skewAmmount: 0
@@ -542,124 +579,44 @@ MonoBehaviour:
     - serializedVersion: 3
       time: -0.0027656555
       value: 0
-      inSlope: 48.812336
-      outSlope: 48.812336
+      inSlope: 104.979294
+      outSlope: 104.979294
       tangentMode: 0
       weightedMode: 0
       inWeight: 0
-      outWeight: 0.07965519
+      outWeight: 0.27008992
     - serializedVersion: 3
-      time: 0.06408939
-      value: 0.99941796
-      inSlope: -0.10416922
-      outSlope: -0.10416922
+      time: 0.008604629
+      value: 0.94685507
+      inSlope: -0.038262058
+      outSlope: -0.038262058
       tangentMode: 0
       weightedMode: 0
       inWeight: 0.33333334
       outWeight: 1
     - serializedVersion: 3
-      time: 0.13652644
-      value: 0.5790996
-      inSlope: -1.2140347
-      outSlope: -1.2140347
+      time: 0.051776618
+      value: 0.63068295
+      inSlope: -3.1156516
+      outSlope: -3.1156516
       tangentMode: 0
       weightedMode: 0
       inWeight: 0.33333334
-      outWeight: 0.3128331
+      outWeight: 0.20917523
     - serializedVersion: 3
-      time: 0.17348298
-      value: 0.7038081
-      inSlope: 1.2459711
-      outSlope: 1.2459711
+      time: 0.19999999
+      value: -0.031696558
+      inSlope: -16.123842
+      outSlope: -16.123842
       tangentMode: 0
       weightedMode: 0
-      inWeight: 0.33333334
-      outWeight: 0.6026837
-    - serializedVersion: 3
-      time: 0.21542194
-      value: 0.6667961
-      inSlope: 1.1621579
-      outSlope: 1.1621579
-      tangentMode: 0
-      weightedMode: 0
-      inWeight: 0.33333334
-      outWeight: 0.33333334
-    - serializedVersion: 3
-      time: 0.27551764
-      value: 0.8595132
-      inSlope: 0.17331767
-      outSlope: 0.17331767
-      tangentMode: 0
-      weightedMode: 0
-      inWeight: 0.33333334
-      outWeight: 0.33333334
-    - serializedVersion: 3
-      time: 0.31573024
-      value: 0.74449706
-      inSlope: 2.9741058
-      outSlope: 2.9741058
-      tangentMode: 0
-      weightedMode: 0
-      inWeight: 0.33333334
-      outWeight: 0.33333334
-    - serializedVersion: 3
-      time: 0.34427696
-      value: 0.97159886
-      inSlope: 0.07739159
-      outSlope: 0.07739159
-      tangentMode: 0
-      weightedMode: 0
-      inWeight: 0.33333334
-      outWeight: 1
-    - serializedVersion: 3
-      time: 0.43888366
-      value: 0.73336166
-      inSlope: -1.2921934
-      outSlope: -1.2921934
-      tangentMode: 0
-      weightedMode: 0
-      inWeight: 0.33333334
-      outWeight: 0.33333334
-    - serializedVersion: 3
-      time: 0.5096451
-      value: 0.7994187
-      inSlope: -0.02930986
-      outSlope: -0.02930986
-      tangentMode: 0
-      weightedMode: 0
-      inWeight: 0.33333334
-      outWeight: 1
-    - serializedVersion: 3
-      time: 0.5717639
-      value: 0.62775946
-      inSlope: 3.2439997
-      outSlope: 3.2439997
-      tangentMode: 0
-      weightedMode: 0
-      inWeight: 0.33333334
-      outWeight: 0.33333334
-    - serializedVersion: 3
-      time: 0.62103564
-      value: 0.8463198
-      inSlope: 4.874452
-      outSlope: 4.874452
-      tangentMode: 0
-      weightedMode: 0
-      inWeight: 0.33333334
-      outWeight: 0.08163423
-    - serializedVersion: 3
-      time: 1
-      value: 0.011958837
-      inSlope: -3.18735
-      outSlope: -3.18735
-      tangentMode: 0
-      weightedMode: 0
-      inWeight: 0.11919784
+      inWeight: 0.1080972
       outWeight: 0
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
   sunLight: {fileID: 705507994}
+  lightIntensityMult: 10
   lightAbsorption: 1
   outScatteringAmbient: 0
   ambientMin: 0
@@ -704,8 +661,8 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 3d04b3037c1a4a640b7ac77a0decf1c4, type: 2}
   - {fileID: 11400000, guid: cdb03daae29d1a74f9d322db4dace868, type: 2}
   _updateNoise: 0
-  _baseShapeRenderTexture: {fileID: 1115722402}
-  _detailRenderTexture: {fileID: 1939686694}
+  _baseShapeRenderTexture: {fileID: 283789566}
+  _detailRenderTexture: {fileID: 1235321915}
 --- !u!114 &963194231
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -719,7 +676,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   targetFPS: 30
---- !u!84 &1115722402
+--- !u!84 &1235321915
 RenderTexture:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -733,8 +690,8 @@ RenderTexture:
   m_DownscaleFallback: 0
   m_IsAlphaChannelOptional: 0
   serializedVersion: 3
-  m_Width: 128
-  m_Height: 128
+  m_Width: 32
+  m_Height: 32
   m_AntiAliasing: 1
   m_MipCount: -1
   m_DepthFormat: 0
@@ -754,7 +711,7 @@ RenderTexture:
     m_WrapV: 0
     m_WrapW: 0
   m_Dimension: 3
-  m_VolumeDepth: 128
+  m_VolumeDepth: 32
 --- !u!1 &1722870503
 GameObject:
   m_ObjectHideFlags: 0
@@ -850,39 +807,3 @@ Transform:
   m_Father: {fileID: 0}
   m_RootOrder: 3
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!84 &1939686694
-RenderTexture:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_Name: 
-  m_ImageContentsHash:
-    serializedVersion: 2
-    Hash: 00000000000000000000000000000000
-  m_ForcedFallbackFormat: 4
-  m_DownscaleFallback: 0
-  m_IsAlphaChannelOptional: 0
-  serializedVersion: 3
-  m_Width: 32
-  m_Height: 32
-  m_AntiAliasing: 1
-  m_MipCount: -1
-  m_DepthFormat: 0
-  m_ColorFormat: 24
-  m_MipMap: 0
-  m_GenerateMips: 1
-  m_SRGB: 0
-  m_UseDynamicScale: 0
-  m_BindMS: 0
-  m_EnableCompatibleFormat: 1
-  m_TextureSettings:
-    serializedVersion: 2
-    m_FilterMode: 2
-    m_Aniso: 1
-    m_MipBias: 0
-    m_WrapU: 0
-    m_WrapV: 0
-    m_WrapW: 0
-  m_Dimension: 3
-  m_VolumeDepth: 32

@@ -52,6 +52,8 @@ namespace Aetherius
         public Texture2D blueNoise;
         [Header("Weather Map")]
         public Texture2D weatherMap;
+        public bool windDisplacesWeatherMap = true;
+
         [HideInInspector]
         public bool cumulusHorizon = false;
         [HideInInspector]
@@ -76,6 +78,7 @@ namespace Aetherius
 
         [Header("Lighting")]
         public Light sunLight;
+        public float lightIntensityMult = 10.0f;
         [Range(0.0f, 10.0f)]
         public float lightAbsorption = 1.0f;
         //[Range(0.0f, 1.0f)]
@@ -190,7 +193,7 @@ namespace Aetherius
             rayMarchMaterial.SetTexture("detailTexture", noiseGen.GetTexture(ProceduralTextureViewer.TEXTURE_TYPE.DETAIL));
             rayMarchMaterial.SetTexture("weatherMapTexture", weatherMap);
             rayMarchMaterial.SetFloat("lightAbsorption", lightAbsorption);
-            rayMarchMaterial.SetFloat("lightIntensity", sunLight.intensity);
+            rayMarchMaterial.SetFloat("lightIntensity", sunLight.intensity * lightIntensityMult);
 
 
             Color[] c = new Color[6];
@@ -228,6 +231,7 @@ namespace Aetherius
             rayMarchMaterial.SetFloat("skewAmmount", skewAmmount);
 
             rayMarchMaterial.SetInt("mode", (int)mode);
+            rayMarchMaterial.SetInt("windDisplacesWeatherMap", windDisplacesWeatherMap ? 1 : 0);
 
             int planetRadiusMeters = planetRadiusKm * 1000;
             rayMarchMaterial.SetVector("planetAtmos", new Vector3(-planetRadiusMeters, planetRadiusMeters + minCloudHeightMeters, planetRadiusMeters + maxCloudHeightMeters));//Center of the planet, radius of min cloud sphere, radius of max cloud sphere

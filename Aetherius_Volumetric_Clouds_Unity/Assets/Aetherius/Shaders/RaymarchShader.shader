@@ -102,6 +102,7 @@ Shader "Aetherius/RaymarchShader"
 			float skewAmmount;
 
 			bool cumulusHorizon;
+			bool windDisplacesWeatherMap;
 			float2 cumulusHorizonGradient;
 
 			sampler2D _CameraDepthTexture;
@@ -318,7 +319,7 @@ Shader "Aetherius/RaymarchShader"
 				float fTime = _Time;
 				float3 windOffset = -windDir * float3(fTime, fTime, fTime);//TODO make this & skewk consistent around the globe
 				float3 skewPos = currPos -normalize(windDir)  * cloudHeightPercent * cloudHeightPercent * 100 * skewAmmount;
-				float4 weatherMapCloud = weatherMapTexture.Sample(samplerweatherMapTexture, (skewPos.xz / weatherMapSize) + windOffset.xz); //We sample the weather map (r coverage,g type)
+				float4 weatherMapCloud = weatherMapTexture.Sample(samplerweatherMapTexture, (skewPos.xz / weatherMapSize) + windOffset.xz* windDisplacesWeatherMap); //We sample the weather map (r coverage,g type)
 				float4 lowFreqNoise = baseShapeTexture.Sample(samplerbaseShapeTexture, (currPos / baseShapeSize) + windOffset * baseShapeWindMult);
 				float4 highFreqNoise = detailTexture.Sample(samplerdetailTexture, (currPos / detailSize) + windOffset * detailShapeWindMult);
 
