@@ -222,8 +222,8 @@ namespace Aetherius
             computeShader.SetFloat("persistenceWorley", currSettings.persistence); //less than 1
 
             //Perlin
-            GenerateCornerVectors(kernelName);
-            GeneratePermutationTable(256, perlinShapeSettings.seed, "permTable", kernelName);
+            GenerateCornerVectors(kernelName,ref buffersToDelete);
+            GeneratePermutationTable(256, perlinShapeSettings.seed, "permTable", kernelName,ref computeShader,ref buffersToDelete);
             computeShader.SetInt("gridSize", perlinShapeSettings.gridSizePerlin);
             computeShader.SetInt("octaves", perlinShapeSettings.numOctavesPerlin);
             computeShader.SetFloat("persistencePerlin", perlinShapeSettings.persistencePerlin); //less than 1
@@ -234,7 +234,7 @@ namespace Aetherius
             computeShader.SetInt("textureSizeP", dim);
             computeShader.SetVector("channelToWriteTo", GetChannelMask(channelToWriteTo));
 
-            DispatchComputeShader(ref computeShader, currKernel,new Vector3Int(dim,dim,dim));
+            DispatchComputeShader(ref computeShader, currKernel, new Vector3Int(dim, dim, dim));
 
         }
         public void GenerateAllNoise()
@@ -246,7 +246,7 @@ namespace Aetherius
         public void GenerateBaseShapeNoise()
         {
             //Base Shape Texture
-            GenerateRenderTexture(baseShapeResolution, ref _baseShapeRenderTexture,TEXTURE_DIMENSIONS.TEX_3D, UnityEngine.Experimental.Rendering.GraphicsFormat.R16G16B16A16_UNorm);
+            GenerateRenderTexture(baseShapeResolution, ref _baseShapeRenderTexture, TEXTURE_DIMENSIONS.TEX_3D, UnityEngine.Experimental.Rendering.GraphicsFormat.R16G16B16A16_UNorm);
             Generate3DPerlinWorley(baseShapeResolution, ref _baseShapeRenderTexture, TEXTURE_CHANNEL.R, TEXTURE_TYPE.BASE_SHAPE);
             Generate3DWorley(baseShapeResolution, ref _baseShapeRenderTexture, TEXTURE_CHANNEL.G, TEXTURE_TYPE.BASE_SHAPE);
             Generate3DWorley(baseShapeResolution, ref _baseShapeRenderTexture, TEXTURE_CHANNEL.B, TEXTURE_TYPE.BASE_SHAPE);
@@ -262,6 +262,32 @@ namespace Aetherius
             Generate3DWorley(detailResolution, ref _detailRenderTexture, TEXTURE_CHANNEL.G, TEXTURE_TYPE.DETAIL);
             Generate3DWorley(detailResolution, ref _detailRenderTexture, TEXTURE_CHANNEL.B, TEXTURE_TYPE.DETAIL);
             DeleteComputeBuffers(ref buffersToDelete);
+        }
+
+        public static void GenerateWeatherMap(int resolution,ref ComputeShader compShader,ref RenderTexture output,ref List<ComputeBuffer> deleteBuffers,int seed)
+        {
+            int dim = Mathf.Max(resolution, 8);
+
+            GenerateRenderTexture(resolution, ref output, TEXTURE_DIMENSIONS.TEX_2D, UnityEngine.Experimental.Rendering.GraphicsFormat.R16G16B16A16_UNorm);
+
+            string kernelName = "GenerateWeatherMap";
+            int kernelIndex = compShader.FindKernel(kernelName);
+
+            //Perlin -> Cloudmap Density
+            GenerateCornerVectors2D(kernelName,"vecTableWMDensity",ref compShader, ref deleteBuffers);
+            GeneratePermutationTable(256, seed, "permTableWMDensity", kernelName, ref compShader, ref deleteBuffers);
+            compShader.SetInt("gridSizeWMDensity", 2);
+            compShader.SetInt("octavesWMDensity", 8);
+            compShader.SetInt("texDim", output.height);
+            compShader.SetFloat("persistenceWMDensity", 0.5f); //less than 1
+            compShader.SetFloat("lacunarityWMDensity", 2.0f); //More than 1
+
+            //TODO
+
+            compShader.SetTexture(kernelIndex, "result", output);
+
+            DispatchComputeShader(ref compShader, kernelIndex, new Vector3Int(dim, dim, 1));
+            DeleteComputeBuffers(ref deleteBuffers);
         }
 
         //Update methods ==========================================================================
@@ -340,11 +366,11 @@ namespace Aetherius
                 points[i] = new Vector3((float)rand.NextDouble(), (float)rand.NextDouble(), (float)rand.NextDouble());
             }
 
-            CreateComputeBuffer(ref buffersToDelete,ref computeShader,sizeof(float) * 3, points, bufferName, kernelName);
+            CreateComputeBuffer(ref buffersToDelete, ref computeShader, sizeof(float) * 3, points, bufferName, kernelName);
         }
 
         //Improved Perlin Related =================================================================
-        void GeneratePermutationTable(int size, int seed, string bufferName, string kernelName)
+        static void GeneratePermutationTable(int size, int seed, string bufferName, string kernelName, ref ComputeShader compShader,ref List<ComputeBuffer> deleteBuffers)
         {
             System.Random rand = new System.Random(seed);
 
@@ -363,9 +389,9 @@ namespace Aetherius
                 permutation[index] = aux;
             }
 
-            CreateComputeBuffer(ref buffersToDelete, ref computeShader, sizeof(int), permutation, bufferName, kernelName);
+            CreateComputeBuffer(ref deleteBuffers, ref compShader, sizeof(int), permutation, bufferName, kernelName);
         }
-        void GenerateCornerVectors(string kernelName)
+        void GenerateCornerVectors(string kernelName, ref List<ComputeBuffer> deleteBuffersList)
         {
             Vector3[] directions = new Vector3[12];
             directions[0] = new Vector3(1, 1, 0);
@@ -381,11 +407,25 @@ namespace Aetherius
             directions[10] = new Vector3(0, 1, -1);
             directions[11] = new Vector3(0, -1, -1);
 
-            CreateComputeBuffer(ref buffersToDelete, ref computeShader, sizeof(float) * 3, directions, "vecTable", kernelName);
+            CreateComputeBuffer(ref deleteBuffersList, ref computeShader, sizeof(float) * 3, directions, "vecTable", kernelName);
+        }
+        static void GenerateCornerVectors2D(string kernelName,string bufferName,ref ComputeShader compShader,ref List<ComputeBuffer> deleteBuffersList)
+        {
+            Vector2[] directions = new Vector2[8];
+            directions[0] = new Vector2(1, 1);
+            directions[1] = new Vector2(-1, 1);
+            directions[2] = new Vector2(1, -1);
+            directions[3] = new Vector2(-1, -1);
+            directions[4] = new Vector2(1, 0);
+            directions[5] = new Vector2(-1, 0);
+            directions[6] = new Vector2(0, 1);
+            directions[7] = new Vector2(0, -1);
+
+            CreateComputeBuffer(ref deleteBuffersList, ref compShader, sizeof(float) * 2, directions,bufferName, kernelName);
         }
 
         //Compute Buffers =========================================================================
-        
+
         public static ComputeBuffer CreateComputeBuffer(ref List<ComputeBuffer> toDeleteList, int dataStride, System.Array data)
         {
             ComputeBuffer newBuffer = new ComputeBuffer(data.Length, dataStride, ComputeBufferType.Structured);
@@ -398,7 +438,7 @@ namespace Aetherius
             return newBuffer;
         }
 
-        public static ComputeBuffer CreateComputeBuffer(ref List<ComputeBuffer> toDeleteList,ref ComputeShader compShader, int dataStride, System.Array data, string bufferName, string kernelName)
+        public static ComputeBuffer CreateComputeBuffer(ref List<ComputeBuffer> toDeleteList, ref ComputeShader compShader, int dataStride, System.Array data, string bufferName, string kernelName)
         {
             ComputeBuffer newBuffer = new ComputeBuffer(data.Length, dataStride, ComputeBufferType.Structured);
             newBuffer.SetData(data);
@@ -422,49 +462,51 @@ namespace Aetherius
             toDeleteList = null;
         }
 
-        public static bool DispatchComputeShader(ref ComputeShader toDispatch,int kernelIndex, Vector3Int textureDimensions)
+        public static bool DispatchComputeShader(ref ComputeShader toDispatch, int kernelIndex, Vector3Int textureDimensions)
         {
             if (toDispatch == null)
                 return false;
 
-            uint[] kernelGroupSizes= new uint[3];
-            toDispatch.GetKernelThreadGroupSizes(kernelIndex,out kernelGroupSizes[0], out kernelGroupSizes[1], out kernelGroupSizes[2]);
-            toDispatch.Dispatch(kernelIndex,textureDimensions.x/(int)kernelGroupSizes[0], textureDimensions.y /(int)kernelGroupSizes[1], textureDimensions.z / (int)kernelGroupSizes[2]); //Image size divided by the thread size of each group
+            uint[] kernelGroupSizes = new uint[3];
+            toDispatch.GetKernelThreadGroupSizes(kernelIndex, out kernelGroupSizes[0], out kernelGroupSizes[1], out kernelGroupSizes[2]);
+            toDispatch.Dispatch(kernelIndex, textureDimensions.x / (int)kernelGroupSizes[0], textureDimensions.y / (int)kernelGroupSizes[1], textureDimensions.z / (int)kernelGroupSizes[2]); //Image size divided by the thread size of each group
 
             return true;
         }
 
         //Textures ================================================================================
-        //returns ture if a texture has been created
-        //bool GenerateTexture3D(int texResolution, ref RenderTexture myTexture, UnityEngine.Experimental.Rendering.GraphicsFormat format)
-        //{
-        //    bool isNewlyCreated = false;
-        //    int res = Mathf.Max(texResolution, 8);
-        //    if (myTexture == null || !myTexture.IsCreated() || myTexture.height != res || myTexture.width != res || myTexture.volumeDepth != res || myTexture.graphicsFormat != format) //if texture doesnt exist or resolution has changed, recreate the texture
-        //    {
-        //        //Debug.Log("GeneratingTexture...");
+        /*
+        //returns true if a texture has been created
+        bool GenerateTexture3D(int texResolution, ref RenderTexture myTexture, UnityEngine.Experimental.Rendering.GraphicsFormat format)
+        {
+            bool isNewlyCreated = false;
+            int res = Mathf.Max(texResolution, 8);
+            if (myTexture == null || !myTexture.IsCreated() || myTexture.height != res || myTexture.width != res || myTexture.volumeDepth != res || myTexture.graphicsFormat != format) //if texture doesnt exist or resolution has changed, recreate the texture
+            {
+                //Debug.Log("GeneratingTexture...");
 
-        //        if (myTexture != null)
-        //        {
-        //            //Debug.Log("Deleting previous texture...");
-        //            myTexture.Release();
-        //            myTexture = null;
-        //        }
+                if (myTexture != null)
+                {
+                    //Debug.Log("Deleting previous texture...");
+                    myTexture.Release();
+                    myTexture = null;
+                }
 
-        //        myTexture = new RenderTexture(res, res, 0);
-        //        myTexture.enableRandomWrite = true;//So it can be used by the compute shader
-        //        myTexture.dimension = UnityEngine.Rendering.TextureDimension.Tex3D;
-        //        myTexture.volumeDepth = res;
-        //        myTexture.filterMode = FilterMode.Trilinear;
-        //        myTexture.wrapMode = TextureWrapMode.Repeat;
-        //        myTexture.graphicsFormat = format;
-        //        myTexture.Create();
+                myTexture = new RenderTexture(res, res, 0);
+                myTexture.enableRandomWrite = true;//So it can be used by the compute shader
+                myTexture.dimension = UnityEngine.Rendering.TextureDimension.Tex3D;
+                myTexture.volumeDepth = res;
+                myTexture.filterMode = FilterMode.Trilinear;
+                myTexture.wrapMode = TextureWrapMode.Repeat;
+                myTexture.graphicsFormat = format;
+                myTexture.Create();
 
-        //        isNewlyCreated = true;
+                isNewlyCreated = true;
 
-        //    }
-        //    return isNewlyCreated;
-        //}
+            }
+            return isNewlyCreated;
+        }
+        */
         public static void ReleaseTexture(ref RenderTexture textureToRelease)
         {
             if (textureToRelease != null)
@@ -474,7 +516,7 @@ namespace Aetherius
             }
         }
 
-        public static bool GenerateRenderTexture(int texResolution, ref RenderTexture myTexture, TEXTURE_DIMENSIONS dimensions, UnityEngine.Experimental.Rendering.GraphicsFormat format,FilterMode filterMode = FilterMode.Trilinear)
+        public static bool GenerateRenderTexture(int texResolution, ref RenderTexture myTexture, TEXTURE_DIMENSIONS dimensions, UnityEngine.Experimental.Rendering.GraphicsFormat format, FilterMode filterMode = FilterMode.Trilinear)
         {
             bool isNewlyCreated = false;
             int res = Mathf.Max(texResolution, 8);
@@ -508,7 +550,7 @@ namespace Aetherius
                 }
 
                 myTexture.filterMode = filterMode;
-                
+
                 myTexture.wrapMode = TextureWrapMode.Repeat;
                 myTexture.graphicsFormat = format;
                 myTexture.Create();

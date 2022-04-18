@@ -53,7 +53,8 @@ namespace Aetherius
         [Header("Weather Map")]
         public Texture2D weatherMap;
         public bool windDisplacesWeatherMap = true;
-
+        public RenderTexture proceduralWM;
+        public int seedWM = 307;
         [HideInInspector]
         public bool cumulusHorizon = false;
         [HideInInspector]
@@ -134,6 +135,16 @@ namespace Aetherius
 
         }
         private ProceduralTextureViewer noiseGen;
+
+        public ref RenderTexture GetProceduralWM()
+        {
+            if(proceduralWM==null)
+            {
+                GenerateWM();
+            }
+
+            return ref proceduralWM;
+        }
         private void Awake()
         {
             noiseGen = GetComponent<ProceduralTextureViewer>();
@@ -191,7 +202,7 @@ namespace Aetherius
             rayMarchMaterial.SetVector("weatherMapOffset", currentShape.weatherMapOffset);
             rayMarchMaterial.SetTexture("baseShapeTexture", noiseGen.GetTexture(ProceduralTextureViewer.TEXTURE_TYPE.BASE_SHAPE));
             rayMarchMaterial.SetTexture("detailTexture", noiseGen.GetTexture(ProceduralTextureViewer.TEXTURE_TYPE.DETAIL));
-            rayMarchMaterial.SetTexture("weatherMapTexture", weatherMap);
+            rayMarchMaterial.SetTexture("weatherMapTexture", GetProceduralWM());
             rayMarchMaterial.SetFloat("lightAbsorption", lightAbsorption);
             rayMarchMaterial.SetFloat("lightIntensity", sunLight.intensity * lightIntensityMult);
 
@@ -325,6 +336,11 @@ namespace Aetherius
         private void OnEnable()
         {
             _camera.depthTextureMode = DepthTextureMode.Depth;
+        }
+
+        public void GenerateWM()
+        {
+            ProceduralTextureViewer.GenerateWeatherMap(256, ref noiseGen.computeShader, ref proceduralWM, ref toDeleteCompBuffers, seedWM);
         }
 
         public void OnDisable() //happens before a hot reload

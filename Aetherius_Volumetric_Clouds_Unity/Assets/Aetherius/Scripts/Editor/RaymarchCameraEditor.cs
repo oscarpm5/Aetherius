@@ -46,6 +46,7 @@ namespace Aetherius
                             if (check.changed) //If we changed any parameters of the resolution property, update its noise
                             {
                                 //_myScript.GenerateBaseShapeNoise();
+                                _myScript.GenerateWM();//TODO test line
                             }
 
                         }

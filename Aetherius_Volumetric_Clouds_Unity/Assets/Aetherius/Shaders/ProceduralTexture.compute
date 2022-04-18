@@ -3,6 +3,7 @@
 #pragma kernel PerlinWorley3DTexture
 #pragma kernel InitializeTexture
 #pragma kernel GenerateDensityLUT
+#pragma kernel GenerateWeatherMap
 
 // Create a RenderTexture with enableRandomWrite flag and set it
 // with cs.SetTexture
@@ -233,4 +234,81 @@ void GenerateDensityLUT(uint3 id : SV_DispatchThreadID)
     
     float density =densityPoints[id.y];
     densityGradientTexture[id.xy]= float4(density,density,density,1.0);
+}
+
+
+StructuredBuffer<float2> vecTableWMDensity;
+StructuredBuffer<int> permTableWMDensity;
+int gridSizeWMDensity;
+int octavesWMDensity;
+int texDim;
+float persistenceWMDensity;
+float lacunarityWMDensity;
+
+RWTexture2D<float4> result;
+
+uint GetpermutationIndexFromPos2D(int2 pos,uint permTableSize)
+{
+    uint index = permTableWMDensity[(uint(pos.x) %permTableSize)];
+    index= permTableWMDensity[(uint(index+pos.y)%permTableSize)];
+    return index;
+}
+
+float2 GetGradientVectorFromPos2D(int2 pos,uint permTableSize)
+{
+    uint vecIndex=GetpermutationIndexFromPos2D(pos,permTableSize)%8;
+    return vecTableWMDensity[vecIndex];
+}
+
+float GetPerlinGradient2D(uint2 id,uint myGridSize)
+{
+    float2 st = id.xy/float(texDim); //convert pixel space into 0 to 1 coordinates
+    st*=float(myGridSize);
+   
+    float2 iPos = floor(st); //get integer coords
+    float2 fPos = frac(st); //get fractional coords
+
+    float2 vecBL = GetGradientVectorFromPos2D(int2(iPos.x,iPos.y)+int2(0,0),myGridSize);//bottom left corner
+    float2 vecBR = GetGradientVectorFromPos2D(int2(iPos.x,iPos.y)+int2(1,0),myGridSize);//bottom right corner
+    float2 vecTL = GetGradientVectorFromPos2D(int2(iPos.x,iPos.y)+int2(0,1),myGridSize);//top left corner
+    float2 vecTR = GetGradientVectorFromPos2D(int2(iPos.x,iPos.y)+int2(1,1),myGridSize);//top right corner
+
+    float dotVecBL = dot(vecBL,fPos-float2(0.0,0.0));
+    float dotVecBR = dot(vecBR,fPos-float2(1.0,0.0));
+    float dotVecTL = dot(vecTL,fPos-float2(0.0,1.0));
+    float dotVecTR = dot(vecTR,fPos-float2(1.0,1.0));
+    
+    float u = Fade(fPos.x); //we use this instead of a linear value to not have hard edges, we also use this instead of smoothstep as it has no discontinuities
+    float v = Fade(fPos.y);
+
+    float dotVecB = lerp(dotVecBL,dotVecBR,u);
+    float dotVecT = lerp(dotVecTL,dotVecTR,u);
+
+    float finalPoint=lerp(dotVecB,dotVecT,v);
+
+    return finalPoint;
+}
+
+
+[numthreads(8,8,1)]
+void GenerateWeatherMap(uint3 id : SV_DispatchThreadID)
+{
+    //Perlin
+    float layeredValPerlin=0.0; 
+    float amplitude=1.0;
+    float totalAmplitude=0.0;
+    float frequency = 1.0;
+    float2 offset = float2(103.5,211.3);
+
+    for(int i =0; i<octavesWMDensity; ++i)
+    {
+        layeredValPerlin += GetPerlinGradient2D((id.xy+offset),uint(gridSizeWMDensity*frequency))*amplitude;
+        totalAmplitude += amplitude;
+        amplitude *=persistenceWMDensity;
+        frequency *= lacunarityWMDensity;
+    }
+    layeredValPerlin = layeredValPerlin/totalAmplitude;
+    layeredValPerlin = remap(layeredValPerlin,-1.0,1.0,0.5,1.0);
+
+   result[id.xy] = float4(layeredValPerlin,layeredValPerlin,layeredValPerlin,1.0);
 }
