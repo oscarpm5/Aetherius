@@ -213,8 +213,8 @@ Shader "Aetherius/RaymarchShader"
 
 
 				float4 stratus = float4(0.0, 0.1, 0.2, 0.3);
-				float4 stratocumulus = float4(0.0, 0.2, 0.4, 0.6);
-				float4 cumulus = float4(0.0, 0.1, 0.8, 1.0);
+				float4 stratocumulus = float4(0.0, 0.2, 0.3, 0.6);
+				float4 cumulus = float4(0.0, 0.2, 0.4, 0.9);
 
 				/*
 					float4 stratus = float4(0.0, 0.1, 0.2, 0.3);

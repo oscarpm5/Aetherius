@@ -576,11 +576,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d9926736fa158f743babbd6b381f53e1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  mode: 1
+  mode: 0
   simple:
     baseShapeSize: 10000
     detailSize: 1500
-    globalCoverage: 0.68
+    globalCoverage: 0.5
     globalDensity: 0.01
     weatherMap: {fileID: 0}
     weatherMapSize: 36000
@@ -588,7 +588,7 @@ MonoBehaviour:
   advanced:
     baseShapeSize: 10000
     detailSize: 1500
-    globalCoverage: 0.75
+    globalCoverage: 0.57
     globalDensity: 0.01
     weatherMap: {fileID: 0}
     weatherMapSize: 36000
@@ -600,7 +600,7 @@ MonoBehaviour:
   blueNoise: {fileID: 2800000, guid: 0cd98530926ee344a93cf6cc4437d4f6, type: 3}
   weatherMap: {fileID: 0}
   windDisplacesWeatherMap: 0
-  proceduralWM: {fileID: 2059376353}
+  proceduralWM: {fileID: 1987978873}
   seedWM: 97
   cumulusHorizon: 1
   cumulusHorizonGradient: {x: 18000, y: 36000}
@@ -809,7 +809,7 @@ Transform:
   m_Father: {fileID: 0}
   m_RootOrder: 3
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!84 &2059376353
+--- !u!84 &1987978873
 RenderTexture:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
