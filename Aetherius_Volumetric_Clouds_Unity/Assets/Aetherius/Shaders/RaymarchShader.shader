@@ -208,7 +208,7 @@ Shader "Aetherius/RaymarchShader"
 				return saturate(Remap(heightPercent, parameters.x, parameters.y, 0.0, 1.0)) * saturate(Remap(heightPercent, parameters.z, parameters.w, 1.0, 0.0));
 			}
 
-			float DensityAlteringSimple(float heightPercent,float weatherMapCloudType, float distance)
+			float ShapeAlteringSimple(float heightPercent,float weatherMapCloudType, float distance)
 			{
 
 
@@ -227,7 +227,6 @@ Shader "Aetherius/RaymarchShader"
 				if (cumulusHorizon==true)
 				{
 					cloudType = max(weatherMapCloudType, saturate(Remap(distance, cumulusHorizonGradient.x, cumulusHorizonGradient.y,0.0,1.0)));
-					//cloudType = 1.0;
 				}
 
 				
@@ -245,33 +244,9 @@ Shader "Aetherius/RaymarchShader"
 
 
 				return ret;
-
-				/*
-				float densityBottom = 0.0;//Reduces density towards the bottom of the cloud
-				float densityTop = 0.0;//Reduces density towards the top of the cloud
-
-				if (weatherMapCloudType < 0.33)
-				{
-					densityBottom = Remap(heightPercent, 0.0, 0.1, 0.0, 1.0);
-					densityTop = Remap(heightPercent, 0.2, 0.3, 1.0, 0.0);
-				}
-				else if (weatherMapCloudType < 0.66)
-				{
-					densityBottom = Remap(heightPercent, 0.0, 0.2, 0.0, 1.0);
-				densityTop = Remap(heightPercent, 0.4, 0.7, 1.0, 0.0);
-				}
-				else
-				{
-					densityBottom = Remap(heightPercent, 0.0, 0.15, 0.0, 1.0);
-					densityTop = Remap(heightPercent, 0.7, 0.9, 1.0, 0.0);
-				}
-
-
-
-				return  saturate(densityBottom) * saturate(densityTop);*/
 			}
 
-			float DensityAlteringAdvanced(float heightPercent)
+			float ShapeAlteringAdvanced(float heightPercent)
 			{
 				//uint numStructs;
 				//uint stride;
@@ -283,15 +258,15 @@ Shader "Aetherius/RaymarchShader"
 				return  densityCurveBuffer[heightPercent * maxN];
 			}
 
-			float DensityAltering(float heightPercent,float weatherMapCloudType,float distance) //Makes Clouds have more shape at the top & be more round towards the bottom, the weather map also influences the density
+			float ShapeAltering(float heightPercent,float weatherMapCloudType,float distance) //Makes Clouds have more shape at the top & be more round towards the bottom, the weather map also influences the density
 			{
 				if (mode == 0)//Simple mode
 				{
-					return DensityAlteringSimple(heightPercent, weatherMapCloudType, distance);
+					return ShapeAlteringSimple(heightPercent, weatherMapCloudType, distance);
 				}
 
 				//Advanced mode
-				return DensityAlteringAdvanced(heightPercent);
+				return ShapeAlteringAdvanced(heightPercent);
 
 			}
 
@@ -311,6 +286,14 @@ Shader "Aetherius/RaymarchShader"
 
 			}
 
+			float DensityAltering(float heightPercent,float weatherMapDensity)
+			{
+				float densityBottom = heightPercent * saturate(Remap(heightPercent, 0.0, 0.15, 0.0, 1.0));
+				float densityTop = saturate(Remap(heightPercent,0.9,1.0,1.0,0.0));
+
+				return densityBottom * densityTop  * weatherMapDensity * 2.0;
+			}
+
 			float GetDensity(float3 currPos)
 			{
 				float3 initialPos = currPos;
@@ -325,13 +308,21 @@ Shader "Aetherius/RaymarchShader"
 
 				//Cloud Base shape
 				float lowFreqFBM = (lowFreqNoise.g * 0.625) + (lowFreqNoise.b * 0.25) + (lowFreqNoise.a * 0.125);
-				float cloudNoiseBase = saturate(Remap(lowFreqNoise.r, 0.0, 1.0, lowFreqFBM, 1.0));
-				cloudNoiseBase *= DensityAltering(cloudHeightPercent, weatherMapCloud.g,length(initialPos.xz - _WorldSpaceCameraPos.xz));
+				float cloudNoiseBase = (Remap(lowFreqNoise.r, lowFreqFBM-1.0, 1.0,0.0 , 1.0));
+				cloudNoiseBase *= ShapeAltering(cloudHeightPercent, weatherMapCloud.g,length(initialPos.xz - _WorldSpaceCameraPos.xz));
 
 				//Coverage
-				float baseCloudWithCoverage = saturate(Remap(cloudNoiseBase,1.0 - (weatherMapCloud.r * globalCoverage),1.0,0.0,1.0));
-				baseCloudWithCoverage *= weatherMapCloud.r;
-
+				float cloudCoverage = weatherMapCloud.r;
+				float baseCloudWithCoverage = (Remap(cloudNoiseBase, 1.0- globalCoverage*cloudCoverage ,1.0,0.0,1.0));
+				if (mode == 0)//Simple mode
+				{
+					baseCloudWithCoverage *= DensityAltering(cloudHeightPercent, cloudCoverage);
+				}
+				else
+				{
+					baseCloudWithCoverage *= cloudCoverage;
+				}
+				
 				////Detail Shape
 				float highFreqFBM = (highFreqNoise.r * 0.625) + (highFreqNoise.g * 0.25) + (highFreqNoise.b * 0.125);
 				float detailNoise = lerp(highFreqFBM,1.0 - highFreqFBM,saturate(cloudHeightPercent * 5.0));

@@ -308,7 +308,7 @@ void GenerateWeatherMap(uint3 id : SV_DispatchThreadID)
         frequency *= lacunarityWMDensity;
     }
     layeredValPerlin = layeredValPerlin/totalAmplitude;
-    layeredValPerlin = remap(layeredValPerlin,-1.0,1.0,0.5,1.0);
+    layeredValPerlin = saturate(remap(layeredValPerlin,-1.0,1.0,0.0,1.0));
 
-   result[id.xy] = float4(layeredValPerlin,layeredValPerlin,layeredValPerlin,1.0);
+   result[id.xy] = float4(layeredValPerlin,0.0,0.0,1.0);
 }

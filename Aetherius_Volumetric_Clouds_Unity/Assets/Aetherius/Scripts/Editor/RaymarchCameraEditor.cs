@@ -54,16 +54,11 @@ namespace Aetherius
                     break;
 
             }
-            
-            using (EditorGUI.ChangeCheckScope check = new EditorGUI.ChangeCheckScope())
+
+            if (GUILayout.Button("GenerateWM"))
             {
-                
-
-                if (check.changed) //If we changed any parameters of the resolution property, update its noise
-                {
-                    //_myScript.GenerateBaseShapeNoise();
-                }
-
+                _myScript.GenerateWM();
+                Debug.Log("Manual WM Update!");
             }
         }
     }

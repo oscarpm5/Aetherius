@@ -280,7 +280,7 @@ namespace Aetherius
             compShader.SetInt("octavesWMDensity", 8);
             compShader.SetInt("texDim", output.height);
             compShader.SetFloat("persistenceWMDensity", 0.5f); //less than 1
-            compShader.SetFloat("lacunarityWMDensity", 2.0f); //More than 1
+            compShader.SetFloat("lacunarityWMDensity", 1.5f); //More than 1
 
             //TODO
 
