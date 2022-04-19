@@ -175,7 +175,7 @@ namespace Aetherius
                 return;
             }
             string kernelName = "Worley3DTextureWithPoints";
-            GeneratePointsWorley(currSettings, kernelName);
+            GeneratePointsWorley(currSettings, kernelName, ref computeShader, ref buffersToDelete);
 
             int currKernel = computeShader.FindKernel(kernelName);
             computeShader.SetTexture(currKernel, "Result3D", targetTexture);
@@ -215,7 +215,7 @@ namespace Aetherius
             int currKernel = computeShader.FindKernel(kernelName);
 
             //Worley
-            GeneratePointsWorley(currSettings, kernelName);
+            GeneratePointsWorley(currSettings, kernelName, ref computeShader, ref buffersToDelete);
             computeShader.SetInt("numCellsA", currSettings.numberOfCellsAxisA);
             computeShader.SetInt("numCellsB", currSettings.numberOfCellsAxisB);
             computeShader.SetInt("numCellsC", currSettings.numberOfCellsAxisC);
@@ -276,13 +276,28 @@ namespace Aetherius
             //Perlin -> Cloudmap Density
             GenerateCornerVectors2D(kernelName,"vecTableWMDensity",ref compShader, ref deleteBuffers);
             GeneratePermutationTable(256, seed, "permTableWMDensity", kernelName, ref compShader, ref deleteBuffers);
-            compShader.SetInt("gridSizeWMDensity", 2);
-            compShader.SetInt("octavesWMDensity", 8);
-            compShader.SetInt("texDim", output.height);
-            compShader.SetFloat("persistenceWMDensity", 0.5f); //less than 1
-            compShader.SetFloat("lacunarityWMDensity", 1.5f); //More than 1
+            compShader.SetInt("gridSizeWMDensity", 23);
+            compShader.SetInt("octavesWMDensity", 4);
+            compShader.SetInt("texDim", dim);
+            compShader.SetFloat("persistenceWMDensityPerlin", 0.5f); //less than 1
+            compShader.SetFloat("lacunarityWMDensityPerlin", 2.0f); //More than 1
 
-            //TODO
+            //Worley
+            int numCellsAxisA = 5;
+            int numCellsAxisB = 11;
+            int numCellsAxisC = 19;
+
+            compShader.SetInt("numWorleyCellsWMDensityA", numCellsAxisA);
+            compShader.SetInt("numWorleyCellsWMDensityB", numCellsAxisB);
+            compShader.SetInt("numWorleyCellsWMDensityC", numCellsAxisC);
+
+            compShader.SetFloat("persistenceWMDensityWorley", 0.5f); //less than 1
+            System.Random random = new System.Random(seed);//TODO generalise for generate Permutation table (input random directly)
+            GeneratePoints2D(random, numCellsAxisA, "pointsWorleyWMDensityA", kernelName, ref compShader, ref deleteBuffers);
+            GeneratePoints2D(random, numCellsAxisB, "pointsWorleyWMDensityB", kernelName, ref compShader, ref deleteBuffers);
+            GeneratePoints2D(random, numCellsAxisC, "pointsWorleyWMDensityC", kernelName, ref compShader, ref deleteBuffers);
+
+
 
             compShader.SetTexture(kernelIndex, "result", output);
 
@@ -349,15 +364,15 @@ namespace Aetherius
         }
 
         //Worley Related ==========================================================================
-        void GeneratePointsWorley(WorleySettings currSettings, string kernelName)
+        void GeneratePointsWorley(WorleySettings currSettings, string kernelName, ref ComputeShader compShader, ref List<ComputeBuffer> deleteBuffers)
         {
             System.Random random = new System.Random(currSettings.seed);
 
-            GeneratePoints(random, currSettings.numberOfCellsAxisA, "pointsA", kernelName);
-            GeneratePoints(random, currSettings.numberOfCellsAxisB, "pointsB", kernelName);
-            GeneratePoints(random, currSettings.numberOfCellsAxisC, "pointsC", kernelName);
+            GeneratePoints(random, currSettings.numberOfCellsAxisA, "pointsA", kernelName,ref compShader,ref deleteBuffers);
+            GeneratePoints(random, currSettings.numberOfCellsAxisB, "pointsB", kernelName, ref compShader, ref deleteBuffers);
+            GeneratePoints(random, currSettings.numberOfCellsAxisC, "pointsC", kernelName, ref compShader, ref deleteBuffers);
         }
-        void GeneratePoints(System.Random rand, int numberOfCellsAxis, string bufferName, string kernelName)
+        void GeneratePoints(System.Random rand, int numberOfCellsAxis, string bufferName, string kernelName, ref ComputeShader compShader, ref List<ComputeBuffer> deleteBuffers)
         {
             int totalNumOfCells = numberOfCellsAxis * numberOfCellsAxis * numberOfCellsAxis;//3D grid
             Vector3[] points = new Vector3[totalNumOfCells];
@@ -366,7 +381,18 @@ namespace Aetherius
                 points[i] = new Vector3((float)rand.NextDouble(), (float)rand.NextDouble(), (float)rand.NextDouble());
             }
 
-            CreateComputeBuffer(ref buffersToDelete, ref computeShader, sizeof(float) * 3, points, bufferName, kernelName);
+            CreateComputeBuffer(ref deleteBuffers, ref compShader, sizeof(float) * 3, points, bufferName, kernelName);
+        }
+        static void GeneratePoints2D(System.Random rand, int numberOfCellsAxis, string bufferName, string kernelName,ref ComputeShader compShader ,ref List<ComputeBuffer> deleteBuffers)
+        {
+            int totalNumOfCells = numberOfCellsAxis * numberOfCellsAxis;//2D grid
+            Vector2[] points = new Vector2[totalNumOfCells];
+            for (int i = 0; i < totalNumOfCells; ++i)
+            {
+                points[i] = new Vector2((float)rand.NextDouble(), (float)rand.NextDouble());
+            }
+
+            CreateComputeBuffer(ref deleteBuffers, ref compShader, sizeof(float) * 2, points, bufferName, kernelName);
         }
 
         //Improved Perlin Related =================================================================

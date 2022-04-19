@@ -212,7 +212,7 @@ void PerlinWorley3DTexture(uint3 id : SV_DispatchThreadID)
 
 
     //Perlin-Worley
-    float perlinWorley = remap(layeredValPerlin,0.0,1.0,layeredValWorley,1.0);
+    float perlinWorley = remap(layeredValWorley,layeredValPerlin-1.0,1.0,0.0,1.0);
     Result3D[id.xyz] = lerp(Result3D[id.xyz],float4(perlinWorley,perlinWorley,perlinWorley,perlinWorley),channelToWriteTo);
 
 }
@@ -236,14 +236,25 @@ void GenerateDensityLUT(uint3 id : SV_DispatchThreadID)
     densityGradientTexture[id.xy]= float4(density,density,density,1.0);
 }
 
-
+//Perlin
 StructuredBuffer<float2> vecTableWMDensity;
 StructuredBuffer<int> permTableWMDensity;
 int gridSizeWMDensity;
 int octavesWMDensity;
 int texDim;
-float persistenceWMDensity;
-float lacunarityWMDensity;
+float persistenceWMDensityPerlin;
+float lacunarityWMDensityPerlin;
+//Worley
+uint numWorleyCellsWMDensityA;
+uint numWorleyCellsWMDensityB;
+uint numWorleyCellsWMDensityC;
+
+float persistenceWMDensityWorley;
+
+StructuredBuffer<float2> pointsWorleyWMDensityA;
+StructuredBuffer<float2> pointsWorleyWMDensityB;
+StructuredBuffer<float2> pointsWorleyWMDensityC;
+
 
 RWTexture2D<float4> result;
 
@@ -289,6 +300,53 @@ float GetPerlinGradient2D(uint2 id,uint myGridSize)
     return finalPoint;
 }
 
+int GetRandomIndexFromPoint2D(int2 p,int numOfCellsAxis)
+{  
+    return p.x + numOfCellsAxis * p.y ;
+}
+
+
+float GetWorleyDistFromCellNumWithPoints2D(uint2 id, uint cellsNum, StructuredBuffer<float2> randomPoints)
+{
+    float2 st = id.xy/float(texDim); //convert pixel space into 0 to 1 coordinates
+    st*=cellsNum;
+   
+    float2 iPos = floor(st); //get integer coords
+    float2 fPos = frac(st); //get fractional coords
+
+
+    float minDist=  1.0;  // minimum distance
+    
+    for(int y=-1; y<=1;++y)
+    {
+        for(int x=-1; x<=1;++x)
+        {
+            int2 neighbourOffset= int2(x,y); //get an offset for the 8 adjacent tiles + the center one
+            int2 neighbourPos =iPos+neighbourOffset; //Position of the cell where we want to obtain the random point
+            
+            if(neighbourPos.x<0) //Cannot do modulo if its a negative number
+            {
+                neighbourPos.x=cellsNum-1;
+            }
+
+            if(neighbourPos.y<0)//Cannot do modulo if its a negative number
+            {
+                neighbourPos.y=cellsNum-1;
+            }
+           
+
+            neighbourPos= neighbourPos % cellsNum;
+            float2 randPoint=randomPoints[GetRandomIndexFromPoint2D(neighbourPos,cellsNum)]; //take a random point given the position of the current tile + the offset of the neighbour we are checking as a seed
+            float2 distV = neighbourOffset+randPoint - fPos; //we calculate the distance vector between the position in our tile and the position of the random point in the neighbouring tile
+            float dist = length(distV); //we calculate the distance from the distance vector
+            minDist= min(minDist,dist); //we take the minimum distance from all neighbours
+        }
+    }
+    
+
+    return minDist;
+}
+
 
 [numthreads(8,8,1)]
 void GenerateWeatherMap(uint3 id : SV_DispatchThreadID)
@@ -304,11 +362,36 @@ void GenerateWeatherMap(uint3 id : SV_DispatchThreadID)
     {
         layeredValPerlin += GetPerlinGradient2D((id.xy+offset),uint(gridSizeWMDensity*frequency))*amplitude;
         totalAmplitude += amplitude;
-        amplitude *=persistenceWMDensity;
-        frequency *= lacunarityWMDensity;
+        amplitude *=persistenceWMDensityPerlin;
+        frequency *= lacunarityWMDensityPerlin;
     }
     layeredValPerlin = layeredValPerlin/totalAmplitude;
-    layeredValPerlin = saturate(remap(layeredValPerlin,-1.0,1.0,0.0,1.0));
+    //layeredValPerlin = saturate(remap(layeredValPerlin,-1.0,1.0,0.0,1.0));
 
-   result[id.xy] = float4(layeredValPerlin,0.0,0.0,1.0);
+    //Worley
+    amplitude=1.0;
+    totalAmplitude=0.0;
+
+    float layeredValWorley=0.0;
+    layeredValWorley += GetWorleyDistFromCellNumWithPoints2D(id.xy,numWorleyCellsWMDensityA,pointsWorleyWMDensityA)*amplitude;
+    totalAmplitude += amplitude;
+    amplitude *=persistenceWMDensityWorley;
+
+    layeredValWorley +=  GetWorleyDistFromCellNumWithPoints2D(id.xy,numWorleyCellsWMDensityB,pointsWorleyWMDensityB)*amplitude;
+    totalAmplitude += amplitude;
+    amplitude *= persistenceWMDensityWorley;
+
+    layeredValWorley +=  GetWorleyDistFromCellNumWithPoints2D(id.xy,numWorleyCellsWMDensityC,pointsWorleyWMDensityC)*amplitude;
+    totalAmplitude += amplitude;
+    amplitude *= persistenceWMDensityWorley;
+
+
+
+    layeredValWorley = layeredValWorley/totalAmplitude;
+    layeredValWorley= 1-layeredValWorley;//we invert the distance
+
+    float layeredValFinal = saturate(remap(layeredValWorley,layeredValPerlin-1.0,1.0,0.0,1.0));
+
+    
+   result[id.xy] = float4(layeredValFinal,0.0,0.0,1.0);
 }

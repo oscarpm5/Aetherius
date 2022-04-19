@@ -314,14 +314,9 @@ Shader "Aetherius/RaymarchShader"
 				//Coverage
 				float cloudCoverage = weatherMapCloud.r;
 				float baseCloudWithCoverage = (Remap(cloudNoiseBase, 1.0- globalCoverage*cloudCoverage ,1.0,0.0,1.0));
-				if (mode == 0)//Simple mode
-				{
-					baseCloudWithCoverage *= DensityAltering(cloudHeightPercent, cloudCoverage);
-				}
-				else
-				{
-					baseCloudWithCoverage *= cloudCoverage;
-				}
+
+				baseCloudWithCoverage *= DensityAltering(cloudHeightPercent, cloudCoverage);
+
 				
 				////Detail Shape
 				float highFreqFBM = (highFreqNoise.r * 0.625) + (highFreqNoise.g * 0.25) + (highFreqNoise.b * 0.125);

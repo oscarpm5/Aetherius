@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Worley_Settings_Detail_2
   m_EditorClassIdentifier: 
   seed: 89
-  numberOfCellsAxisA: 13
-  numberOfCellsAxisB: 26
-  numberOfCellsAxisC: 47
-  persistence: 0.2
+  numberOfCellsAxisA: 9
+  numberOfCellsAxisB: 22
+  numberOfCellsAxisC: 37
+  persistence: 0.5
