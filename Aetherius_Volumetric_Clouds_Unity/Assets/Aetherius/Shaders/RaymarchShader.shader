@@ -446,9 +446,35 @@ Shader "Aetherius/RaymarchShader"
 				return distFromCamSq <= maxDepth * maxDepth;
 			}
 
-			float4 Raymarching(bool isAtmosRay,float3 ro, float3 rd,float maxRayLength,float2 uv,float maxDepth,bool isMaxDepth) //where ro is ray origin & rd is ray direction
+
+			float DoubleLobeScattering(float cosAngle, float l1, float l2, float mix)
 			{
-				float3 col = float3(1.0,1.0,1.0);
+				return lerp(HenyeyGreenstein(cosAngle, l1), HenyeyGreenstein(cosAngle, -l2), mix);
+			}
+
+			float LightShadowTransmittance(float3 pos, float sampleDistance)
+			{
+				int iter = 6;
+				float stepSize = (sampleDistance / float(iter));//TODO make as variable (maybe when we have cone light samples?)
+
+				float shadow = 1.0;
+				float accDensity = 0.0;
+				for (int currStep = 0; currStep < iter - 1; ++currStep)
+				{
+					float3 newPos = pos + currStep * stepSize * -sunDir;
+					float density = GetDensity(newPos);
+
+					accDensity += density;
+					shadow *= exp(-density * stepSize * lightAbsorption);
+				}
+
+				shadow *= exp(-GetDensity(pos + sampleDistance * 5.0 * -sunDir) * stepSize * lightAbsorption);//long range sample
+
+				return shadow;//TODO can lerp powder effect here (multiplying shadow) but might not be energy conserving!
+			}
+
+			float3 Raymarching(float3 col,bool isAtmosRay,float3 ro, float3 rd,float maxRayLength,float2 uv,float maxDepth,bool isMaxDepth) //where ro is ray origin & rd is ray direction
+			{
 
 				uint blueNoiseW;
 				uint blueNoiseH;
@@ -465,49 +491,36 @@ Shader "Aetherius/RaymarchShader"
 				float3 currPos = ro + rd * stepLength * (blueNoiseTexture.Sample(samplerblueNoiseTexture, uv) - 0.5) * 2.0;
 				float cosAngle = dot(-rd,sunDir);//We assume they are normalized
 
-				float density = 0.0;
-				float lightEnergy = 0.0;
-				float transmittance = 1.0;
-
+				float3 scatteredLuminance = float3(0.0, 0.0, 0.0);
+				float scatteredtransmittance = 1.0;
 				[loop] for (int currStep = 0; currStep < maxStepsRay; ++currStep)
 				{
 				
 
-					if (density < 1.0 && isAtmosRay && IsPosVisible(currPos, maxDepth,isMaxDepth))//TODO why cant atmos ray be out of here?
+					if (isAtmosRay && IsPosVisible(currPos, maxDepth,isMaxDepth && scatteredtransmittance > 0.01))//TODO why cant atmos ray be out of here?
 					{
 						float currDensity = GetDensity(currPos);
 						if (currDensity > 0.0)
 						{
-							//float densityTowardsLight = DensityTowardsLightCone(currPos,.5);
-							float densityTowardsLight = DensityTowardsLight(currPos);
-							float absorption = BeerLambertLaw(densityTowardsLight, lightAbsorption);
+							float shadow = LightShadowTransmittance(currPos, 2000.0f);
+							float transmittance = exp(-currDensity * stepLength);
+
+							float clampedExtinction = max(currDensity, 0.0000001);
 
 
-							float attenuation = Attenuation(densityTowardsLight,cosAngle);
+							float3 luminance = lightColor * lightIntensity * shadow * currDensity * DoubleLobeScattering(cosAngle, 0.3, 0.2, 0.4) +
+								(1.0 - shadow) * currDensity * ambientColor;//This is not correct?
+							float3 integScatt = (luminance - luminance * transmittance) / clampedExtinction;
+							scatteredLuminance += scatteredtransmittance * integScatt;
 
-							float inOutScattering = IOS(cosAngle,0.3,0.2);
-							float ambientScatter = OSa(density, GetCloudLayerHeightSphere(currPos));
-							float beerPowder = 2.0 * absorption * PowderEffect(densityTowardsLight, lightAbsorption);
-
-
-							lightEnergy += attenuation * inOutScattering * ambientScatter * currDensity * stepLength * transmittance;
-							transmittance *= BeerLambertLaw(currDensity * stepLength, lightAbsorption);
-							density += currDensity * stepLength;
+							scatteredtransmittance *= transmittance;
 						}
 					}
 					currPos += rd * stepLength;
 				}
-				//TODO density above 1 makes banding worse somehow, fix, do we really need to clamp density?
-				density = saturate(density);//we dont want density above 1 for now (TODO visual glitch in the sun if above 1, fix this?)
 
-				col = lightColor * lightEnergy * lightIntensity;
-
-				//col = lightColor* lightIntensity * transmission + lightEnergy;
-				//col = col * lightEnergy;
-				float div = (1.0 / 2.2);
-				col = pow(col, float3(div, div, div));//Linear to gamma needed? TODO depends on the project settings i think
-
-				return float4(col, density);
+				col = scatteredtransmittance * col + scatteredLuminance;
+				return float3(col);
 			}
 
 
@@ -529,8 +542,8 @@ Shader "Aetherius/RaymarchShader"
 			
 			bool isAtmosRay = GetRayAtmosphere(_WorldSpaceCameraPos, rayDirection, rayOrigin, t);
 
-			float4 result = Raymarching(isAtmosRay,rayOrigin, rayDirection,t,i.uv, depthMeters,linearDepth>=1.0);
-			return fixed4(col * (1.0 - result.w) + result.rgb * result.w,1.0); //lerp between colors of the scene & the color of the volume (TODO temporal, will have another solution later)
+			float3 result = Raymarching(col,isAtmosRay,rayOrigin, rayDirection,t,i.uv, depthMeters,linearDepth>=1.0);
+			return fixed4(result,1.0); //lerp between colors of the scene & the color of the volume (TODO temporal, will have another solution later)
 
 			}
 ENDCG
