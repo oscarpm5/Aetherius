@@ -105,6 +105,7 @@ Shader "Aetherius/RaymarchShader"
 			bool windDisplacesWeatherMap;
 			float2 cumulusHorizonGradient;
 
+
 			sampler2D _CameraDepthTexture;
 
 			float2 GetAtmosphereIntersection(float3 ro,float3 rd,float3 sphO, float r)//returns -1 when no intersection has been found
@@ -423,7 +424,7 @@ Shader "Aetherius/RaymarchShader"
 				float3 planetOrigin = float3(0.0,planetAtmos.x,0.0);
 				float3 camPos = _WorldSpaceCameraPos;
 
-				float planetNorm = normalize(camPos - planetOrigin);
+				float3 planetNorm = normalize(camPos - planetOrigin);
 
 				float d = abs(dot(planetNorm, rd));
 
@@ -487,19 +488,22 @@ Shader "Aetherius/RaymarchShader"
 
 
 
-
-				float3 currPos = ro + rd * stepLength * (blueNoiseTexture.Sample(samplerblueNoiseTexture, uv) - 0.5) * 2.0;
+				float3 startingPos = ro + rd * stepLength * (blueNoiseTexture.Sample(samplerblueNoiseTexture, uv) - 0.5) * 2.0;
+				float3 currPos = startingPos;
 				float cosAngle = dot(-rd,sunDir);//We assume they are normalized
 
 				float3 scatteredLuminance = float3(0.0, 0.0, 0.0);
 				float scatteredtransmittance = 1.0;
+				float3 atmosphereHazePos = startingPos;
 				[loop] for (int currStep = 0; currStep < maxStepsRay; ++currStep)
 				{
-				
-
 					if (isAtmosRay && IsPosVisible(currPos, maxDepth,isMaxDepth && scatteredtransmittance > 0.01))//TODO why cant atmos ray be out of here?
 					{
 						float currDensity = GetDensity(currPos);
+
+						if (scatteredtransmittance >= 0.99)
+							atmosphereHazePos = currPos;
+
 						if (currDensity > 0.0)
 						{
 							float shadow = LightShadowTransmittance(currPos, 2000.0f);
@@ -508,18 +512,33 @@ Shader "Aetherius/RaymarchShader"
 							float clampedExtinction = max(currDensity, 0.0000001);
 
 
-							float3 luminance = lightColor * lightIntensity * shadow * currDensity * DoubleLobeScattering(cosAngle, 0.3, 0.2, 0.4) +
-								(1.0 - shadow) * currDensity * ambientColor;//This is not correct?
+							float3 luminance = lightColor * lightIntensity * shadow * currDensity * DoubleLobeScattering(cosAngle, 0.3, 0.2, 0.4);
 							float3 integScatt = (luminance - luminance * transmittance) / clampedExtinction;
 							scatteredLuminance += scatteredtransmittance * integScatt;
 
 							scatteredtransmittance *= transmittance;
 						}
+				
 					}
 					currPos += rd * stepLength;
 				}
 
-				col = scatteredtransmittance * col + scatteredLuminance;
+				float minHazeDist = 18000.0f;//TODO consider making this public
+				float maxHazeDist = sqrt(planetAtmos.z*planetAtmos.z -(planetAtmos.x*planetAtmos.x));//Horizon max view
+
+				float3 initPosHaze = _WorldSpaceCameraPos;
+				float3 vecFromPlanetCenter = _WorldSpaceCameraPos - float3(0.0, planetAtmos.x, 0.0);
+				
+				if (length(vecFromPlanetCenter) > planetAtmos.z )//if positon is outside the atmosphere
+				{
+					initPosHaze = startingPos;
+				}
+
+
+				float hazeAmmount = saturate(Remap(length(atmosphereHazePos - initPosHaze), minHazeDist, maxHazeDist, 0.0, 1.0));
+
+				col = lerp(scatteredtransmittance * col + scatteredLuminance,col,1.0-(1.0-hazeAmmount)*(1.0-hazeAmmount));
+				//col = scatteredtransmittance * col + scatteredLuminance;
 				return float3(col);
 			}
 
@@ -543,7 +562,7 @@ Shader "Aetherius/RaymarchShader"
 			bool isAtmosRay = GetRayAtmosphere(_WorldSpaceCameraPos, rayDirection, rayOrigin, t);
 
 			float3 result = Raymarching(col,isAtmosRay,rayOrigin, rayDirection,t,i.uv, depthMeters,linearDepth>=1.0);
-			return fixed4(result,1.0); //lerp between colors of the scene & the color of the volume (TODO temporal, will have another solution later)
+			return fixed4(result,1.0); 
 
 			}
 ENDCG
