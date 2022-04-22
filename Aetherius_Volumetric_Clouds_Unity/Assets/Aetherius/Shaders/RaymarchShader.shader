@@ -59,10 +59,9 @@ Shader "Aetherius/RaymarchShader"
 			}
 
 
-			int maxSteps;
-			float maxRayDist;//In meters "Far Plane" of the raycast
 			float minCloudHeight;
 			float maxCloudHeight;
+			
 			Texture3D<float4> baseShapeTexture;
 			Texture3D<float4> detailTexture; //TODO see if I can get around using a float3
 			Texture2D<float4> weatherMapTexture;
@@ -71,25 +70,20 @@ Shader "Aetherius/RaymarchShader"
 			SamplerState samplerbaseShapeTexture;
 			SamplerState samplerdetailTexture;
 			SamplerState samplerweatherMapTexture;
+			
 			float baseShapeSize;
 			float detailSize;
 			float weatherMapSize;
+
 			float globalCoverage;
 			float globalDensity;
-			float3 weatherMapOffset;
+
 			float3 sunDir;
 			float lightAbsorption;
 			float lightIntensity;
 			float3 lightColor;
 			float3 ambientColor;
 			float4 coneKernel[6];
-			float osA;
-			float ambientMin;//0 to 1
-			float attenuationClamp;//0 to 1
-
-			float silverIntesity;//0 to 1
-			float silverExponent;//0 to 1
-			float shadowBaseLight;//0 to 1
 
 			StructuredBuffer<float> densityCurveBuffer;
 
@@ -334,37 +328,6 @@ Shader "Aetherius/RaymarchShader"
 				return density;
 			}
 
-			float BeerLambertLaw(float accDensity, float absorptionCoefficient)
-			{
-				float ret = exp(-accDensity * absorptionCoefficient);
-				return shadowBaseLight + ret * (1.0 - shadowBaseLight);
-			}
-
-			float PowderEffect(float accDensity, float absorptionCoefficient)
-			{
-				float ret = 1.0 - exp(-accDensity * absorptionCoefficient * 2.0);
-				return shadowBaseLight + ret * (1.0 - shadowBaseLight);
-			}
-
-
-			float DensityTowardsLight(float3 currPosition)
-			{
-				int iter = 6;
-				float accDensity = 0.0;
-				float stepSize = (float(maxCloudHeight - minCloudHeight) * 0.5) / float(iter);//TODO make as variable (maybe when we have cone light samples?)
-				float3 startingPos = currPosition;
-
-				for (int currStep = 0; currStep < iter; ++currStep)
-				{
-					currPosition += -sunDir * stepSize;
-					accDensity += GetDensity(currPosition) * stepSize;
-
-				}
-
-				accDensity += GetDensity(startingPos - sunDir * stepSize * float(iter) * 3.0) * stepSize;
-
-				return accDensity;
-			}
 
 			float DensityTowardsLightCone(float3 currPosition,float coneWidthScale)//cone width scale between 0 & 1
 			{
@@ -387,36 +350,6 @@ Shader "Aetherius/RaymarchShader"
 			{
 				float g2 = g * g;
 				return ((1.0 - g2) / pow(1.0 + g2 - 2.0 * g * cosAngle, 1.5)) / (4 * 3.1415);
-			}
-
-			float InScatteringExtra(float cosAngle)
-			{
-				return silverIntesity * pow(saturate(cosAngle), silverExponent);
-			}
-
-			float IOS(float cosAngle, float inS,float outS)
-			{
-				return lerp(max(HenyeyGreenstein(cosAngle, inS), InScatteringExtra(cosAngle)), HenyeyGreenstein(cosAngle, -outS),0.5);
-			}
-
-			float Attenuation(float lightDensity, float cosAngle)
-			{
-				float prim = exp(-lightAbsorption * lightDensity);
-				float scnd = exp(-lightAbsorption * attenuationClamp) * 0.7;
-
-				float checkval = Remap(cosAngle, 0.0, 1.0, scnd, scnd * 0.5);
-				return max(checkval, prim);
-			}
-
-			//OutScatterAmbient
-			float OSa(float density,float hPercent)
-			{
-
-				float depth = osA * pow(density, Remap(hPercent, 0.3, 0.9, 0.5, 1.0));
-				float vertical = pow(saturate(Remap(hPercent, 0.0, 0.3, 0.8, 1.0)),0.8);
-				float outScatter = depth * vertical;
-
-				return 1.0 - saturate(outScatter);
 			}
 
 			int CalculateStepsForRay(float3 rd)

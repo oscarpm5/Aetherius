@@ -14,8 +14,6 @@ namespace Aetherius
 
         public Texture2D weatherMap; //Advanced -> TODO when we have weather map generation
         public float weatherMapSize; //Advanced
-        public Vector3 weatherMapOffset; //Always display
-
     }
 
     [RequireComponent(typeof(Camera))]
@@ -45,9 +43,7 @@ namespace Aetherius
         [SerializeField, HideInInspector]
         private Material _material;
         [Header("Ray March")]
-        [Range(32, 1024)]
-        public int maxSteps = 256;
-        public float maxRayDist = 500.0f;
+        
 
         public Texture2D blueNoise;
         [Header("Weather Map")]
@@ -82,20 +78,7 @@ namespace Aetherius
         public float lightIntensityMult = 10.0f;
         [Range(0.0f, 10.0f)]
         public float lightAbsorption = 1.0f;
-        //[Range(0.0f, 1.0f)]
-        public float outScatteringAmbient = 1.0f;
         List<Vector4> conekernel;
-        [Range(0.0f, 1.0f)]
-        public float ambientMin = 0.2f;
-        [Range(0.0f, 1.0f)]
-        public float attenuationClamp = 0.2f;
-        //[Range(0.0f, 1.0f)]
-        public float silverIntesity = 0.5f;
-        //[Range(0.0f, 1.0f)]
-        public float silverExponent = 0.5f;
-
-        [Range(0.0f, 1.0f)]
-        public float shadowBaseLight = 0.5f;
 
         public CloudShape currentShape
         {
@@ -188,21 +171,25 @@ namespace Aetherius
 
             rayMarchMaterial.SetMatrix("_CamFrustum", CamFrustrumFromCam(_camera));
             rayMarchMaterial.SetMatrix("_CamToWorldMat", _camera.cameraToWorldMatrix);
+
             rayMarchMaterial.SetTexture("_MainTex", source); //input the rendered camera texture 
-            rayMarchMaterial.SetInt("maxSteps", maxSteps);
-            rayMarchMaterial.SetFloat("maxRayDist", maxRayDist);
-            rayMarchMaterial.SetFloat("minCloudHeight", minCloudHeightMeters);
-            rayMarchMaterial.SetFloat("maxCloudHeight", maxCloudHeightMeters);
-            rayMarchMaterial.SetFloat("baseShapeSize", currentShape.baseShapeSize);
-            rayMarchMaterial.SetFloat("detailSize", currentShape.detailSize);
-            rayMarchMaterial.SetFloat("weatherMapSize", currentShape.weatherMapSize);
-            rayMarchMaterial.SetFloat("globalCoverage", currentShape.globalCoverage);
-            rayMarchMaterial.SetFloat("globalDensity", currentShape.globalDensity);
-            rayMarchMaterial.SetVector("sunDir", sunLight.transform.rotation * Vector3.forward);
-            rayMarchMaterial.SetVector("weatherMapOffset", currentShape.weatherMapOffset);
             rayMarchMaterial.SetTexture("baseShapeTexture", noiseGen.GetTexture(ProceduralTextureViewer.TEXTURE_TYPE.BASE_SHAPE));
             rayMarchMaterial.SetTexture("detailTexture", noiseGen.GetTexture(ProceduralTextureViewer.TEXTURE_TYPE.DETAIL));
             rayMarchMaterial.SetTexture("weatherMapTexture", GetProceduralWM());
+            rayMarchMaterial.SetTexture("blueNoiseTexture", blueNoise);
+
+
+            rayMarchMaterial.SetFloat("minCloudHeight", minCloudHeightMeters);
+            rayMarchMaterial.SetFloat("maxCloudHeight", maxCloudHeightMeters);
+            
+            rayMarchMaterial.SetFloat("baseShapeSize", currentShape.baseShapeSize);
+            rayMarchMaterial.SetFloat("detailSize", currentShape.detailSize);
+            rayMarchMaterial.SetFloat("weatherMapSize", currentShape.weatherMapSize);
+            
+            rayMarchMaterial.SetFloat("globalCoverage", currentShape.globalCoverage);
+            rayMarchMaterial.SetFloat("globalDensity", currentShape.globalDensity);
+            
+            rayMarchMaterial.SetVector("sunDir", sunLight.transform.rotation * Vector3.forward);      
             rayMarchMaterial.SetFloat("lightAbsorption", lightAbsorption);
             rayMarchMaterial.SetFloat("lightIntensity", sunLight.intensity * lightIntensityMult);
 
@@ -228,21 +215,15 @@ namespace Aetherius
             rayMarchMaterial.SetVector("lightColor", sunLight.color);
             rayMarchMaterial.SetVector("ambientColor", ambientCol);
             rayMarchMaterial.SetVectorArray("coneKernel", conekernel);
-            rayMarchMaterial.SetFloat("osA", outScatteringAmbient);
-            rayMarchMaterial.SetFloat("ambientMin", ambientMin);
-            rayMarchMaterial.SetFloat("attenuationClamp", attenuationClamp);
-            rayMarchMaterial.SetFloat("silverIntesity", silverIntesity);
-            rayMarchMaterial.SetFloat("silverExponent", silverExponent);
-            rayMarchMaterial.SetTexture("blueNoiseTexture", blueNoise);
-            rayMarchMaterial.SetFloat("shadowBaseLight", shadowBaseLight);
 
+  
             rayMarchMaterial.SetVector("windDir", windDirection);
+            rayMarchMaterial.SetInt("windDisplacesWeatherMap", windDisplacesWeatherMap ? 1 : 0);
             rayMarchMaterial.SetFloat("baseShapeWindMult", baseShapeWindMult);
             rayMarchMaterial.SetFloat("detailShapeWindMult", detailShapeWindMult);
             rayMarchMaterial.SetFloat("skewAmmount", skewAmmount);
 
             rayMarchMaterial.SetInt("mode", (int)mode);
-            rayMarchMaterial.SetInt("windDisplacesWeatherMap", windDisplacesWeatherMap ? 1 : 0);
 
             int planetRadiusMeters = planetRadiusKm * 1000;
             rayMarchMaterial.SetVector("planetAtmos", new Vector3(-planetRadiusMeters, planetRadiusMeters + minCloudHeightMeters, planetRadiusMeters + maxCloudHeightMeters));//Center of the planet, radius of min cloud sphere, radius of max cloud sphere
@@ -367,7 +348,6 @@ namespace Aetherius
             myShape.globalCoverage = 0.5f;
             myShape.globalDensity = 0.01f;
             //myShape.weatherMap = GenerateWeatherMap() //TODO
-            //myShape.weatherMapOffset = Vector3.zero; -> expose this always
             myShape.weatherMapSize = 36000.0f;
         }
 
