@@ -86,6 +86,7 @@ Shader "Aetherius/RaymarchShader"
 			float4 coneKernel[6];
 
 			StructuredBuffer<float> densityCurveBuffer;
+			int densityCurveBufferSize;
 
 			int mode;
 
@@ -243,14 +244,7 @@ Shader "Aetherius/RaymarchShader"
 
 			float ShapeAlteringAdvanced(float heightPercent)
 			{
-				//uint numStructs;
-				//uint stride;
-				//densityCurveBuffer.GetDimensions(numStructs, stride);
-
-				uint maxN = 256;
-
-
-				return  densityCurveBuffer[heightPercent * maxN];
+				return  densityCurveBuffer[heightPercent * densityCurveBufferSize];
 			}
 
 			float ShapeAltering(float heightPercent,float weatherMapCloudType,float distance) //Makes Clouds have more shape at the top & be more round towards the bottom, the weather map also influences the density
@@ -367,7 +361,7 @@ Shader "Aetherius/RaymarchShader"
 
 			float CalculateMaxRayDist(float rayLength)
 			{
-				return min(sqrt(planetAtmos.z * planetAtmos.z - planetAtmos.x * planetAtmos.x), rayLength);
+				return min(sqrt(planetAtmos.z * planetAtmos.z - (planetAtmos.x * planetAtmos.x)), rayLength);
 			}
 
 			bool IsPosVisible(float3 pos,float maxDepth,bool isMaxDepth)
@@ -414,8 +408,8 @@ Shader "Aetherius/RaymarchShader"
 				uint blueNoiseH;
 				blueNoiseTexture.GetDimensions(blueNoiseW, blueNoiseH);
 
-				const int maxStepsRay = CalculateStepsForRay(rd);
-				float stepLength = CalculateMaxRayDist(maxRayLength) / maxStepsRay;
+				int maxStepsRay = CalculateStepsForRay(rd);
+				float stepLength = CalculateMaxRayDist(maxRayLength) / float(maxStepsRay);
 				uv.x *= (_ScreenParams.x / _ScreenParams.y);
 				uv *= min(_ScreenParams.x, _ScreenParams.y) / blueNoiseW;
 

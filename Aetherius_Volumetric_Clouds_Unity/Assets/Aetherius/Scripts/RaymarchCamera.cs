@@ -230,9 +230,9 @@ namespace Aetherius
             rayMarchMaterial.SetInt("cumulusHorizon", cumulusHorizon ? 1 : 0);
             rayMarchMaterial.SetVector("cumulusHorizonGradient", cumulusHorizonGradient);
 
-
-            CreateLUTBuffer(256, ref densityCurve, "densityCurveBuffer");
-
+            int lutBufferSize = 256;
+            CreateLUTBuffer(lutBufferSize, ref densityCurve, "densityCurveBuffer");
+            rayMarchMaterial.SetInt("densityCurveBufferSize", lutBufferSize);
 
             //Create a screen quad
             RenderTexture.active = destination;
