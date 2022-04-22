@@ -133,38 +133,37 @@ Shader "Aetherius/RaymarchShader"
 			}
 
 			//outputs a ro + the length of the ray, returns false if no intersection has been found
-			bool GetRayAtmosphere(float3 camPos,float3 rd,out float3 rayOrigin, out float rayLength)
+			bool GetRayAtmosphere(float3 ro,float3 rd,out float3 rayOrigin, out float rayLength)
 			{
 				float3 planetO = float3(0.0, planetAtmos.x,0.0);
-				float d = length(camPos - planetO);//distance btween camera and the planet center
+				float d = length(ro - planetO);//distance btween camera and the planet center
 
-				float2 innerAtmT = GetAtmosphereIntersection(camPos, rd, planetO, planetAtmos.y);
-				float2 outerAtmT = GetAtmosphereIntersection(camPos, rd, planetO, planetAtmos.z);
-				float2 groundT = GetAtmosphereIntersection(camPos, rd, planetO, -planetAtmos.x);
+				float2 innerAtmT = GetAtmosphereIntersection(ro, rd, planetO, planetAtmos.y);
+				float2 outerAtmT = GetAtmosphereIntersection(ro, rd, planetO, planetAtmos.z);
+				float2 groundT = GetAtmosphereIntersection(ro, rd, planetO, -planetAtmos.x);
 
 				if (d < planetAtmos.y)//if camera is under the atmosphere
 				{
-					rayOrigin = camPos + rd * innerAtmT.y;//second hit as 1st will always be behind camera in this case
-					rayLength = outerAtmT.y - innerAtmT.y;//second hit as 1st will always be behind camera in this case
-
-					if (max(groundT.x, groundT.y) != -1.0)
+					if (max(groundT.x, groundT.y) != -1.0) //if collision is with ground return false
 					{
 						return false;
 					}
+
+					rayOrigin = ro + rd * innerAtmT.y;//second hit as 1st will always be behind camera in this case
+					rayLength = outerAtmT.y - innerAtmT.y;//second hit as 1st will always be behind camera in this case
 
 					return true;
 				}
 
 				if (d < planetAtmos.z) //if camera is inside the atmosphere
 				{
-					float innerAtmIntersection = min(innerAtmT.x, innerAtmT.y);//only care about first intersection as we are outside the sphere
-					rayOrigin = camPos;
+					rayOrigin = ro;
 
-					if (innerAtmIntersection != -1.0)
+					if (max(innerAtmT.x, innerAtmT.y) != -1.0)
 					{
-						rayLength = innerAtmIntersection;
+						rayLength = min(innerAtmT.x, innerAtmT.y);
 						return true;
-					}
+					}				
 
 					rayLength = outerAtmT.y;//only care about 2nd intersection as 1s will always be behind camera
 
@@ -176,17 +175,16 @@ Shader "Aetherius/RaymarchShader"
 				if (max(outerAtmT.x, outerAtmT.y) == -1.0)
 					return false;//No hit!
 
-				float innerAtmIntersection = min(innerAtmT.x, innerAtmT.y);//only care about first intersection as we are outside the sphere
+				rayOrigin = ro + rd * outerAtmT.x;
 
+				float innerAtmIntersection = min(innerAtmT.x, innerAtmT.y);//only care about first intersection as we are outside the sphere
 				if (innerAtmIntersection != -1.0) //if there is an intersection with the innerAtm shell
 				{
-					rayOrigin = camPos + rd * outerAtmT.x;
 					rayLength = innerAtmIntersection - outerAtmT.x;
 					return true;
 				}
 
-				rayOrigin = camPos + rd * outerAtmT.x;
-				rayLength = outerAtmT.y;
+				rayLength = outerAtmT.y- outerAtmT.x;
 				return true;
 
 			}
@@ -482,7 +480,7 @@ Shader "Aetherius/RaymarchShader"
 			float t = 0.0;
 
 			
-			bool isAtmosRay = GetRayAtmosphere(_WorldSpaceCameraPos, rayDirection, rayOrigin, t);
+			bool isAtmosRay = GetRayAtmosphere(rayOrigin, rayDirection, rayOrigin, t);
 
 			float3 result = Raymarching(col,isAtmosRay,rayOrigin, rayDirection,t,i.uv, depthMeters,linearDepth>=1.0);
 			return fixed4(result,1.0);
