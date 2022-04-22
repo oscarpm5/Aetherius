@@ -169,9 +169,6 @@ namespace Aetherius
 
             //UpdateGradientLUTs();
 
-            rayMarchMaterial.SetMatrix("_CamFrustum", CamFrustrumFromCam(_camera));
-            rayMarchMaterial.SetMatrix("_CamToWorldMat", _camera.cameraToWorldMatrix);
-
             rayMarchMaterial.SetTexture("_MainTex", source); //input the rendered camera texture 
             rayMarchMaterial.SetTexture("baseShapeTexture", noiseGen.GetTexture(ProceduralTextureViewer.TEXTURE_TYPE.BASE_SHAPE));
             rayMarchMaterial.SetTexture("detailTexture", noiseGen.GetTexture(ProceduralTextureViewer.TEXTURE_TYPE.DETAIL));
@@ -234,29 +231,7 @@ namespace Aetherius
             CreateLUTBuffer(lutBufferSize, ref densityCurve, "densityCurveBuffer");
             rayMarchMaterial.SetInt("densityCurveBufferSize", lutBufferSize);
 
-            //Create a screen quad
-            RenderTexture.active = destination;
-            GL.PushMatrix();
-            GL.LoadOrtho();
-            rayMarchMaterial.SetPass(0);
-            GL.Begin(GL.QUADS);
-            //Bottom Left
-            GL.MultiTexCoord2(0, 0.0f, 0.0f);
-            GL.Vertex3(0.0f, 0.0f, 3.0f);
-            //Bottom Right
-            GL.MultiTexCoord2(0, 1.0f, 0.0f);
-            GL.Vertex3(1.0f, 0.0f, 2.0f);
-            //Top Right
-            GL.MultiTexCoord2(0, 1.0f, 1.0f);
-            GL.Vertex3(1.0f, 1.0f, 1.0f);
-            //Top Left
-            GL.MultiTexCoord2(0, 0.0f, 1.0f);
-            GL.Vertex3(0.0f, 1.0f, 0.0f);
-
-            GL.End();
-            GL.PopMatrix();
-
-
+            Graphics.Blit(source, destination, rayMarchMaterial);
 
             ProceduralTextureViewer.DeleteComputeBuffers(ref toDeleteCompBuffers);
         }

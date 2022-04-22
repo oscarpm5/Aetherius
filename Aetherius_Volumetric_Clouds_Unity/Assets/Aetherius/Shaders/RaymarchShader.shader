@@ -19,8 +19,6 @@ Shader "Aetherius/RaymarchShader"
 
 			sampler2D _MainTex;
 
-			float4x4 _CamFrustum;//Eye Space
-			float4x4 _CamToWorldMat;//Convert camera to world space
 
 			struct appdata
 			{
@@ -30,8 +28,8 @@ Shader "Aetherius/RaymarchShader"
 
 			struct v2f
 			{
+				float4 pos : SV_POSITION;
 				float2 uv : TEXCOORD0;
-				float4 vertex : SV_POSITION;
 				float3 ray : TEXCOORD1;
 			};
 
@@ -39,16 +37,11 @@ Shader "Aetherius/RaymarchShader"
 			{
 				v2f o;
 
-				half index = v.vertex.z; //we use the z component of the vertex as an index for the _CamFrustum matrix
-				v.vertex.z = 0;
-
-				o.vertex = UnityObjectToClipPos(v.vertex);
+				o.pos = UnityObjectToClipPos(v.vertex);
 				o.uv = v.uv;
 
-				o.ray = _CamFrustum[(int)index].xyz;
-
-				o.ray /= abs(o.ray.z);//Normalize in z direction
-				o.ray = mul(_CamToWorldMat, o.ray);
+				float3 ray = mul(unity_CameraInvProjection, float4(v.uv * 2 - 1, 0, -1));
+				o.ray = mul(unity_CameraToWorld, float4(ray, 0));
 
 				return o;
 			}
@@ -473,6 +466,11 @@ Shader "Aetherius/RaymarchShader"
 
 			fixed4 frag(v2f i) : SV_Target
 			{
+				float3 rayOrigin = _WorldSpaceCameraPos;
+				float viewLength = length(i.ray);
+				float3 rayDirection = i.ray / viewLength;
+
+
 				fixed3 col = tex2D(_MainTex, i.uv);
 			float depth = tex2D(_CameraDepthTexture,i.uv);
 			float linearDepth = Linear01Depth(depth);//depth 0,1
@@ -481,15 +479,13 @@ Shader "Aetherius/RaymarchShader"
 			float3 posWorld = mul(unity_CameraToWorld, posView).xyz;
 			depthMeters = length(posWorld - _WorldSpaceCameraPos);//depth in meters
 			
-			float3 rayDirection = normalize(i.ray.xyz);
-			float3 rayOrigin = _WorldSpaceCameraPos;
 			float t = 0.0;
 
 			
 			bool isAtmosRay = GetRayAtmosphere(_WorldSpaceCameraPos, rayDirection, rayOrigin, t);
 
 			float3 result = Raymarching(col,isAtmosRay,rayOrigin, rayDirection,t,i.uv, depthMeters,linearDepth>=1.0);
-			return fixed4(result,1.0); 
+			return fixed4(result,1.0);
 
 			}
 ENDCG
