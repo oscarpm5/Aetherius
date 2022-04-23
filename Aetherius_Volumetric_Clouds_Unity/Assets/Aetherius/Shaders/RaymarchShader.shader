@@ -96,6 +96,8 @@ Shader "Aetherius/RaymarchShader"
 
 			sampler2D _CameraDepthTexture;
 
+			int maxRayVisibilityDist;
+
 			float2 GetAtmosphereIntersection(float3 ro,float3 rd,float3 sphO, float r)//returns -1 when no intersection has been found
 			{
 				float t0 = -1.0;
@@ -159,7 +161,7 @@ Shader "Aetherius/RaymarchShader"
 				{
 					rayOrigin = ro;
 
-					if (max(innerAtmT.x, innerAtmT.y) != -1.0)
+					if (max(groundT.x, groundT.y) != -1.0)
 					{
 						rayLength = min(innerAtmT.x, innerAtmT.y);
 						return true;
@@ -177,10 +179,9 @@ Shader "Aetherius/RaymarchShader"
 
 				rayOrigin = ro + rd * outerAtmT.x;
 
-				float innerAtmIntersection = min(innerAtmT.x, innerAtmT.y);//only care about first intersection as we are outside the sphere
-				if (innerAtmIntersection != -1.0) //if there is an intersection with the innerAtm shell
+				if (max(groundT.x,groundT.y) != -1.0) //if there is an intersection with the innerAtm shell
 				{
-					rayLength = innerAtmIntersection - outerAtmT.x;
+					rayLength = innerAtmT.x - outerAtmT.x;
 					return true;
 				}
 
@@ -318,7 +319,7 @@ Shader "Aetherius/RaymarchShader"
 			{
 				int iter = 6;
 				float accDensity = 0.0;
-				float stepSize = (float(maxCloudHeight - minCloudHeight) * 0.5) / float(iter);//TODO make as variable (maybe when we have cone light samples?)
+				float stepSize = ((maxCloudHeight - minCloudHeight) * 0.5) / float(iter);//TODO make as variable (maybe when we have cone light samples?)
 				float3 startingPos = currPosition;
 				for (int currStep = 0; currStep < iter; ++currStep)
 				{
@@ -337,12 +338,11 @@ Shader "Aetherius/RaymarchShader"
 				return ((1.0 - g2) / pow(1.0 + g2 - 2.0 * g * cosAngle, 1.5)) / (4 * 3.1415);
 			}
 
-			int CalculateStepsForRay(float3 rd)
+			int CalculateStepsForRay(float3 ro,float3 rd)
 			{
 				float3 planetOrigin = float3(0.0,planetAtmos.x,0.0);
-				float3 camPos = _WorldSpaceCameraPos;
 
-				float3 planetNorm = normalize(camPos - planetOrigin);
+				float3 planetNorm = normalize(ro - planetOrigin);
 
 				float d = abs(dot(planetNorm, rd));
 
@@ -352,7 +352,7 @@ Shader "Aetherius/RaymarchShader"
 
 			float CalculateMaxRayDist(float rayLength)
 			{
-				return min(sqrt(planetAtmos.z * planetAtmos.z - (planetAtmos.x * planetAtmos.x)), rayLength);
+				return min(maxRayVisibilityDist, rayLength);
 			}
 
 			bool IsPosVisible(float3 pos,float maxDepth,bool isMaxDepth)
@@ -392,21 +392,21 @@ Shader "Aetherius/RaymarchShader"
 				return shadow;//TODO can lerp powder effect here (multiplying shadow) but might not be energy conserving!
 			}
 
-			float3 Raymarching(float3 col,bool isAtmosRay,float3 ro, float3 rd,float maxRayLength,float2 uv,float maxDepth,bool isMaxDepth) //where ro is ray origin & rd is ray direction
+			float3 Raymarching(float3 col,float3 ro, float3 rd,float maxRayLength,float2 uv,float maxDepth,bool isMaxDepth) //where ro is ray origin & rd is ray direction
 			{
 
 				uint blueNoiseW;
 				uint blueNoiseH;
 				blueNoiseTexture.GetDimensions(blueNoiseW, blueNoiseH);
 
-				int maxStepsRay = CalculateStepsForRay(rd);
+				int maxStepsRay = CalculateStepsForRay(ro,rd);
 				float stepLength = CalculateMaxRayDist(maxRayLength) / float(maxStepsRay);
 				uv.x *= (_ScreenParams.x / _ScreenParams.y);
 				uv *= min(_ScreenParams.x, _ScreenParams.y) / blueNoiseW;
 
 
 
-				float3 startingPos = ro + rd * stepLength * (blueNoiseTexture.Sample(samplerblueNoiseTexture, uv) - 0.5) * 2.0;
+				float3 startingPos = ro + rd * stepLength * blueNoiseTexture.Sample(samplerblueNoiseTexture, uv);
 				float3 currPos = startingPos;
 				float cosAngle = dot(-rd,sunDir);//We assume they are normalized
 
@@ -415,7 +415,7 @@ Shader "Aetherius/RaymarchShader"
 				float3 atmosphereHazePos = startingPos;
 				[loop] for (int currStep = 0; currStep < maxStepsRay; ++currStep)
 				{
-					if (isAtmosRay && IsPosVisible(currPos, maxDepth,isMaxDepth && scatteredtransmittance > 0.01))//TODO why cant atmos ray be out of here?
+					if (IsPosVisible(currPos, maxDepth,isMaxDepth))//TODO why cant atmos ray be out of here?
 					{
 						float currDensity = GetDensity(currPos);
 
@@ -441,8 +441,8 @@ Shader "Aetherius/RaymarchShader"
 					currPos += rd * stepLength;
 				}
 
-				float minHazeDist = 18000.0f;//TODO consider making this public
-				float maxHazeDist = sqrt(planetAtmos.z*planetAtmos.z -(planetAtmos.x*planetAtmos.x));//Horizon max view
+				float minHazeDist = maxRayVisibilityDist*0.5;//TODO consider making this public
+				float maxHazeDist = maxRayVisibilityDist;//Horizon max view
 
 				float3 initPosHaze = _WorldSpaceCameraPos;
 				float3 vecFromPlanetCenter = _WorldSpaceCameraPos - float3(0.0, planetAtmos.x, 0.0);
@@ -482,7 +482,10 @@ Shader "Aetherius/RaymarchShader"
 			
 			bool isAtmosRay = GetRayAtmosphere(rayOrigin, rayDirection, rayOrigin, t);
 
-			float3 result = Raymarching(col,isAtmosRay,rayOrigin, rayDirection,t,i.uv, depthMeters,linearDepth>=1.0);
+			if(!isAtmosRay || t<=0.0)
+				return fixed4(col, 1.0);
+
+			float3 result = Raymarching(col,rayOrigin, rayDirection,t,i.uv, depthMeters,linearDepth>=1.0);
 			return fixed4(result,1.0);
 
 			}

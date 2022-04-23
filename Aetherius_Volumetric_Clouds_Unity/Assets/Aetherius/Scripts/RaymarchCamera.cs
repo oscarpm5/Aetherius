@@ -43,7 +43,7 @@ namespace Aetherius
         [SerializeField, HideInInspector]
         private Material _material;
         [Header("Ray March")]
-        
+        public int maxRayVisibilityDist=50000;
 
         public Texture2D blueNoise;
         [Header("Weather Map")]
@@ -178,7 +178,8 @@ namespace Aetherius
 
             rayMarchMaterial.SetFloat("minCloudHeight", minCloudHeightMeters);
             rayMarchMaterial.SetFloat("maxCloudHeight", maxCloudHeightMeters);
-            
+            rayMarchMaterial.SetInt("maxRayVisibilityDist", maxRayVisibilityDist);
+
             rayMarchMaterial.SetFloat("baseShapeSize", currentShape.baseShapeSize);
             rayMarchMaterial.SetFloat("detailSize", currentShape.detailSize);
             rayMarchMaterial.SetFloat("weatherMapSize", currentShape.weatherMapSize);
