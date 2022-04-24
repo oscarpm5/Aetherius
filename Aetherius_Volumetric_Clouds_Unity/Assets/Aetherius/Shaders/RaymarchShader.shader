@@ -262,10 +262,10 @@ Shader "Aetherius/RaymarchShader"
 
 				float DensityAltering(float heightPercent,float weatherMapDensity)
 				{
-					float densityBottom = heightPercent * saturate(Remap(heightPercent, 0.0, 0.15, 0.0, 1.0));
+					float densityBottom = saturate(Remap(heightPercent, 0.0, 0.1, 0.0, 1.0));
 					float densityTop = saturate(Remap(heightPercent,0.9,1.0,1.0,0.0));
 
-					return densityBottom * densityTop * weatherMapDensity*globalCoverage;
+					return (Remap(heightPercent,0.0,1.0,0.5,1.0))* densityBottom * densityTop * weatherMapDensity*globalCoverage;
 				}
 
 				float GetDensity(float3 currPos)

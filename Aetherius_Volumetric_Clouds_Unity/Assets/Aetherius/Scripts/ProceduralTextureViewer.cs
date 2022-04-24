@@ -17,6 +17,9 @@ namespace Aetherius
         public int worleyNumCellsB;
         public int worleyNumCellsC;
         public float worleyPersistence;
+
+        //General
+        public Vector2 minMaxBounds;
     }
 
     [RequireComponent(typeof(Camera))]
@@ -322,6 +325,7 @@ namespace Aetherius
 
 
             compShader.SetVector("channelMask", GetChannelMask(channelToWriteTo));
+            compShader.SetVector("minMaxBounds", data.minMaxBounds);
             compShader.SetTexture(kernelIndex, "result", output);
 
             DispatchComputeShader(ref compShader, kernelIndex, new Vector3Int(dim, dim, 1));
@@ -347,6 +351,9 @@ namespace Aetherius
                         ret.worleyNumCellsB = 13;
                         ret.worleyNumCellsC = 23;
                         ret.worleyPersistence = 0.5f;
+
+                        //General
+                        ret.minMaxBounds = new Vector2(0.0f,1.0f);
                     }
                     break;
                 case TEXTURE_CHANNEL.G:
@@ -362,6 +369,9 @@ namespace Aetherius
                         ret.worleyNumCellsB = 9;
                         ret.worleyNumCellsC = 13;
                         ret.worleyPersistence = 0.5f;
+
+                        //General
+                        ret.minMaxBounds = new Vector2(0.0f, 1.0f);
                     }
                     break;
                 case TEXTURE_CHANNEL.B:
@@ -377,6 +387,9 @@ namespace Aetherius
                         ret.worleyNumCellsB = 5;
                         ret.worleyNumCellsC = 9;
                         ret.worleyPersistence = 0.4f;
+
+                        //General
+                        ret.minMaxBounds = new Vector2(0.0f, 1.0f);
                     }
                     break;
                 case TEXTURE_CHANNEL.A:

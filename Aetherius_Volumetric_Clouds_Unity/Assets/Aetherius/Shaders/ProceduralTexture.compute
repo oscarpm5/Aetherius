@@ -257,6 +257,7 @@ StructuredBuffer<float2> pointsWorleyWMDensityC;
 
 
 float4 channelMask;
+float2 minMaxBounds;
 
 RWTexture2D<float4> result;
 
@@ -393,7 +394,7 @@ void GenerateWeatherMap(uint3 id : SV_DispatchThreadID)
     layeredValWorley= 1-layeredValWorley;//we invert the distance
 
     float layeredValFinal = saturate(remap(layeredValWorley,layeredValPerlin-1.0,1.0,0.0,1.0));
-
+    layeredValFinal = saturate(remap(layeredValFinal,0.0,1.0,minMaxBounds.x,minMaxBounds.y));
     
    result[id.xy] = lerp(result[id.xy],float4(layeredValFinal,layeredValFinal,layeredValFinal,layeredValFinal),channelMask);
 }
