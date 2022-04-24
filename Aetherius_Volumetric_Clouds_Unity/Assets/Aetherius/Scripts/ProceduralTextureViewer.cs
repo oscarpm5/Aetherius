@@ -4,6 +4,20 @@ using UnityEngine;
 
 namespace Aetherius
 {
+    public struct WMChannelData //TODO consider moving this to a different script?
+    {
+        //Perlin Related
+        public int perlinGridSize;
+        public int perlinOctaves;
+        public float perlinPersistence;
+        public float perlinLacunarity;
+
+        //Worley Related
+        public int worleyNumCellsA;
+        public int worleyNumCellsB;
+        public int worleyNumCellsC;
+        public float worleyPersistence;
+    }
 
     [RequireComponent(typeof(Camera))]
     [ImageEffectAllowedInSceneView]
@@ -222,8 +236,8 @@ namespace Aetherius
             computeShader.SetFloat("persistenceWorley", currSettings.persistence); //less than 1
 
             //Perlin
-            GenerateCornerVectors(kernelName,ref buffersToDelete);
-            GeneratePermutationTable(256, perlinShapeSettings.seed, "permTable", kernelName,ref computeShader,ref buffersToDelete);
+            GenerateCornerVectors(kernelName, ref buffersToDelete);
+            GeneratePermutationTable(256, perlinShapeSettings.seed, "permTable", kernelName, ref computeShader, ref buffersToDelete);
             computeShader.SetInt("gridSize", perlinShapeSettings.gridSizePerlin);
             computeShader.SetInt("octaves", perlinShapeSettings.numOctavesPerlin);
             computeShader.SetFloat("persistencePerlin", perlinShapeSettings.persistencePerlin); //less than 1
@@ -264,7 +278,7 @@ namespace Aetherius
             DeleteComputeBuffers(ref buffersToDelete);
         }
 
-        public static void GenerateWeatherMap(int resolution,ref ComputeShader compShader,ref RenderTexture output,ref List<ComputeBuffer> deleteBuffers,int seed)
+        public static void GenerateWeatherMap(int resolution, ref ComputeShader compShader, ref RenderTexture output, ref List<ComputeBuffer> deleteBuffers, int seed)
         {
             int dim = Mathf.Max(resolution, 8);
 
@@ -273,36 +287,115 @@ namespace Aetherius
             string kernelName = "GenerateWeatherMap";
             int kernelIndex = compShader.FindKernel(kernelName);
 
+            GenerateWeatherMapChannel(TEXTURE_CHANNEL.R, kernelName, kernelIndex, dim, ref compShader, ref output, ref deleteBuffers, seed);
+            GenerateWeatherMapChannel(TEXTURE_CHANNEL.G, kernelName, kernelIndex, dim, ref compShader, ref output, ref deleteBuffers, seed);
+            GenerateWeatherMapChannel(TEXTURE_CHANNEL.B, kernelName, kernelIndex, dim, ref compShader, ref output, ref deleteBuffers, seed);
+            GenerateWeatherMapChannel(TEXTURE_CHANNEL.A, kernelName, kernelIndex, dim, ref compShader, ref output, ref deleteBuffers, seed);
+
+
+        }
+
+        private static void GenerateWeatherMapChannel(TEXTURE_CHANNEL channelToWriteTo, string kernelName, int kernelIndex, int dim, ref ComputeShader compShader, ref RenderTexture output, ref List<ComputeBuffer> deleteBuffers, int seed)
+        {
+            WMChannelData data = GetWMChannelData(channelToWriteTo);
+
             //Perlin -> Cloudmap Density
-            GenerateCornerVectors2D(kernelName,"vecTableWMDensity",ref compShader, ref deleteBuffers);
+            GenerateCornerVectors2D(kernelName, "vecTableWMDensity", ref compShader, ref deleteBuffers);
             GeneratePermutationTable(256, seed, "permTableWMDensity", kernelName, ref compShader, ref deleteBuffers);
-            compShader.SetInt("gridSizeWMDensity", 23);
-            compShader.SetInt("octavesWMDensity", 4);
+            compShader.SetInt("gridSizeWMDensity", data.perlinGridSize);
+            compShader.SetInt("octavesWMDensity", data.perlinOctaves);
             compShader.SetInt("texDim", dim);
-            compShader.SetFloat("persistenceWMDensityPerlin", 0.5f); //less than 1
-            compShader.SetFloat("lacunarityWMDensityPerlin", 2.0f); //More than 1
+            compShader.SetFloat("persistenceWMDensityPerlin", data.perlinPersistence); //less than 1
+            compShader.SetFloat("lacunarityWMDensityPerlin", data.perlinLacunarity); //More than 1
 
             //Worley
-            int numCellsAxisA = 5;
-            int numCellsAxisB = 11;
-            int numCellsAxisC = 19;
+            compShader.SetInt("numWorleyCellsWMDensityA", data.worleyNumCellsA);
+            compShader.SetInt("numWorleyCellsWMDensityB", data.worleyNumCellsB);
+            compShader.SetInt("numWorleyCellsWMDensityC", data.worleyNumCellsC);
 
-            compShader.SetInt("numWorleyCellsWMDensityA", numCellsAxisA);
-            compShader.SetInt("numWorleyCellsWMDensityB", numCellsAxisB);
-            compShader.SetInt("numWorleyCellsWMDensityC", numCellsAxisC);
-
-            compShader.SetFloat("persistenceWMDensityWorley", 0.5f); //less than 1
+            compShader.SetFloat("persistenceWMDensityWorley", data.worleyPersistence); //less than 1
             System.Random random = new System.Random(seed);//TODO generalise for generate Permutation table (input random directly)
-            GeneratePoints2D(random, numCellsAxisA, "pointsWorleyWMDensityA", kernelName, ref compShader, ref deleteBuffers);
-            GeneratePoints2D(random, numCellsAxisB, "pointsWorleyWMDensityB", kernelName, ref compShader, ref deleteBuffers);
-            GeneratePoints2D(random, numCellsAxisC, "pointsWorleyWMDensityC", kernelName, ref compShader, ref deleteBuffers);
+            GeneratePoints2D(random, data.worleyNumCellsA, "pointsWorleyWMDensityA", kernelName, ref compShader, ref deleteBuffers);
+            GeneratePoints2D(random, data.worleyNumCellsB, "pointsWorleyWMDensityB", kernelName, ref compShader, ref deleteBuffers);
+            GeneratePoints2D(random, data.worleyNumCellsC, "pointsWorleyWMDensityC", kernelName, ref compShader, ref deleteBuffers);
 
 
-
+            compShader.SetVector("channelMask", GetChannelMask(channelToWriteTo));
             compShader.SetTexture(kernelIndex, "result", output);
 
             DispatchComputeShader(ref compShader, kernelIndex, new Vector3Int(dim, dim, 1));
             DeleteComputeBuffers(ref deleteBuffers);
+        }
+
+        static WMChannelData GetWMChannelData(TEXTURE_CHANNEL channel)
+        {
+            WMChannelData ret = new WMChannelData();
+
+            switch (channel)
+            {
+                case TEXTURE_CHANNEL.R:
+                    {
+                        //Perlin Related
+                        ret.perlinGridSize = 23;
+                        ret.perlinOctaves = 4;
+                        ret.perlinPersistence = 0.5f;
+                        ret.perlinLacunarity = 2.0f;
+
+                        //Worley Related
+                        ret.worleyNumCellsA = 5;
+                        ret.worleyNumCellsB = 11;
+                        ret.worleyNumCellsC = 19;
+                        ret.worleyPersistence = 0.5f;
+                    }
+                    break;
+                case TEXTURE_CHANNEL.G:
+                    {
+                        //Perlin Related
+                        ret.perlinGridSize = 23;
+                        ret.perlinOctaves = 4;
+                        ret.perlinPersistence = 0.5f;
+                        ret.perlinLacunarity = 2.0f;
+
+                        //Worley Related
+                        ret.worleyNumCellsA = 5;
+                        ret.worleyNumCellsB = 11;
+                        ret.worleyNumCellsC = 19;
+                        ret.worleyPersistence = 0.5f;
+                    }
+                    break;
+                case TEXTURE_CHANNEL.B:
+                    {
+                        //Perlin Related
+                        ret.perlinGridSize = 23;
+                        ret.perlinOctaves = 4;
+                        ret.perlinPersistence = 0.5f;
+                        ret.perlinLacunarity = 2.0f;
+
+                        //Worley Related
+                        ret.worleyNumCellsA = 5;
+                        ret.worleyNumCellsB = 11;
+                        ret.worleyNumCellsC = 19;
+                        ret.worleyPersistence = 0.5f;
+                    }
+                    break;
+                case TEXTURE_CHANNEL.A:
+                    {
+                        //Perlin Related
+                        ret.perlinGridSize = 23;
+                        ret.perlinOctaves = 4;
+                        ret.perlinPersistence = 0.5f;
+                        ret.perlinLacunarity = 2.0f;
+
+                        //Worley Related
+                        ret.worleyNumCellsA = 5;
+                        ret.worleyNumCellsB = 11;
+                        ret.worleyNumCellsC = 19;
+                        ret.worleyPersistence = 0.5f;
+                    }
+                    break;
+            }
+
+            return ret;
         }
 
         //Update methods ==========================================================================
@@ -368,7 +461,7 @@ namespace Aetherius
         {
             System.Random random = new System.Random(currSettings.seed);
 
-            GeneratePoints(random, currSettings.numberOfCellsAxisA, "pointsA", kernelName,ref compShader,ref deleteBuffers);
+            GeneratePoints(random, currSettings.numberOfCellsAxisA, "pointsA", kernelName, ref compShader, ref deleteBuffers);
             GeneratePoints(random, currSettings.numberOfCellsAxisB, "pointsB", kernelName, ref compShader, ref deleteBuffers);
             GeneratePoints(random, currSettings.numberOfCellsAxisC, "pointsC", kernelName, ref compShader, ref deleteBuffers);
         }
@@ -383,7 +476,7 @@ namespace Aetherius
 
             CreateComputeBuffer(ref deleteBuffers, ref compShader, sizeof(float) * 3, points, bufferName, kernelName);
         }
-        static void GeneratePoints2D(System.Random rand, int numberOfCellsAxis, string bufferName, string kernelName,ref ComputeShader compShader ,ref List<ComputeBuffer> deleteBuffers)
+        static void GeneratePoints2D(System.Random rand, int numberOfCellsAxis, string bufferName, string kernelName, ref ComputeShader compShader, ref List<ComputeBuffer> deleteBuffers)
         {
             int totalNumOfCells = numberOfCellsAxis * numberOfCellsAxis;//2D grid
             Vector2[] points = new Vector2[totalNumOfCells];
@@ -396,7 +489,7 @@ namespace Aetherius
         }
 
         //Improved Perlin Related =================================================================
-        static void GeneratePermutationTable(int size, int seed, string bufferName, string kernelName, ref ComputeShader compShader,ref List<ComputeBuffer> deleteBuffers)
+        static void GeneratePermutationTable(int size, int seed, string bufferName, string kernelName, ref ComputeShader compShader, ref List<ComputeBuffer> deleteBuffers)
         {
             System.Random rand = new System.Random(seed);
 
@@ -435,7 +528,7 @@ namespace Aetherius
 
             CreateComputeBuffer(ref deleteBuffersList, ref computeShader, sizeof(float) * 3, directions, "vecTable", kernelName);
         }
-        static void GenerateCornerVectors2D(string kernelName,string bufferName,ref ComputeShader compShader,ref List<ComputeBuffer> deleteBuffersList)
+        static void GenerateCornerVectors2D(string kernelName, string bufferName, ref ComputeShader compShader, ref List<ComputeBuffer> deleteBuffersList)
         {
             Vector2[] directions = new Vector2[8];
             directions[0] = new Vector2(1, 1);
@@ -447,7 +540,7 @@ namespace Aetherius
             directions[6] = new Vector2(0, 1);
             directions[7] = new Vector2(0, -1);
 
-            CreateComputeBuffer(ref deleteBuffersList, ref compShader, sizeof(float) * 2, directions,bufferName, kernelName);
+            CreateComputeBuffer(ref deleteBuffersList, ref compShader, sizeof(float) * 2, directions, bufferName, kernelName);
         }
 
         //Compute Buffers =========================================================================

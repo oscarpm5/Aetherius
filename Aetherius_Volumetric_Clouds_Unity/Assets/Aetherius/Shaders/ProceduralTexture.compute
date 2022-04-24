@@ -256,6 +256,8 @@ StructuredBuffer<float2> pointsWorleyWMDensityB;
 StructuredBuffer<float2> pointsWorleyWMDensityC;
 
 
+float4 channelMask;
+
 RWTexture2D<float4> result;
 
 uint GetpermutationIndexFromPos2D(int2 pos,uint permTableSize)
@@ -393,5 +395,5 @@ void GenerateWeatherMap(uint3 id : SV_DispatchThreadID)
     float layeredValFinal = saturate(remap(layeredValWorley,layeredValPerlin-1.0,1.0,0.0,1.0));
 
     
-   result[id.xy] = float4(layeredValFinal,0.0,0.0,1.0);
+   result[id.xy] = lerp(result[id.xy],float4(layeredValFinal,layeredValFinal,layeredValFinal,layeredValFinal),channelMask);
 }
