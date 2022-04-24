@@ -289,9 +289,10 @@ namespace Aetherius
 
             GenerateWeatherMapChannel(TEXTURE_CHANNEL.R, kernelName, kernelIndex, dim, ref compShader, ref output, ref deleteBuffers, seed);
             GenerateWeatherMapChannel(TEXTURE_CHANNEL.G, kernelName, kernelIndex, dim, ref compShader, ref output, ref deleteBuffers, seed);
-            GenerateWeatherMapChannel(TEXTURE_CHANNEL.B, kernelName, kernelIndex, dim, ref compShader, ref output, ref deleteBuffers, seed);
-            GenerateWeatherMapChannel(TEXTURE_CHANNEL.A, kernelName, kernelIndex, dim, ref compShader, ref output, ref deleteBuffers, seed);
-
+            //GenerateWeatherMapChannel(TEXTURE_CHANNEL.B, kernelName, kernelIndex, dim, ref compShader, ref output, ref deleteBuffers, seed);
+            
+            //TODO this line will be used to model precipitation extra absorption
+            //GenerateWeatherMapChannel(TEXTURE_CHANNEL.A, kernelName, kernelIndex, dim, ref compShader, ref output, ref deleteBuffers, seed);
 
         }
 
@@ -342,40 +343,40 @@ namespace Aetherius
                         ret.perlinLacunarity = 2.0f;
 
                         //Worley Related
-                        ret.worleyNumCellsA = 5;
-                        ret.worleyNumCellsB = 11;
-                        ret.worleyNumCellsC = 19;
+                        ret.worleyNumCellsA = 9;
+                        ret.worleyNumCellsB = 13;
+                        ret.worleyNumCellsC = 23;
                         ret.worleyPersistence = 0.5f;
                     }
                     break;
                 case TEXTURE_CHANNEL.G:
                     {
                         //Perlin Related
-                        ret.perlinGridSize = 23;
+                        ret.perlinGridSize = 13;
                         ret.perlinOctaves = 4;
                         ret.perlinPersistence = 0.5f;
                         ret.perlinLacunarity = 2.0f;
 
                         //Worley Related
-                        ret.worleyNumCellsA = 5;
-                        ret.worleyNumCellsB = 11;
-                        ret.worleyNumCellsC = 19;
+                        ret.worleyNumCellsA = 4;
+                        ret.worleyNumCellsB = 9;
+                        ret.worleyNumCellsC = 13;
                         ret.worleyPersistence = 0.5f;
                     }
                     break;
                 case TEXTURE_CHANNEL.B:
                     {
                         //Perlin Related
-                        ret.perlinGridSize = 23;
+                        ret.perlinGridSize = 9;
                         ret.perlinOctaves = 4;
                         ret.perlinPersistence = 0.5f;
                         ret.perlinLacunarity = 2.0f;
 
                         //Worley Related
-                        ret.worleyNumCellsA = 5;
-                        ret.worleyNumCellsB = 11;
-                        ret.worleyNumCellsC = 19;
-                        ret.worleyPersistence = 0.5f;
+                        ret.worleyNumCellsA = 3;
+                        ret.worleyNumCellsB = 5;
+                        ret.worleyNumCellsC = 9;
+                        ret.worleyPersistence = 0.4f;
                     }
                     break;
                 case TEXTURE_CHANNEL.A:

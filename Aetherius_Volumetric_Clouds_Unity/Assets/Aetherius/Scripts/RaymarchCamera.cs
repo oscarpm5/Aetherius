@@ -55,6 +55,10 @@ namespace Aetherius
         public bool cumulusHorizon = false;
         [HideInInspector]
         public Vector2 cumulusHorizonGradient;
+        public Vector4 cloudLayerGradient1= new Vector4(0.0f, 0.05f, 0.1f, 0.3f);
+        public Vector4 cloudLayerGradient2 = new Vector4(0.2f, 0.3f, 0.3f, 0.45f);
+        public Vector4 cloudLayerGradient3 = new Vector4(0.0f, 0.1f, 0.7f, 1.0f);
+
 
         [Header("Cloud")]
         public int planetRadiusKm = 6371;
@@ -227,6 +231,10 @@ namespace Aetherius
             rayMarchMaterial.SetVector("planetAtmos", new Vector3(-planetRadiusMeters, planetRadiusMeters + minCloudHeightMeters, planetRadiusMeters + maxCloudHeightMeters));//Center of the planet, radius of min cloud sphere, radius of max cloud sphere
             rayMarchMaterial.SetInt("cumulusHorizon", cumulusHorizon ? 1 : 0);
             rayMarchMaterial.SetVector("cumulusHorizonGradient", cumulusHorizonGradient);
+            rayMarchMaterial.SetVector("cloudLayerGradient1", cloudLayerGradient1);
+            rayMarchMaterial.SetVector("cloudLayerGradient2", cloudLayerGradient2);
+            rayMarchMaterial.SetVector("cloudLayerGradient3", cloudLayerGradient3);
+
 
             int lutBufferSize = 256;
             CreateLUTBuffer(lutBufferSize, ref densityCurve, "densityCurveBuffer");
