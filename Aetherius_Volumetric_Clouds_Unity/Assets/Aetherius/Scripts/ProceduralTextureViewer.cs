@@ -347,13 +347,13 @@ namespace Aetherius
                         ret.perlinLacunarity = 2.0f;
 
                         //Worley Related
-                        ret.worleyNumCellsA = 9;
-                        ret.worleyNumCellsB = 13;
-                        ret.worleyNumCellsC = 23;
+                        ret.worleyNumCellsA = 7;
+                        ret.worleyNumCellsB = 11;
+                        ret.worleyNumCellsC = 27;
                         ret.worleyPersistence = 0.5f;
 
                         //General
-                        ret.minMaxBounds = new Vector2(0.0f,1.0f);
+                        ret.minMaxBounds = new Vector2(-0.5f,1.0f);
                     }
                     break;
                 case TEXTURE_CHANNEL.G:
@@ -365,13 +365,13 @@ namespace Aetherius
                         ret.perlinLacunarity = 2.0f;
 
                         //Worley Related
-                        ret.worleyNumCellsA = 4;
-                        ret.worleyNumCellsB = 9;
-                        ret.worleyNumCellsC = 13;
+                        ret.worleyNumCellsA = 3;
+                        ret.worleyNumCellsB = 5;
+                        ret.worleyNumCellsC = 7;
                         ret.worleyPersistence = 0.5f;
 
                         //General
-                        ret.minMaxBounds = new Vector2(0.0f, 1.0f);
+                        ret.minMaxBounds = new Vector2(-0.5f, 1.0f);
                     }
                     break;
                 case TEXTURE_CHANNEL.B:
