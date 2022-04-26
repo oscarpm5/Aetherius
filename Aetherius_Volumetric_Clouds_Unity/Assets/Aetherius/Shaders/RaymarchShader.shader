@@ -302,26 +302,27 @@ Shader "Aetherius/RaymarchShader"
 					float cloudCoverageB = (weatherMapCloud.g);
 					float cloudCoverageC = (weatherMapCloud.b);
 
-					float baseCloudWithCoverageA = (Remap(coudNoiseBaseA, 1.0 - globalCoverage * cloudCoverageA, 1.0, 0.0, 1.0));
-					float baseCloudWithCoverageB = (Remap(coudNoiseBaseB, 1.0 - globalCoverage * cloudCoverageB, 1.0, 0.0, 1.0));
-					float baseCloudWithCoverageC = (Remap(coudNoiseBaseC, 1.0 - globalCoverage * cloudCoverageC, 1.0, 0.0, 1.0));
+					float baseCloudWithCoverageA = (Remap(coudNoiseBaseA, 1.0 -  cloudCoverageA  , 1.0, 0.0, 1.0));
+					float baseCloudWithCoverageB = (Remap(coudNoiseBaseB, 1.0 -  cloudCoverageB , 1.0, 0.0, 1.0));
+					float baseCloudWithCoverageC = (Remap(coudNoiseBaseC, 1.0 -  cloudCoverageC , 1.0, 0.0, 1.0));
 
-					baseCloudWithCoverageA *= DensityAltering(cloudHeightPercent, cloudCoverageA);
-					baseCloudWithCoverageB *= DensityAltering(cloudHeightPercent, cloudCoverageB);
-					baseCloudWithCoverageC *= DensityAltering(cloudHeightPercent, cloudCoverageC);
+					baseCloudWithCoverageA *= cloudCoverageA * globalCoverage;
+					baseCloudWithCoverageB *= cloudCoverageB * globalCoverage;
+					baseCloudWithCoverageC *= cloudCoverageC * globalCoverage;
 
-					float baseCloudWithCoverage = max(baseCloudWithCoverageA,0.0) + max(baseCloudWithCoverageB,0.0) + max(baseCloudWithCoverageC,0.0);
+					float baseCloudWithCoverage = max(max(baseCloudWithCoverageA, baseCloudWithCoverageB) ,baseCloudWithCoverageC);
 
 					////Detail Shape
 					float highFreqFBM = (highFreqNoise.r * 0.625) + (highFreqNoise.g * 0.25) + (highFreqNoise.b * 0.125);
-					float detailNoise = (lerp(highFreqFBM,1.0 - highFreqFBM,saturate(cloudHeightPercent * 5.0)));
-					detailNoise *= 0.35 * exp(-globalCoverage * 0.75);
+					float detailNoise = (lerp(highFreqFBM,1.0 - highFreqFBM,saturate(cloudHeightPercent * 10.0)));
+					detailNoise *= Remap(saturate(globalCoverage), 0.0, 1.0, 0.1, 0.3);
 
 					//Detail - Base Shape
 					float finalCloud = saturate(Remap(baseCloudWithCoverage, detailNoise, 1.0,0.0, 1.0));
 
 					density = finalCloud * globalDensity;
 
+					//Tests
 
 
 					return density;
