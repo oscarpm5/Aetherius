@@ -265,7 +265,7 @@ Shader "Aetherius/RaymarchShader"
 					float densityBottom = saturate(Remap(heightPercent, 0.0, 0.1, 0.0, 1.0));
 					float densityTop = saturate(Remap(heightPercent,0.9,1.0,1.0,0.0));
 
-					return (Remap(heightPercent,0.0,1.0,0.5,1.0))* densityBottom * densityTop * weatherMapDensity*globalCoverage;
+					return (Remap(heightPercent,0.0,1.0,0.25,1.0))* densityBottom * densityTop * weatherMapDensity*globalCoverage*2.0;
 				}
 
 				float GetDensity(float3 currPos)
@@ -306,9 +306,9 @@ Shader "Aetherius/RaymarchShader"
 					float baseCloudWithCoverageB = (Remap(coudNoiseBaseB, 1.0 -  cloudCoverageB , 1.0, 0.0, 1.0));
 					float baseCloudWithCoverageC = (Remap(coudNoiseBaseC, 1.0 -  cloudCoverageC , 1.0, 0.0, 1.0));
 
-					baseCloudWithCoverageA *= cloudCoverageA * globalCoverage;
-					baseCloudWithCoverageB *= cloudCoverageB * globalCoverage;
-					baseCloudWithCoverageC *= cloudCoverageC * globalCoverage;
+					baseCloudWithCoverageA *= DensityAltering(cloudHeightPercent, cloudCoverageA);
+					baseCloudWithCoverageB *= DensityAltering(cloudHeightPercent, cloudCoverageB);
+					baseCloudWithCoverageC *= DensityAltering(cloudHeightPercent, cloudCoverageC);
 
 					float baseCloudWithCoverage = max(max(baseCloudWithCoverageA, baseCloudWithCoverageB) ,baseCloudWithCoverageC);
 
