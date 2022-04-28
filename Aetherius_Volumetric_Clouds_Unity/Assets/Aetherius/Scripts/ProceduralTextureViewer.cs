@@ -20,6 +20,7 @@ namespace Aetherius
 
         //General
         public Vector2 minMaxBounds;
+        public bool activeChannel;
     }
 
     [RequireComponent(typeof(Camera))]
@@ -281,7 +282,7 @@ namespace Aetherius
             DeleteComputeBuffers(ref buffersToDelete);
         }
 
-        public static void GenerateWeatherMap(int resolution, ref ComputeShader compShader, ref RenderTexture output, ref List<ComputeBuffer> deleteBuffers, int seed)
+        public static void GenerateWeatherMap(int resolution, ref ComputeShader compShader, ref RenderTexture output, ref List<ComputeBuffer> deleteBuffers, int seed,RaymarchCamera.CLOUD_PRESET preset)
         {
             int dim = Mathf.Max(resolution, 8);
 
@@ -290,18 +291,23 @@ namespace Aetherius
             string kernelName = "GenerateWeatherMap";
             int kernelIndex = compShader.FindKernel(kernelName);
 
-            GenerateWeatherMapChannel(TEXTURE_CHANNEL.R, kernelName, kernelIndex, dim, ref compShader, ref output, ref deleteBuffers, seed);
-            GenerateWeatherMapChannel(TEXTURE_CHANNEL.G, kernelName, kernelIndex, dim, ref compShader, ref output, ref deleteBuffers, seed);
+            GenerateWeatherMapChannel(preset,TEXTURE_CHANNEL.R, kernelName, kernelIndex, dim, ref compShader, ref output, ref deleteBuffers, seed);
+            GenerateWeatherMapChannel(preset,TEXTURE_CHANNEL.G, kernelName, kernelIndex, dim, ref compShader, ref output, ref deleteBuffers, seed);
             //GenerateWeatherMapChannel(TEXTURE_CHANNEL.B, kernelName, kernelIndex, dim, ref compShader, ref output, ref deleteBuffers, seed);
-            
+
             //TODO this line will be used to model precipitation extra absorption
-            //GenerateWeatherMapChannel(TEXTURE_CHANNEL.A, kernelName, kernelIndex, dim, ref compShader, ref output, ref deleteBuffers, seed);
+            //GenerateWeatherMapChannel(preset, TEXTURE_CHANNEL.A, kernelName, kernelIndex, dim, ref compShader, ref output, ref deleteBuffers, seed);
 
         }
 
-        private static void GenerateWeatherMapChannel(TEXTURE_CHANNEL channelToWriteTo, string kernelName, int kernelIndex, int dim, ref ComputeShader compShader, ref RenderTexture output, ref List<ComputeBuffer> deleteBuffers, int seed)
+        private static void GenerateWeatherMapChannel(RaymarchCamera.CLOUD_PRESET preset,TEXTURE_CHANNEL channelToWriteTo, string kernelName, int kernelIndex, int dim, ref ComputeShader compShader, ref RenderTexture output, ref List<ComputeBuffer> deleteBuffers, int seed)
         {
-            WMChannelData data = GetWMChannelData(channelToWriteTo);
+            WMChannelData data = GetWMChannelData(channelToWriteTo,preset);
+
+            if(!data.activeChannel) //If channel isn't active just initialize to 0
+                return;
+            
+
 
             //Perlin -> Cloudmap Density
             GenerateCornerVectors2D(kernelName, "vecTableWMDensity", ref compShader, ref deleteBuffers);
@@ -332,82 +338,335 @@ namespace Aetherius
             DeleteComputeBuffers(ref deleteBuffers);
         }
 
-        static WMChannelData GetWMChannelData(TEXTURE_CHANNEL channel)
+        static WMChannelData GetWMChannelData(TEXTURE_CHANNEL channel, RaymarchCamera.CLOUD_PRESET preset) //TODO make this an external file?
         {
             WMChannelData ret = new WMChannelData();
 
-            switch (channel)
+            switch (preset)
             {
-                case TEXTURE_CHANNEL.R:
+                case RaymarchCamera.CLOUD_PRESET.SPARSE:
                     {
-                        //Perlin Related
-                        ret.perlinGridSize = 23;
-                        ret.perlinOctaves = 4;
-                        ret.perlinPersistence = 0.5f;
-                        ret.perlinLacunarity = 2.0f;
+                        switch (channel)
+                        {
+                            case TEXTURE_CHANNEL.R:
+                                {
+                                    //Perlin Related
+                                    ret.perlinGridSize = 23;
+                                    ret.perlinOctaves = 4;
+                                    ret.perlinPersistence = 0.5f;
+                                    ret.perlinLacunarity = 2.0f;
 
-                        //Worley Related
-                        ret.worleyNumCellsA = 7;
-                        ret.worleyNumCellsB = 11;
-                        ret.worleyNumCellsC = 27;
-                        ret.worleyPersistence = 0.5f;
+                                    //Worley Related
+                                    ret.worleyNumCellsA = 7;
+                                    ret.worleyNumCellsB = 11;
+                                    ret.worleyNumCellsC = 27;
+                                    ret.worleyPersistence = 0.5f;
 
-                        //General
-                        ret.minMaxBounds = new Vector2(-0.5f,1.0f);
+                                    //General
+                                    ret.minMaxBounds = new Vector2(-0.5f, 1.0f);
+                                    ret.activeChannel = true;
+                                }
+                                break;
+                            case TEXTURE_CHANNEL.G:
+                                {
+                                    //Perlin Related
+                                    ret.perlinGridSize = 13;
+                                    ret.perlinOctaves = 4;
+                                    ret.perlinPersistence = 0.5f;
+                                    ret.perlinLacunarity = 2.0f;
+
+                                    //Worley Related
+                                    ret.worleyNumCellsA = 3;
+                                    ret.worleyNumCellsB = 5;
+                                    ret.worleyNumCellsC = 7;
+                                    ret.worleyPersistence = 0.5f;
+
+                                    //General
+                                    ret.minMaxBounds = new Vector2(-0.5f, 1.0f);
+                                    ret.activeChannel = true;
+                                }
+                                break;
+                            case TEXTURE_CHANNEL.B:
+                                {
+                                    //Perlin Related
+                                    ret.perlinGridSize = 9;
+                                    ret.perlinOctaves = 4;
+                                    ret.perlinPersistence = 0.5f;
+                                    ret.perlinLacunarity = 2.0f;
+
+                                    //Worley Related
+                                    ret.worleyNumCellsA = 3;
+                                    ret.worleyNumCellsB = 5;
+                                    ret.worleyNumCellsC = 9;
+                                    ret.worleyPersistence = 0.4f;
+
+                                    //General
+                                    ret.minMaxBounds = new Vector2(0.0f, 1.0f);
+                                    ret.activeChannel = true;
+                                }
+                                break;
+                            case TEXTURE_CHANNEL.A:
+                                {
+                                    //Perlin Related
+                                    ret.perlinGridSize = 23;
+                                    ret.perlinOctaves = 4;
+                                    ret.perlinPersistence = 0.5f;
+                                    ret.perlinLacunarity = 2.0f;
+
+                                    //Worley Related
+                                    ret.worleyNumCellsA = 5;
+                                    ret.worleyNumCellsB = 11;
+                                    ret.worleyNumCellsC = 19;
+                                    ret.worleyPersistence = 0.5f;
+                                    ret.activeChannel = true;
+                                }
+                                break;
+                        }
                     }
                     break;
-                case TEXTURE_CHANNEL.G:
+                case RaymarchCamera.CLOUD_PRESET.CLOUDY:
                     {
-                        //Perlin Related
-                        ret.perlinGridSize = 13;
-                        ret.perlinOctaves = 4;
-                        ret.perlinPersistence = 0.5f;
-                        ret.perlinLacunarity = 2.0f;
+                        switch (channel)
+                        {
+                            case TEXTURE_CHANNEL.R:
+                                {
+                                    //Perlin Related
+                                    ret.perlinGridSize = 23;
+                                    ret.perlinOctaves = 4;
+                                    ret.perlinPersistence = 0.5f;
+                                    ret.perlinLacunarity = 2.0f;
 
-                        //Worley Related
-                        ret.worleyNumCellsA = 3;
-                        ret.worleyNumCellsB = 5;
-                        ret.worleyNumCellsC = 7;
-                        ret.worleyPersistence = 0.5f;
+                                    //Worley Related
+                                    ret.worleyNumCellsA = 7;
+                                    ret.worleyNumCellsB = 11;
+                                    ret.worleyNumCellsC = 27;
+                                    ret.worleyPersistence = 0.5f;
 
-                        //General
-                        ret.minMaxBounds = new Vector2(-0.5f, 1.0f);
+                                    //General
+                                    ret.minMaxBounds = new Vector2(-0.5f, 1.0f);
+                                    ret.activeChannel = true;
+                                }
+                                break;
+                            case TEXTURE_CHANNEL.G:
+                                {
+                                    //Perlin Related
+                                    ret.perlinGridSize = 13;
+                                    ret.perlinOctaves = 4;
+                                    ret.perlinPersistence = 0.5f;
+                                    ret.perlinLacunarity = 2.0f;
+
+                                    //Worley Related
+                                    ret.worleyNumCellsA = 3;
+                                    ret.worleyNumCellsB = 5;
+                                    ret.worleyNumCellsC = 7;
+                                    ret.worleyPersistence = 0.5f;
+
+                                    //General
+                                    ret.minMaxBounds = new Vector2(-0.5f, 1.0f);
+                                    ret.activeChannel = true;
+                                }
+                                break;
+                            case TEXTURE_CHANNEL.B:
+                                {
+                                    //Perlin Related
+                                    ret.perlinGridSize = 9;
+                                    ret.perlinOctaves = 4;
+                                    ret.perlinPersistence = 0.5f;
+                                    ret.perlinLacunarity = 2.0f;
+
+                                    //Worley Related
+                                    ret.worleyNumCellsA = 3;
+                                    ret.worleyNumCellsB = 5;
+                                    ret.worleyNumCellsC = 9;
+                                    ret.worleyPersistence = 0.4f;
+
+                                    //General
+                                    ret.minMaxBounds = new Vector2(0.0f, 1.0f);
+                                    ret.activeChannel = true;
+                                }
+                                break;
+                            case TEXTURE_CHANNEL.A:
+                                {
+                                    //Perlin Related
+                                    ret.perlinGridSize = 23;
+                                    ret.perlinOctaves = 4;
+                                    ret.perlinPersistence = 0.5f;
+                                    ret.perlinLacunarity = 2.0f;
+
+                                    //Worley Related
+                                    ret.worleyNumCellsA = 5;
+                                    ret.worleyNumCellsB = 11;
+                                    ret.worleyNumCellsC = 19;
+                                    ret.worleyPersistence = 0.5f;
+                                    ret.activeChannel = true;
+                                }
+                                break;
+                        }
                     }
                     break;
-                case TEXTURE_CHANNEL.B:
+                case RaymarchCamera.CLOUD_PRESET.STORMY:
                     {
-                        //Perlin Related
-                        ret.perlinGridSize = 9;
-                        ret.perlinOctaves = 4;
-                        ret.perlinPersistence = 0.5f;
-                        ret.perlinLacunarity = 2.0f;
+                        switch (channel)
+                        {
+                            case TEXTURE_CHANNEL.R:
+                                {
+                                    //Perlin Related
+                                    ret.perlinGridSize = 23;
+                                    ret.perlinOctaves = 4;
+                                    ret.perlinPersistence = 0.5f;
+                                    ret.perlinLacunarity = 2.0f;
 
-                        //Worley Related
-                        ret.worleyNumCellsA = 3;
-                        ret.worleyNumCellsB = 5;
-                        ret.worleyNumCellsC = 9;
-                        ret.worleyPersistence = 0.4f;
+                                    //Worley Related
+                                    ret.worleyNumCellsA = 7;
+                                    ret.worleyNumCellsB = 11;
+                                    ret.worleyNumCellsC = 27;
+                                    ret.worleyPersistence = 0.5f;
 
-                        //General
-                        ret.minMaxBounds = new Vector2(0.0f, 1.0f);
+                                    //General
+                                    ret.minMaxBounds = new Vector2(-0.5f, 1.0f);
+                                    ret.activeChannel = true;
+                                }
+                                break;
+                            case TEXTURE_CHANNEL.G:
+                                {
+                                    //Perlin Related
+                                    ret.perlinGridSize = 13;
+                                    ret.perlinOctaves = 4;
+                                    ret.perlinPersistence = 0.5f;
+                                    ret.perlinLacunarity = 2.0f;
+
+                                    //Worley Related
+                                    ret.worleyNumCellsA = 3;
+                                    ret.worleyNumCellsB = 5;
+                                    ret.worleyNumCellsC = 7;
+                                    ret.worleyPersistence = 0.5f;
+
+                                    //General
+                                    ret.minMaxBounds = new Vector2(-0.5f, 1.0f);
+                                    ret.activeChannel = true;
+                                }
+                                break;
+                            case TEXTURE_CHANNEL.B:
+                                {
+                                    //Perlin Related
+                                    ret.perlinGridSize = 9;
+                                    ret.perlinOctaves = 4;
+                                    ret.perlinPersistence = 0.5f;
+                                    ret.perlinLacunarity = 2.0f;
+
+                                    //Worley Related
+                                    ret.worleyNumCellsA = 3;
+                                    ret.worleyNumCellsB = 5;
+                                    ret.worleyNumCellsC = 9;
+                                    ret.worleyPersistence = 0.4f;
+
+                                    //General
+                                    ret.minMaxBounds = new Vector2(0.0f, 1.0f);
+                                    ret.activeChannel = true;
+                                }
+                                break;
+                            case TEXTURE_CHANNEL.A:
+                                {
+                                    //Perlin Related
+                                    ret.perlinGridSize = 23;
+                                    ret.perlinOctaves = 4;
+                                    ret.perlinPersistence = 0.5f;
+                                    ret.perlinLacunarity = 2.0f;
+
+                                    //Worley Related
+                                    ret.worleyNumCellsA = 5;
+                                    ret.worleyNumCellsB = 11;
+                                    ret.worleyNumCellsC = 19;
+                                    ret.worleyPersistence = 0.5f;
+                                    ret.activeChannel = true;
+                                }
+                                break;
+                        }
                     }
                     break;
-                case TEXTURE_CHANNEL.A:
+                case RaymarchCamera.CLOUD_PRESET.OVERCAST:
                     {
-                        //Perlin Related
-                        ret.perlinGridSize = 23;
-                        ret.perlinOctaves = 4;
-                        ret.perlinPersistence = 0.5f;
-                        ret.perlinLacunarity = 2.0f;
+                        switch (channel)
+                        {
+                            case TEXTURE_CHANNEL.R:
+                                {
+                                    //Perlin Related
+                                    ret.perlinGridSize = 23;
+                                    ret.perlinOctaves = 4;
+                                    ret.perlinPersistence = 0.5f;
+                                    ret.perlinLacunarity = 2.0f;
 
-                        //Worley Related
-                        ret.worleyNumCellsA = 5;
-                        ret.worleyNumCellsB = 11;
-                        ret.worleyNumCellsC = 19;
-                        ret.worleyPersistence = 0.5f;
+                                    //Worley Related
+                                    ret.worleyNumCellsA = 7;
+                                    ret.worleyNumCellsB = 11;
+                                    ret.worleyNumCellsC = 27;
+                                    ret.worleyPersistence = 0.5f;
+
+                                    //General
+                                    ret.minMaxBounds = new Vector2(-0.5f, 1.0f);
+                                    ret.activeChannel = true;
+                                }
+                                break;
+                            case TEXTURE_CHANNEL.G:
+                                {
+                                    //Perlin Related
+                                    ret.perlinGridSize = 13;
+                                    ret.perlinOctaves = 4;
+                                    ret.perlinPersistence = 0.5f;
+                                    ret.perlinLacunarity = 2.0f;
+
+                                    //Worley Related
+                                    ret.worleyNumCellsA = 3;
+                                    ret.worleyNumCellsB = 5;
+                                    ret.worleyNumCellsC = 7;
+                                    ret.worleyPersistence = 0.5f;
+
+                                    //General
+                                    ret.minMaxBounds = new Vector2(-0.5f, 1.0f);
+                                    ret.activeChannel = true;
+                                }
+                                break;
+                            case TEXTURE_CHANNEL.B:
+                                {
+                                    //Perlin Related
+                                    ret.perlinGridSize = 9;
+                                    ret.perlinOctaves = 4;
+                                    ret.perlinPersistence = 0.5f;
+                                    ret.perlinLacunarity = 2.0f;
+
+                                    //Worley Related
+                                    ret.worleyNumCellsA = 3;
+                                    ret.worleyNumCellsB = 5;
+                                    ret.worleyNumCellsC = 9;
+                                    ret.worleyPersistence = 0.4f;
+
+                                    //General
+                                    ret.minMaxBounds = new Vector2(0.0f, 1.0f);
+                                    ret.activeChannel = true;
+                                }
+                                break;
+                            case TEXTURE_CHANNEL.A:
+                                {
+                                    //Perlin Related
+                                    ret.perlinGridSize = 23;
+                                    ret.perlinOctaves = 4;
+                                    ret.perlinPersistence = 0.5f;
+                                    ret.perlinLacunarity = 2.0f;
+
+                                    //Worley Related
+                                    ret.worleyNumCellsA = 5;
+                                    ret.worleyNumCellsB = 11;
+                                    ret.worleyNumCellsC = 19;
+                                    ret.worleyPersistence = 0.5f;
+                                    ret.activeChannel = true;
+                                }
+                                break;
+                        }
                     }
                     break;
             }
+
+
 
             return ret;
         }

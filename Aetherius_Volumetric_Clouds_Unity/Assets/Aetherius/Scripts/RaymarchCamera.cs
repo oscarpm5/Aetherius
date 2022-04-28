@@ -27,10 +27,19 @@ namespace Aetherius
             ADVANCED
         }
 
+        public enum CLOUD_PRESET
+        {
+            SPARSE,
+            CLOUDY,
+            STORMY,
+            OVERCAST
+        }
+
         private Camera _cam;
 
         public CLOUD_CONTROL mode = CLOUD_CONTROL.SIMPLE;
-
+        [HideInInspector]
+        public CLOUD_PRESET preset = CLOUD_PRESET.SPARSE;
 
         public CloudShape simple;
         public CloudShape advanced;
@@ -305,7 +314,7 @@ namespace Aetherius
 
         public void GenerateWM()
         {
-            ProceduralTextureViewer.GenerateWeatherMap(256, ref noiseGen.computeShader, ref proceduralWM, ref toDeleteCompBuffers, seedWM);
+            ProceduralTextureViewer.GenerateWeatherMap(256, ref noiseGen.computeShader, ref proceduralWM, ref toDeleteCompBuffers, seedWM,preset);
         }
 
         public void OnDisable() //happens before a hot reload

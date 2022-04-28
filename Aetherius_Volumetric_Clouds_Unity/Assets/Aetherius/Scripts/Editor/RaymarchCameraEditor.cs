@@ -11,11 +11,13 @@ namespace Aetherius
     {
         private RaymarchCamera _myScript;
         private Editor _editor;
+        private SerializedProperty preset;
        
 
         void OnEnable()
         {
             _myScript = (RaymarchCamera)target;
+            preset = serializedObject.FindProperty("preset");
         }
 
         public override void OnInspectorGUI()
@@ -28,6 +30,20 @@ namespace Aetherius
             {
                 case RaymarchCamera.CLOUD_CONTROL.SIMPLE:
                     {
+                        using (EditorGUI.ChangeCheckScope check = new EditorGUI.ChangeCheckScope())
+                        {
+                            EditorGUILayout.PropertyField(preset);
+
+                            if (check.changed) 
+                            {
+                                _myScript.preset = (RaymarchCamera.CLOUD_PRESET)preset.intValue;
+                                _myScript.GenerateWM();
+                            }
+
+                        }
+                        
+                       
+
                         _myScript.cumulusHorizon = EditorGUILayout.ToggleLeft(new GUIContent("Cumulus Horizon","Option to make more epic cloudscapes, making the clouds toward the horizon appear more imposing"), _myScript.cumulusHorizon);
                         if (_myScript.cumulusHorizon==true)
                         {
@@ -60,6 +76,7 @@ namespace Aetherius
                 _myScript.GenerateWM();
                 Debug.Log("Manual WM Update!");
             }
+
         }
     }
 }
