@@ -100,6 +100,11 @@ Shader "Aetherius/RaymarchShader"
 
 			int maxRayVisibilityDist;
 
+			bool transitioningWM;
+			float transitionLerpT;
+			Texture2D<float4> weatherMapTextureNew;
+			SamplerState samplerweatherMapTextureNew;
+
 			float2 GetAtmosphereIntersection(float3 ro,float3 rd,float3 sphO, float r)//returns -1 when no intersection has been found
 			{
 				float t0 = -1.0;
@@ -277,6 +282,9 @@ Shader "Aetherius/RaymarchShader"
 					float3 windOffset = -windDir * float3(fTime, fTime, fTime);//TODO make this & skewk consistent around the globe
 					float3 skewPos = currPos - normalize(windDir) * cloudHeightPercent * cloudHeightPercent * 100 * skewAmmount;
 					float4 weatherMapCloud = weatherMapTexture.Sample(samplerweatherMapTexture, (skewPos.xz / weatherMapSize) + windOffset.xz * windDisplacesWeatherMap); //We sample the weather map (r coverage,g type)
+					if (transitioningWM == true)
+						weatherMapCloud = lerp(weatherMapCloud, weatherMapTextureNew.Sample(samplerweatherMapTextureNew, (skewPos.xz / weatherMapSize) + windOffset.xz * windDisplacesWeatherMap), transitionLerpT);
+					
 					float4 lowFreqNoise = baseShapeTexture.Sample(samplerbaseShapeTexture, (currPos / baseShapeSize) + windOffset * baseShapeWindMult);
 					float4 highFreqNoise = detailTexture.Sample(samplerdetailTexture, (currPos / detailSize) + windOffset * detailShapeWindMult);
 

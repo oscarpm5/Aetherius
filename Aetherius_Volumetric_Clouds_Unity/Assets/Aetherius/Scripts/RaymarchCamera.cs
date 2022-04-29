@@ -4,6 +4,9 @@ using UnityEngine;
 
 namespace Aetherius
 {
+
+
+
     [System.Serializable]
     public struct CloudShape
     {
@@ -52,19 +55,26 @@ namespace Aetherius
         [SerializeField, HideInInspector]
         private Material _material;
         [Header("Ray March")]
-        public int maxRayVisibilityDist=50000;
+        public int maxRayVisibilityDist = 50000;
 
         public Texture2D blueNoise;
+
         [Header("Weather Map")]
         public Texture2D weatherMap;
         public bool windDisplacesWeatherMap = true;
+
         public RenderTexture proceduralWM;
+        public RenderTexture proceduralWMNew;
+        public float transitionTimeWM = 10.0f;
+        public float currentTransitionTimeWM = 0.0f;
+        public bool transitioning = false;
+
         public int seedWM = 307;
         [HideInInspector]
         public bool cumulusHorizon = false;
         [HideInInspector]
         public Vector2 cumulusHorizonGradient;
-        public Vector4 cloudLayerGradient1= new Vector4(0.0f, 0.05f, 0.1f, 0.3f);
+        public Vector4 cloudLayerGradient1 = new Vector4(0.0f, 0.05f, 0.1f, 0.3f);
         public Vector4 cloudLayerGradient2 = new Vector4(0.2f, 0.3f, 0.3f, 0.45f);
         public Vector4 cloudLayerGradient3 = new Vector4(0.0f, 0.1f, 0.7f, 1.0f);
 
@@ -134,9 +144,9 @@ namespace Aetherius
 
         public ref RenderTexture GetProceduralWM()
         {
-            if(proceduralWM==null)
+            if (proceduralWM == null)
             {
-                GenerateWM();
+                GenerateWM(ref proceduralWM);
             }
 
             return ref proceduralWM;
@@ -152,6 +162,38 @@ namespace Aetherius
             }
         }
 
+        public void StartWMTransition()//TODO pass the preset as an argument in the future instead of picking the one in the class
+        {
+            if (transitioning) //if a transition was ocurring already generate a texture with the status of the transition currently and lerp with that
+            {
+                ProceduralTextureViewer.LerpWM(256, ref noiseGen.computeShader, ref proceduralWM, ref proceduralWMNew, Mathf.Clamp01(currentTransitionTimeWM / transitionTimeWM), ref toDeleteCompBuffers);
+                Debug.Log("Changing Transition on the fly!");
+
+            }
+            GenerateWM(ref proceduralWMNew);
+            currentTransitionTimeWM = 0.0f;
+            transitioning = true;
+            Debug.Log("TransitionStarted!");
+
+        }
+
+        public void StopWMTransition()
+        {
+            if (!transitioning)
+                return;
+            
+
+            if (proceduralWMNew != null)
+            {
+                ProceduralTextureViewer.ReleaseTexture(ref proceduralWMNew);
+            }
+            GenerateWM(ref proceduralWM); //TODO provisional solution, texture gets erased when assigning: proceduralWM = proceduralWMNew
+
+
+            transitioning = false;
+            currentTransitionTimeWM = 0.0f;
+            Debug.Log("TransitionEnded!");
+        }
 
         private void OnRenderImage(RenderTexture source, RenderTexture destination)
         {
@@ -182,6 +224,15 @@ namespace Aetherius
 
             //UpdateGradientLUTs();
 
+            if (transitioning)
+            {
+                rayMarchMaterial.SetTexture("weatherMapTextureNew", proceduralWMNew);
+                rayMarchMaterial.SetFloat("transitionLerpT", Mathf.Clamp01(currentTransitionTimeWM / transitionTimeWM));
+            }
+            rayMarchMaterial.SetInt("transitioningWM", transitioning ? 1 : 0);
+
+
+
             rayMarchMaterial.SetTexture("_MainTex", source); //input the rendered camera texture 
             rayMarchMaterial.SetTexture("baseShapeTexture", noiseGen.GetTexture(ProceduralTextureViewer.TEXTURE_TYPE.BASE_SHAPE));
             rayMarchMaterial.SetTexture("detailTexture", noiseGen.GetTexture(ProceduralTextureViewer.TEXTURE_TYPE.DETAIL));
@@ -196,11 +247,11 @@ namespace Aetherius
             rayMarchMaterial.SetFloat("baseShapeSize", currentShape.baseShapeSize);
             rayMarchMaterial.SetFloat("detailSize", currentShape.detailSize);
             rayMarchMaterial.SetFloat("weatherMapSize", currentShape.weatherMapSize);
-            
+
             rayMarchMaterial.SetFloat("globalCoverage", currentShape.globalCoverage);
             rayMarchMaterial.SetFloat("globalDensity", currentShape.globalDensity);
-            
-            rayMarchMaterial.SetVector("sunDir", sunLight.transform.rotation * Vector3.forward);      
+
+            rayMarchMaterial.SetVector("sunDir", sunLight.transform.rotation * Vector3.forward);
             rayMarchMaterial.SetFloat("lightAbsorption", lightAbsorption);
             rayMarchMaterial.SetFloat("lightIntensity", sunLight.intensity * lightIntensityMult);
 
@@ -227,7 +278,7 @@ namespace Aetherius
             rayMarchMaterial.SetVector("ambientColor", ambientCol);
             rayMarchMaterial.SetVectorArray("coneKernel", conekernel);
 
-  
+
             rayMarchMaterial.SetVector("windDir", windDirection);
             rayMarchMaterial.SetInt("windDisplacesWeatherMap", windDisplacesWeatherMap ? 1 : 0);
             rayMarchMaterial.SetFloat("baseShapeWindMult", baseShapeWindMult);
@@ -312,9 +363,9 @@ namespace Aetherius
             _camera.depthTextureMode = DepthTextureMode.Depth;
         }
 
-        public void GenerateWM()
+        public void GenerateWM(ref RenderTexture newWM)
         {
-            ProceduralTextureViewer.GenerateWeatherMap(256, ref noiseGen.computeShader, ref proceduralWM, ref toDeleteCompBuffers, seedWM,preset);
+            ProceduralTextureViewer.GenerateWeatherMap(256, ref noiseGen.computeShader, ref newWM, ref toDeleteCompBuffers, seedWM, preset);
         }
 
         public void OnDisable() //happens before a hot reload
@@ -332,6 +383,21 @@ namespace Aetherius
         void CleanUp()
         {
 
+        }
+
+        public void Update()
+        {
+            if( _camera == Camera.main && transitioning)
+            {
+                if (currentTransitionTimeWM >= transitionTimeWM)
+                {
+                    StopWMTransition();
+                }
+                else
+                {
+                    currentTransitionTimeWM += Time.deltaTime;
+                }
+            }
         }
 
         void SetShapeParams(ref CloudShape myShape)//TODO in the future it will generate parameters from a preset

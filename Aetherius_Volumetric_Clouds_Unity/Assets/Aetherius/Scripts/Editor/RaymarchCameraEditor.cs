@@ -37,7 +37,7 @@ namespace Aetherius
                             if (check.changed) 
                             {
                                 _myScript.preset = (RaymarchCamera.CLOUD_PRESET)preset.intValue;
-                                _myScript.GenerateWM();
+                                _myScript.StartWMTransition();
                             }
 
                         }
@@ -62,7 +62,7 @@ namespace Aetherius
                             if (check.changed) //If we changed any parameters of the resolution property, update its noise
                             {
                                 //_myScript.GenerateBaseShapeNoise();
-                                _myScript.GenerateWM();//TODO test line
+                                _myScript.GenerateWM(ref _myScript.proceduralWM);//TODO test line
                             }
 
                         }
@@ -73,7 +73,7 @@ namespace Aetherius
 
             if (GUILayout.Button("GenerateWM"))
             {
-                _myScript.GenerateWM();
+                _myScript.GenerateWM(ref _myScript.proceduralWM);
                 Debug.Log("Manual WM Update!");
             }
 

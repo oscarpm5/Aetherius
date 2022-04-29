@@ -282,7 +282,23 @@ namespace Aetherius
             DeleteComputeBuffers(ref buffersToDelete);
         }
 
-        public static void GenerateWeatherMap(int resolution, ref ComputeShader compShader, ref RenderTexture output, ref List<ComputeBuffer> deleteBuffers, int seed,RaymarchCamera.CLOUD_PRESET preset)
+        public static bool LerpWM(int resolution, ref ComputeShader compShader, ref RenderTexture originalWM, ref RenderTexture newWM, float t, ref List<ComputeBuffer> deleteBuffers)
+        {
+            if (originalWM.width != newWM.width || originalWM.height != newWM.height)
+                return false;
+
+                int dim = Mathf.Max(resolution, 8);
+                int kernelIndex = compShader.FindKernel("TextureLerp2D");
+                compShader.SetTexture(kernelIndex, "output", originalWM);
+                compShader.SetTexture(kernelIndex, "input", newWM);
+                compShader.SetFloat("t", t);
+                DispatchComputeShader(ref compShader, kernelIndex, new Vector3Int(dim, dim, 1));
+                DeleteComputeBuffers(ref deleteBuffers);
+
+            return true;
+        }
+
+        public static void GenerateWeatherMap(int resolution, ref ComputeShader compShader, ref RenderTexture output, ref List<ComputeBuffer> deleteBuffers, int seed, RaymarchCamera.CLOUD_PRESET preset)
         {
             int dim = Mathf.Max(resolution, 8);
 
@@ -291,8 +307,8 @@ namespace Aetherius
             string kernelName = "GenerateWeatherMap";
             int kernelIndex = compShader.FindKernel(kernelName);
 
-            GenerateWeatherMapChannel(preset,TEXTURE_CHANNEL.R, kernelName, kernelIndex, dim, ref compShader, ref output, ref deleteBuffers, seed);
-            GenerateWeatherMapChannel(preset,TEXTURE_CHANNEL.G, kernelName, kernelIndex, dim, ref compShader, ref output, ref deleteBuffers, seed);
+            GenerateWeatherMapChannel(preset, TEXTURE_CHANNEL.R, kernelName, kernelIndex, dim, ref compShader, ref output, ref deleteBuffers, seed);
+            GenerateWeatherMapChannel(preset, TEXTURE_CHANNEL.G, kernelName, kernelIndex, dim, ref compShader, ref output, ref deleteBuffers, seed);
             //GenerateWeatherMapChannel(TEXTURE_CHANNEL.B, kernelName, kernelIndex, dim, ref compShader, ref output, ref deleteBuffers, seed);
 
             //TODO this line will be used to model precipitation extra absorption
@@ -300,13 +316,13 @@ namespace Aetherius
 
         }
 
-        private static void GenerateWeatherMapChannel(RaymarchCamera.CLOUD_PRESET preset,TEXTURE_CHANNEL channelToWriteTo, string kernelName, int kernelIndex, int dim, ref ComputeShader compShader, ref RenderTexture output, ref List<ComputeBuffer> deleteBuffers, int seed)
+        private static void GenerateWeatherMapChannel(RaymarchCamera.CLOUD_PRESET preset, TEXTURE_CHANNEL channelToWriteTo, string kernelName, int kernelIndex, int dim, ref ComputeShader compShader, ref RenderTexture output, ref List<ComputeBuffer> deleteBuffers, int seed)
         {
-            WMChannelData data = GetWMChannelData(channelToWriteTo,preset);
+            WMChannelData data = GetWMChannelData(channelToWriteTo, preset);
 
-            if(!data.activeChannel) //If channel isn't active just initialize to 0
+            if (!data.activeChannel) //If channel isn't active just initialize to 0
                 return;
-            
+
 
 
             //Perlin -> Cloudmap Density
@@ -443,7 +459,7 @@ namespace Aetherius
                                     ret.worleyPersistence = 0.5f;
 
                                     //General
-                                    ret.minMaxBounds = new Vector2(-0.5f, 1.0f);
+                                    ret.minMaxBounds = new Vector2(0.0f, 2.0f);
                                     ret.activeChannel = true;
                                 }
                                 break;
