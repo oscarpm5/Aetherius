@@ -181,7 +181,7 @@ namespace Aetherius
         {
             if (!transitioning)
                 return;
-            
+
 
             if (proceduralWMNew != null)
             {
@@ -256,23 +256,16 @@ namespace Aetherius
             rayMarchMaterial.SetFloat("lightIntensity", sunLight.intensity * lightIntensityMult);
 
 
-            Color[] c = new Color[6];
-            Vector3[] dirs = new Vector3[6];
-            dirs[0] = sunLight.transform.rotation * Vector3.forward;
-            dirs[1] = sunLight.transform.rotation * Vector3.back;
-            dirs[2] = sunLight.transform.rotation * Vector3.right;
-            dirs[3] = sunLight.transform.rotation * Vector3.left;
-            dirs[4] = sunLight.transform.rotation * Vector3.up;
-            dirs[5] = sunLight.transform.rotation * Vector3.down;
+            Color[] c = new Color[2];
+            Vector3[] dirs = new Vector3[2];
+            dirs[0] = Vector3.up;
+            dirs[1] = Vector3.down;
+
 
             RenderSettings.ambientProbe.Evaluate(dirs, c);
             Color ambientCol = new Color(0.0f, 0.0f, 0.0f);
-            for (int i = 0; i < c.Length; i++)
-            {
-                ambientCol += c[i];
-            }
 
-            ambientCol /= (float)c.Length;
+            ambientCol = c[0] * 0.75f + c[1] * 0.25f;
 
             rayMarchMaterial.SetVector("lightColor", sunLight.color);
             rayMarchMaterial.SetVector("ambientColor", ambientCol);
@@ -387,7 +380,7 @@ namespace Aetherius
 
         public void Update()
         {
-            if( _camera == Camera.main && transitioning)
+            if (_camera == Camera.main && transitioning)
             {
                 if (currentTransitionTimeWM >= transitionTimeWM)
                 {
