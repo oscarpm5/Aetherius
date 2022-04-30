@@ -46,6 +46,7 @@ Shader "Aetherius/DisplayPreview"
 			int displayGrayscale;
 			int displayAllChannels;
 			int isDetail;
+			int lod;
 
 			fixed4 frag(v2f i) : SV_Target
 			{
@@ -61,7 +62,7 @@ Shader "Aetherius/DisplayPreview"
 				if (currPixel.x < minDimensionsScaled && currPixel.y < minDimensionsScaled) //overwrite only the pixels inside the wanted square
 				{
 					float2 st = (currPixel / minDimensionsScaled) * tileAmmount;
-					col = tex3D(_DisplayTex3D, float3(frac(st), slice3DTex));
+					col = tex3Dlod(_DisplayTex3D, float4(frac(st), slice3DTex,lod));
 					
 					if (displayAllChannels == 0) //If we only want to display one channel
 					{

@@ -273,20 +273,21 @@ Shader "Aetherius/RaymarchShader"
 					return (Remap(heightPercent,0.0,1.0,0.25,1.0))* densityBottom * densityTop * weatherMapDensity*globalCoverage*2.0;
 				}
 
-				float GetDensity(float3 currPos)
+				float GetDensity(float3 currPos,float sampleLvl)
 				{
+
 					float3 initialPos = currPos;
 					float density = 0.0;
 					float cloudHeightPercent = GetCloudLayerHeightSphere(currPos);//value between 0 & 1 showing where we are in the cloud 
 					float fTime = _Time;
 					float3 windOffset = -windDir * float3(fTime, fTime, fTime);//TODO make this & skewk consistent around the globe
 					float3 skewPos = currPos - normalize(windDir) * cloudHeightPercent * cloudHeightPercent * 100 * skewAmmount;
-					float4 weatherMapCloud = weatherMapTexture.Sample(samplerweatherMapTexture, (skewPos.xz / weatherMapSize) + windOffset.xz * windDisplacesWeatherMap); //We sample the weather map (r coverage,g type)
+					float4 weatherMapCloud = weatherMapTexture.SampleLevel(samplerweatherMapTexture, (skewPos.xz / weatherMapSize) + windOffset.xz * windDisplacesWeatherMap,sampleLvl); //We sample the weather map (r coverage,g type)
 					if (transitioningWM == true)
 						weatherMapCloud = lerp(weatherMapCloud, weatherMapTextureNew.Sample(samplerweatherMapTextureNew, (skewPos.xz / weatherMapSize) + windOffset.xz * windDisplacesWeatherMap), transitionLerpT);
 					
-					float4 lowFreqNoise = baseShapeTexture.Sample(samplerbaseShapeTexture, (currPos / baseShapeSize) + windOffset * baseShapeWindMult);
-					float4 highFreqNoise = detailTexture.Sample(samplerdetailTexture, (currPos / detailSize) + windOffset * detailShapeWindMult);
+					float4 lowFreqNoise = baseShapeTexture.SampleLevel(samplerbaseShapeTexture, (currPos / baseShapeSize) + windOffset * baseShapeWindMult, sampleLvl);
+					float4 highFreqNoise = detailTexture.SampleLevel(samplerdetailTexture, (currPos / detailSize) + windOffset * detailShapeWindMult, sampleLvl);
 
 
 					//Cloud Base shape
@@ -346,10 +347,10 @@ Shader "Aetherius/RaymarchShader"
 					for (int currStep = 0; currStep < iter; ++currStep)
 					{
 						currPosition += -sunDir * stepSize + (stepSize * coneKernel[currStep].xyz * float(currStep) * coneWidthScale);
-						accDensity += GetDensity(currPosition) * stepSize;
+						accDensity += GetDensity(currPosition,0.0) * stepSize;
 					}
 
-					accDensity += GetDensity(startingPos - sunDir * stepSize * 6.0 + (-sunDir * stepSize * 6 * 3 * coneWidthScale)) * stepSize;
+					accDensity += GetDensity(startingPos - sunDir * stepSize * 6.0 + (-sunDir * stepSize * 6 * 3 * coneWidthScale),0.0) * stepSize;
 
 					return accDensity;
 				}
@@ -403,15 +404,24 @@ Shader "Aetherius/RaymarchShader"
 					for (int currStep = 0; currStep < iter - 1; ++currStep)
 					{
 						float3 newPos = pos + currStep * stepSize * -sunDir;
-						float density = GetDensity(newPos);
+						float density = GetDensity(newPos,0.0);
 
 						accDensity += density;
 						shadow *= exp(-density * stepSize * lightAbsorption);
 					}
 
-					shadow *= exp(-GetDensity(pos + sampleDistance * 5.0 * -sunDir) * stepSize * lightAbsorption);//long range sample
-
+					float lightSamples = GetDensity(pos + sampleDistance * 5.0 * -sunDir,0.0) * stepSize;
+					shadow *= exp(-lightSamples * lightAbsorption);//long range sample					
 					return shadow;//TODO can lerp powder effect here (multiplying shadow) but might not be energy conserving!
+				}
+
+				float PowderEffect(float3 currPos)
+				{
+					float loddedDensity = GetDensity(currPos, 4.0);
+					float cloudHeightPercent = GetCloudLayerHeightSphere(currPos);//value between 0 & 1 showing where we are in the cloud
+					float depthProbability =0.05 + pow(1.0-exp(loddedDensity),2.0);
+					float verticalProbability = pow(Remap(cloudHeightPercent, 0.07, 0.14, 0.1, 1.0), 0.8);
+					return exp(-loddedDensity*2.0);
 				}
 
 				float3 Raymarching(float3 col,float3 ro, float3 rd,float maxRayLength,float2 uv,float maxDepth,bool isMaxDepth) //where ro is ray origin & rd is ray direction
@@ -439,7 +449,7 @@ Shader "Aetherius/RaymarchShader"
 					{
 						if (IsPosVisible(currPos, maxDepth,isMaxDepth))//TODO why cant atmos ray be out of here?
 						{
-							float currDensity = GetDensity(currPos);
+							float currDensity = GetDensity(currPos,0.0);
 
 							if (scatteredtransmittance >= 0.99)
 								atmosphereHazePos = currPos;
@@ -449,10 +459,11 @@ Shader "Aetherius/RaymarchShader"
 								float shadow = LightShadowTransmittance(currPos, 2000.0f);
 								float transmittance = exp(-currDensity * stepLength);
 
-								float clampedExtinction = max(currDensity, 0.0000001);
+								float clampedExtinction = max(currDensity, 0.000001);
 
-
-								float3 luminance = (lightColor * lightIntensity * shadow * currDensity * DoubleLobeScattering(cosAngle, 0.3, 0.2, 0.4)) + ambientColor * exp(-currDensity * stepLength * lightAbsorption)*currDensity;
+								//float powderEffect = PowderEffect(currPos);
+								//powderEffect = 1.0;
+								float3 luminance = (lightColor * lightIntensity * shadow /* *powderEffect*/ * currDensity * DoubleLobeScattering(cosAngle, 0.3, 0.2, 0.4)) /* + ambientColor * exp(-currDensity) * currDensity*/;
 								float3 integScatt = (luminance - luminance * transmittance) / clampedExtinction;
 								scatteredLuminance += scatteredtransmittance * integScatt;
 

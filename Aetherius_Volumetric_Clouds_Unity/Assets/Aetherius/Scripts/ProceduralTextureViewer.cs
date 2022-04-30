@@ -60,8 +60,8 @@ namespace Aetherius
         public float debugDisplaySize = 0.5f;
         [Range(1, 5)]
         public float tileAmmount = 1;
-
-
+        [Range(0, 8)]
+        public int textureLOD = 0;
 
         [Range(0.0f, 1.0f)]
         public float textureSlice = 1.0f;
@@ -164,6 +164,8 @@ namespace Aetherius
             material.SetInt("displayGrayscale", displayGrayscale ? 1 : 0);
             material.SetInt("displayAllChannels", displayAllChannels ? 1 : 0);
             material.SetInt("isDetail", (int)displayType);//0 if base shape, 1 if detail
+
+            material.SetInt("lod", textureLOD);
 
             Graphics.Blit(source, destination, material);
         }
@@ -269,6 +271,7 @@ namespace Aetherius
             Generate3DWorley(baseShapeResolution, ref _baseShapeRenderTexture, TEXTURE_CHANNEL.G, TEXTURE_TYPE.BASE_SHAPE);
             Generate3DWorley(baseShapeResolution, ref _baseShapeRenderTexture, TEXTURE_CHANNEL.B, TEXTURE_TYPE.BASE_SHAPE);
             Generate3DWorley(baseShapeResolution, ref _baseShapeRenderTexture, TEXTURE_CHANNEL.A, TEXTURE_TYPE.BASE_SHAPE);
+            _baseShapeRenderTexture.GenerateMips();
             DeleteComputeBuffers(ref buffersToDelete);
 
         }
@@ -279,6 +282,7 @@ namespace Aetherius
             Generate3DWorley(detailResolution, ref _detailRenderTexture, TEXTURE_CHANNEL.R, TEXTURE_TYPE.DETAIL);
             Generate3DWorley(detailResolution, ref _detailRenderTexture, TEXTURE_CHANNEL.G, TEXTURE_TYPE.DETAIL);
             Generate3DWorley(detailResolution, ref _detailRenderTexture, TEXTURE_CHANNEL.B, TEXTURE_TYPE.DETAIL);
+            _detailRenderTexture.GenerateMips();
             DeleteComputeBuffers(ref buffersToDelete);
         }
 
@@ -287,13 +291,14 @@ namespace Aetherius
             if (originalWM.width != newWM.width || originalWM.height != newWM.height)
                 return false;
 
-                int dim = Mathf.Max(resolution, 8);
-                int kernelIndex = compShader.FindKernel("TextureLerp2D");
-                compShader.SetTexture(kernelIndex, "output", originalWM);
-                compShader.SetTexture(kernelIndex, "input", newWM);
-                compShader.SetFloat("t", t);
-                DispatchComputeShader(ref compShader, kernelIndex, new Vector3Int(dim, dim, 1));
-                DeleteComputeBuffers(ref deleteBuffers);
+            int dim = Mathf.Max(resolution, 8);
+            int kernelIndex = compShader.FindKernel("TextureLerp2D");
+            compShader.SetTexture(kernelIndex, "output", originalWM);
+            compShader.SetTexture(kernelIndex, "input", newWM);
+            compShader.SetFloat("t", t);
+            DispatchComputeShader(ref compShader, kernelIndex, new Vector3Int(dim, dim, 1));
+            originalWM.GenerateMips();
+            DeleteComputeBuffers(ref deleteBuffers);
 
             return true;
         }
@@ -313,7 +318,7 @@ namespace Aetherius
 
             //TODO this line will be used to model precipitation extra absorption
             //GenerateWeatherMapChannel(preset, TEXTURE_CHANNEL.A, kernelName, kernelIndex, dim, ref compShader, ref output, ref deleteBuffers, seed);
-
+            output.GenerateMips();
         }
 
         private static void GenerateWeatherMapChannel(RaymarchCamera.CLOUD_PRESET preset, TEXTURE_CHANNEL channelToWriteTo, string kernelName, int kernelIndex, int dim, ref ComputeShader compShader, ref RenderTexture output, ref List<ComputeBuffer> deleteBuffers, int seed)
@@ -958,10 +963,12 @@ namespace Aetherius
                 }
 
                 myTexture.filterMode = filterMode;
-
+                myTexture.useMipMap = true;
+                myTexture.autoGenerateMips = false;
                 myTexture.wrapMode = TextureWrapMode.Repeat;
                 myTexture.graphicsFormat = format;
                 myTexture.Create();
+                //myTexture.GenerateMips();
 
                 isNewlyCreated = true;
 
