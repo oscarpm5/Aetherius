@@ -8,15 +8,13 @@ namespace Aetherius
 
 
     [System.Serializable]
-    public struct CloudShape
+    public class CloudShape
     {
-        public float baseShapeSize; //Advanced
-        public float detailSize; //Advanced
-        public float globalCoverage; //Advanced
-        public float globalDensity; //Advanced
-
-        public Texture2D weatherMap; //Advanced -> TODO when we have weather map generation
-        public float weatherMapSize; //Advanced
+        public float baseShapeSize=10000.0f; //Advanced
+        public float detailSize= 1500.0f; //Advanced
+        public float globalCoverage= 0.5f; //Advanced
+        public float globalDensity=0.2f; //Advanced
+        public float weatherMapSize=36000.0f; //Advanced
     }
 
     [RequireComponent(typeof(Camera))]
@@ -154,16 +152,6 @@ namespace Aetherius
             }
 
             return ref proceduralWM;
-        }
-        private void Awake()
-        {
-            noiseGen = GetComponent<ProceduralTextureViewer>();
-            SetShapeParams(ref simple);
-
-            if (advanced.globalDensity == 0.0f) //We use density as a flag to know whether it has been initialized -> TODO find a better way
-            {
-                SetShapeParams(ref advanced);
-            }
         }
 
         public void StartWMTransition()//TODO pass the preset as an argument in the future instead of picking the one in the class
@@ -399,18 +387,6 @@ namespace Aetherius
                 }
             }
         }
-
-        void SetShapeParams(ref CloudShape myShape)//TODO in the future it will generate parameters from a preset
-        {
-            myShape.baseShapeSize = 10000.0f;
-            myShape.detailSize = 1500.0f;
-            myShape.globalCoverage = 0.5f;
-            myShape.globalDensity = 0.01f;
-            //myShape.weatherMap = GenerateWeatherMap() //TODO
-            myShape.weatherMapSize = 36000.0f;
-        }
-
-
     }
 
 

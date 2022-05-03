@@ -406,7 +406,7 @@ Shader "Aetherius/RaymarchShader"
 					for (int currStep = 1; currStep < iter ; ++currStep)
 					{
 						pos += currStep * initialStepSize * -sunDir;
-						float density = GetDensity(pos,0.0);
+						float density = GetDensity(pos, (float(currStep-1)/float(iter))*3.0);
 
 						shadow *= exp(-density * currStep* initialStepSize * extintionC);
 
@@ -436,7 +436,8 @@ Shader "Aetherius/RaymarchShader"
 					uv.x *= (_ScreenParams.x / _ScreenParams.y);
 					uv *= min(_ScreenParams.x, _ScreenParams.y) / blueNoiseW;
 
-
+					float3 ambientSky = ambientColors[0] * ambientLightIntensity;
+					float3 ambientFloor = ambientColors[1] * ambientLightIntensity * 0.5;
 
 					float3 startingPos = ro + rd * stepLength * blueNoiseTexture.Sample(samplerblueNoiseTexture, uv);
 					float3 currPos = startingPos;
@@ -464,9 +465,9 @@ Shader "Aetherius/RaymarchShader"
 
 
 								float3 l = lightColor * lightIntensity;
-								float3 ambientSky = ambientColors[0] *ambientLightIntensity;
-								float3 ambientFloor = ambientColors[1] * ambientLightIntensity*0.5;
-								float3 ambientColor = lerp(ambientFloor, ambientSky, saturate(GetCloudLayerHeightSphere(currPos)));
+								
+								float t = saturate(Remap(GetCloudLayerHeightSphere(currPos),0.0,1.0,0.15,1.0));
+								float3 ambientColor = lerp(ambientFloor, ambientSky, t) /(4.0*3.1415);
 
 								float3 luminance = (l * shadow * DoubleLobeScattering(cosAngle, 0.8, 0.5, 0.9) + ambientColor * exp(-GetDensity(currPos, 2.0) * extintionC)) * currDensity;
 

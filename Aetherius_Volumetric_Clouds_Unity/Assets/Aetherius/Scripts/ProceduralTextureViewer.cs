@@ -313,8 +313,8 @@ namespace Aetherius
             int kernelIndex = compShader.FindKernel(kernelName);
 
             GenerateWeatherMapChannel(preset, TEXTURE_CHANNEL.R, kernelName, kernelIndex, dim, ref compShader, ref output, ref deleteBuffers, seed);
-            GenerateWeatherMapChannel(preset, TEXTURE_CHANNEL.G, kernelName, kernelIndex, dim, ref compShader, ref output, ref deleteBuffers, seed);
-            //GenerateWeatherMapChannel(TEXTURE_CHANNEL.B, kernelName, kernelIndex, dim, ref compShader, ref output, ref deleteBuffers, seed);
+            GenerateWeatherMapChannel(preset, TEXTURE_CHANNEL.G, kernelName, kernelIndex, dim, ref compShader, ref output, ref deleteBuffers, seed + 1);
+            GenerateWeatherMapChannel(preset, TEXTURE_CHANNEL.B, kernelName, kernelIndex, dim, ref compShader, ref output, ref deleteBuffers, seed + 2);
 
             //TODO this line will be used to model precipitation extra absorption
             //GenerateWeatherMapChannel(preset, TEXTURE_CHANNEL.A, kernelName, kernelIndex, dim, ref compShader, ref output, ref deleteBuffers, seed);
@@ -372,19 +372,19 @@ namespace Aetherius
                             case TEXTURE_CHANNEL.R:
                                 {
                                     //Perlin Related
-                                    ret.perlinGridSize = 23;
+                                    ret.perlinGridSize = 17;
                                     ret.perlinOctaves = 4;
                                     ret.perlinPersistence = 0.5f;
                                     ret.perlinLacunarity = 2.0f;
 
                                     //Worley Related
-                                    ret.worleyNumCellsA = 7;
-                                    ret.worleyNumCellsB = 11;
-                                    ret.worleyNumCellsC = 27;
-                                    ret.worleyPersistence = 0.5f;
+                                    ret.worleyNumCellsA = 3;
+                                    ret.worleyNumCellsB = 5;
+                                    ret.worleyNumCellsC = 7;
+                                    ret.worleyPersistence = 0.4f;
 
                                     //General
-                                    ret.minMaxBounds = new Vector2(-0.5f, 1.0f);
+                                    ret.minMaxBounds = new Vector2(-1.5f, 1.1f);
                                     ret.activeChannel = true;
                                 }
                                 break;
@@ -398,12 +398,12 @@ namespace Aetherius
 
                                     //Worley Related
                                     ret.worleyNumCellsA = 3;
-                                    ret.worleyNumCellsB = 5;
-                                    ret.worleyNumCellsC = 7;
-                                    ret.worleyPersistence = 0.5f;
+                                    ret.worleyNumCellsB = 4;
+                                    ret.worleyNumCellsC = 5;
+                                    ret.worleyPersistence = 0.3f;
 
                                     //General
-                                    ret.minMaxBounds = new Vector2(-0.5f, 1.0f);
+                                    ret.minMaxBounds = new Vector2(-1.5f, 1.0f);
                                     ret.activeChannel = true;
                                 }
                                 break;
@@ -423,7 +423,7 @@ namespace Aetherius
 
                                     //General
                                     ret.minMaxBounds = new Vector2(0.0f, 1.0f);
-                                    ret.activeChannel = true;
+                                    ret.activeChannel = false;
                                 }
                                 break;
                             case TEXTURE_CHANNEL.A:
@@ -439,7 +439,7 @@ namespace Aetherius
                                     ret.worleyNumCellsB = 11;
                                     ret.worleyNumCellsC = 19;
                                     ret.worleyPersistence = 0.5f;
-                                    ret.activeChannel = true;
+                                    ret.activeChannel = false;
                                 }
                                 break;
                         }
@@ -464,7 +464,7 @@ namespace Aetherius
                                     ret.worleyPersistence = 0.5f;
 
                                     //General
-                                    ret.minMaxBounds = new Vector2(0.0f, 2.0f);
+                                    ret.minMaxBounds = new Vector2(-0.5f, 1.1f);
                                     ret.activeChannel = true;
                                 }
                                 break;
@@ -503,7 +503,7 @@ namespace Aetherius
 
                                     //General
                                     ret.minMaxBounds = new Vector2(0.0f, 1.0f);
-                                    ret.activeChannel = true;
+                                    ret.activeChannel = false;
                                 }
                                 break;
                             case TEXTURE_CHANNEL.A:
@@ -519,7 +519,7 @@ namespace Aetherius
                                     ret.worleyNumCellsB = 11;
                                     ret.worleyNumCellsC = 19;
                                     ret.worleyPersistence = 0.5f;
-                                    ret.activeChannel = true;
+                                    ret.activeChannel = false;
                                 }
                                 break;
                         }
@@ -532,23 +532,42 @@ namespace Aetherius
                             case TEXTURE_CHANNEL.R:
                                 {
                                     //Perlin Related
-                                    ret.perlinGridSize = 23;
+                                    ret.perlinGridSize = 17;
                                     ret.perlinOctaves = 4;
                                     ret.perlinPersistence = 0.5f;
                                     ret.perlinLacunarity = 2.0f;
 
                                     //Worley Related
-                                    ret.worleyNumCellsA = 7;
-                                    ret.worleyNumCellsB = 11;
-                                    ret.worleyNumCellsC = 27;
-                                    ret.worleyPersistence = 0.5f;
+                                    ret.worleyNumCellsA = 3;
+                                    ret.worleyNumCellsB = 6;
+                                    ret.worleyNumCellsC = 7;
+                                    ret.worleyPersistence = 0.3f;
 
                                     //General
-                                    ret.minMaxBounds = new Vector2(-0.5f, 1.0f);
+                                    ret.minMaxBounds = new Vector2(-0.5f, 1.1f);
                                     ret.activeChannel = true;
                                 }
                                 break;
                             case TEXTURE_CHANNEL.G:
+                                {
+                                    //Perlin Related
+                                    ret.perlinGridSize = 17;
+                                    ret.perlinOctaves = 4;
+                                    ret.perlinPersistence = 0.5f;
+                                    ret.perlinLacunarity = 2.0f;
+
+                                    //Worley Related
+                                    ret.worleyNumCellsA = 3;
+                                    ret.worleyNumCellsB = 5;
+                                    ret.worleyNumCellsC = 7;
+                                    ret.worleyPersistence = 0.3f;
+
+                                    //General
+                                    ret.minMaxBounds = new Vector2(-1.5f, 1.5f);
+                                    ret.activeChannel = true;
+                                }
+                                break;
+                            case TEXTURE_CHANNEL.B:
                                 {
                                     //Perlin Related
                                     ret.perlinGridSize = 13;
@@ -558,31 +577,12 @@ namespace Aetherius
 
                                     //Worley Related
                                     ret.worleyNumCellsA = 3;
-                                    ret.worleyNumCellsB = 5;
-                                    ret.worleyNumCellsC = 7;
-                                    ret.worleyPersistence = 0.5f;
+                                    ret.worleyNumCellsB = 4;
+                                    ret.worleyNumCellsC = 6;
+                                    ret.worleyPersistence = 0.3f;
 
                                     //General
-                                    ret.minMaxBounds = new Vector2(-0.5f, 1.0f);
-                                    ret.activeChannel = true;
-                                }
-                                break;
-                            case TEXTURE_CHANNEL.B:
-                                {
-                                    //Perlin Related
-                                    ret.perlinGridSize = 9;
-                                    ret.perlinOctaves = 4;
-                                    ret.perlinPersistence = 0.5f;
-                                    ret.perlinLacunarity = 2.0f;
-
-                                    //Worley Related
-                                    ret.worleyNumCellsA = 3;
-                                    ret.worleyNumCellsB = 5;
-                                    ret.worleyNumCellsC = 9;
-                                    ret.worleyPersistence = 0.4f;
-
-                                    //General
-                                    ret.minMaxBounds = new Vector2(0.0f, 1.0f);
+                                    ret.minMaxBounds = new Vector2(-0.75f, 1.5f);
                                     ret.activeChannel = true;
                                 }
                                 break;
@@ -624,7 +624,7 @@ namespace Aetherius
                                     ret.worleyPersistence = 0.5f;
 
                                     //General
-                                    ret.minMaxBounds = new Vector2(-0.5f, 1.0f);
+                                    ret.minMaxBounds = new Vector2(0.75f, 1.0f);
                                     ret.activeChannel = true;
                                 }
                                 break;
@@ -650,19 +650,19 @@ namespace Aetherius
                             case TEXTURE_CHANNEL.B:
                                 {
                                     //Perlin Related
-                                    ret.perlinGridSize = 9;
+                                    ret.perlinGridSize = 13;
                                     ret.perlinOctaves = 4;
                                     ret.perlinPersistence = 0.5f;
                                     ret.perlinLacunarity = 2.0f;
 
                                     //Worley Related
                                     ret.worleyNumCellsA = 3;
-                                    ret.worleyNumCellsB = 5;
-                                    ret.worleyNumCellsC = 9;
-                                    ret.worleyPersistence = 0.4f;
+                                    ret.worleyNumCellsB = 4;
+                                    ret.worleyNumCellsC = 6;
+                                    ret.worleyPersistence = 0.3f;
 
                                     //General
-                                    ret.minMaxBounds = new Vector2(0.0f, 1.0f);
+                                    ret.minMaxBounds = new Vector2(-1.0f, 1.0f);
                                     ret.activeChannel = true;
                                 }
                                 break;
