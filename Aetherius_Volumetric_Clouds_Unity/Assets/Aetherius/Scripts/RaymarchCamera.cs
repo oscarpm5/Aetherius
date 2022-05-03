@@ -10,11 +10,11 @@ namespace Aetherius
     [System.Serializable]
     public class CloudShape
     {
-        public float baseShapeSize=10000.0f; //Advanced
-        public float detailSize= 1500.0f; //Advanced
-        public float globalCoverage= 0.5f; //Advanced
-        public float globalDensity=0.2f; //Advanced
-        public float weatherMapSize=36000.0f; //Advanced
+        public float baseShapeSize = 10000.0f; //Advanced
+        public float detailSize = 1500.0f; //Advanced
+        public float globalCoverage = 0.5f; //Advanced
+        public float globalDensity = 0.2f; //Advanced
+        public float weatherMapSize = 36000.0f; //Advanced
     }
 
     [RequireComponent(typeof(Camera))]
@@ -154,6 +154,12 @@ namespace Aetherius
             return ref proceduralWM;
         }
 
+        private void Awake()
+        {
+            noiseGen = GetComponent<ProceduralTextureViewer>();
+        }
+
+
         public void StartWMTransition()//TODO pass the preset as an argument in the future instead of picking the one in the class
         {
             if (transitioning) //if a transition was ocurring already generate a texture with the status of the transition currently and lerp with that
@@ -244,9 +250,9 @@ namespace Aetherius
             rayMarchMaterial.SetFloat("globalDensity", currentShape.globalDensity);
 
             rayMarchMaterial.SetVector("sunDir", sunLight.transform.rotation * Vector3.forward);
-            rayMarchMaterial.SetFloat("absorptionC", absorptionC); 
+            rayMarchMaterial.SetFloat("absorptionC", absorptionC);
             rayMarchMaterial.SetFloat("scatterC", scatterC);
-            rayMarchMaterial.SetFloat("extintionC", absorptionC+scatterC);
+            rayMarchMaterial.SetFloat("extintionC", absorptionC + scatterC);
             rayMarchMaterial.SetFloat("lightIntensity", sunLight.intensity * lightIntensityMult);
             rayMarchMaterial.SetFloat("ambientLightIntensity", ambientLightIntensity);
 
