@@ -72,10 +72,14 @@ Shader "Aetherius/RaymarchShader"
 			float globalDensity;
 
 			float3 sunDir;
-			float lightAbsorption;
+			float extintionC;
+			float absorptionC;
+			float scatterC;
+
 			float lightIntensity;
 			float3 lightColor;
-			float3 ambientColor;
+			float ambientLightIntensity;
+			float3 ambientColors[2];
 			float4 coneKernel[6];
 
 			StructuredBuffer<float> densityCurveBuffer;
@@ -394,24 +398,20 @@ Shader "Aetherius/RaymarchShader"
 					return lerp(HenyeyGreenstein(cosAngle, l1), HenyeyGreenstein(cosAngle, -l2), mix);
 				}
 
-				float LightShadowTransmittance(float3 pos, float sampleDistance)
+				float LightShadowTransmittance(float3 pos, float initialStepSize)
 				{
-					int iter = 6;
-					float stepSize = (sampleDistance / float(iter));//TODO make as variable (maybe when we have cone light samples?)
+					int iter = 5;
 
 					float shadow = 1.0;
-					float accDensity = 0.0;
-					for (int currStep = 0; currStep < iter - 1; ++currStep)
+					for (int currStep = 1; currStep < iter ; ++currStep)
 					{
-						float3 newPos = pos + currStep * stepSize * -sunDir;
-						float density = GetDensity(newPos,0.0);
+						pos += currStep * initialStepSize * -sunDir;
+						float density = GetDensity(pos,0.0);
 
-						accDensity += density;
-						shadow *= exp(-density * stepSize * lightAbsorption);
+						shadow *= exp(-density * currStep* initialStepSize * extintionC);
+
 					}
-
-					float lightSamples = GetDensity(pos + sampleDistance * 5.0 * -sunDir,0.0) * stepSize;
-					shadow *= exp(-lightSamples * lightAbsorption);//long range sample					
+								
 					return shadow;//TODO can lerp powder effect here (multiplying shadow) but might not be energy conserving!
 				}
 
@@ -444,6 +444,7 @@ Shader "Aetherius/RaymarchShader"
 
 					float3 scatteredLuminance = float3(0.0, 0.0, 0.0);
 					float scatteredtransmittance = 1.0;
+
 					float3 atmosphereHazePos = startingPos;
 					[loop] for (int currStep = 0; currStep < maxStepsRay; ++currStep)
 					{
@@ -456,14 +457,19 @@ Shader "Aetherius/RaymarchShader"
 
 							if (currDensity > 0.0)
 							{
-								float shadow = LightShadowTransmittance(currPos, 2000.0f);
-								float transmittance = exp(-currDensity * stepLength);
+								float shadow = LightShadowTransmittance(currPos, 100.0f);
+								float extintion = currDensity * extintionC;
+								float clampedExtinction = max(extintion, 0.0000001);
+								float transmittance = exp(-clampedExtinction * stepLength);
 
-								float clampedExtinction = max(currDensity, 0.000001);
 
-								//float powderEffect = PowderEffect(currPos);
-								//powderEffect = 1.0;
-								float3 luminance = (lightColor * lightIntensity * shadow /* *powderEffect*/ * currDensity * DoubleLobeScattering(cosAngle, 0.3, 0.2, 0.4)) /* + ambientColor * exp(-currDensity) * currDensity*/;
+								float3 l = lightColor * lightIntensity;
+								float3 ambientSky = ambientColors[0] *ambientLightIntensity;
+								float3 ambientFloor = ambientColors[1] * ambientLightIntensity*0.5;
+								float3 ambientColor = lerp(ambientFloor, ambientSky, saturate(GetCloudLayerHeightSphere(currPos)));
+
+								float3 luminance = (l * shadow * DoubleLobeScattering(cosAngle, 0.8, 0.5, 0.9) + ambientColor * exp(-GetDensity(currPos, 2.0) * extintionC)) * currDensity;
+
 								float3 integScatt = (luminance - luminance * transmittance) / clampedExtinction;
 								scatteredLuminance += scatteredtransmittance * integScatt;
 

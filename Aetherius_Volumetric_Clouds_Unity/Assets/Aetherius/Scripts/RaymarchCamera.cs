@@ -99,8 +99,12 @@ namespace Aetherius
         [Header("Lighting")]
         public Light sunLight;
         public float lightIntensityMult = 10.0f;
-        [Range(0.0f, 10.0f)]
-        public float lightAbsorption = 1.0f;
+        public float ambientLightIntensity = 1.0f;
+        [HideInInspector]
+        public float extintionC = 1.0f;
+        public float scatterC = 1.0f;
+        public float absorptionC = 1.0f;
+
         List<Vector4> conekernel;
 
         public CloudShape currentShape
@@ -252,8 +256,11 @@ namespace Aetherius
             rayMarchMaterial.SetFloat("globalDensity", currentShape.globalDensity);
 
             rayMarchMaterial.SetVector("sunDir", sunLight.transform.rotation * Vector3.forward);
-            rayMarchMaterial.SetFloat("lightAbsorption", lightAbsorption);
+            rayMarchMaterial.SetFloat("absorptionC", absorptionC); 
+            rayMarchMaterial.SetFloat("scatterC", scatterC);
+            rayMarchMaterial.SetFloat("extintionC", absorptionC+scatterC);
             rayMarchMaterial.SetFloat("lightIntensity", sunLight.intensity * lightIntensityMult);
+            rayMarchMaterial.SetFloat("ambientLightIntensity", ambientLightIntensity);
 
 
             Color[] c = new Color[2];
@@ -263,12 +270,12 @@ namespace Aetherius
 
 
             RenderSettings.ambientProbe.Evaluate(dirs, c);
-            Color ambientCol = new Color(0.0f, 0.0f, 0.0f);
-
-            ambientCol = c[0] * 0.75f + c[1] * 0.25f;
+            List<Vector4> ambientColors = new List<Vector4>();
+            ambientColors.Add(c[0]);
+            ambientColors.Add(c[1]);
 
             rayMarchMaterial.SetVector("lightColor", sunLight.color);
-            rayMarchMaterial.SetVector("ambientColor", ambientCol);
+            rayMarchMaterial.SetVectorArray("ambientColors", ambientColors);
             rayMarchMaterial.SetVectorArray("coneKernel", conekernel);
 
 
