@@ -638,12 +638,12 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   mode: 0
-  preset: 2
+  preset: 1
   simple:
     baseShapeSize: 10000
     detailSize: 1500
     globalCoverage: 0.5
-    globalDensity: 0.2
+    globalDensity: 1
     weatherMapSize: 36000
   advanced:
     baseShapeSize: 10000
@@ -657,7 +657,7 @@ MonoBehaviour:
   blueNoise: {fileID: 2800000, guid: 0cd98530926ee344a93cf6cc4437d4f6, type: 3}
   weatherMap: {fileID: 0}
   windDisplacesWeatherMap: 0
-  proceduralWM: {fileID: 1131669072}
+  proceduralWM: {fileID: 1297487623}
   proceduralWMNew: {fileID: 0}
   transitionTimeWM: 10
   currentTransitionTimeWM: 0
@@ -718,10 +718,10 @@ MonoBehaviour:
     m_PostInfinity: 2
     m_RotationOrder: 4
   sunLight: {fileID: 705507994}
-  lightIntensityMult: 4.8
+  lightIntensityMult: 6.14
   ambientLightIntensity: 0
   extintionC: 1
-  scatterC: 0.25
+  scatterC: 0.1
   absorptionC: 0
 --- !u!114 &963194230
 MonoBehaviour:
@@ -791,7 +791,7 @@ MonoBehaviour:
   speed: 100
   rotSpeed: 10
   sprintMultiplier: 100
---- !u!84 &1131669072
+--- !u!84 &1297487623
 RenderTexture:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}

@@ -279,7 +279,8 @@ Shader "Aetherius/RaymarchShader"
 
 				float GetDensity(float3 currPos,float sampleLvl)
 				{
-
+					//sample lvl incremented with dist
+					sampleLvl += min( length(currPos - _WorldSpaceCameraPos) / 200000.0,4);//TODO expose these variables?
 					float3 initialPos = currPos;
 					float density = 0.0;
 					float cloudHeightPercent = GetCloudLayerHeightSphere(currPos);//value between 0 & 1 showing where we are in the cloud 
@@ -398,17 +399,17 @@ Shader "Aetherius/RaymarchShader"
 					return lerp(HenyeyGreenstein(cosAngle, l1), HenyeyGreenstein(cosAngle, -l2), mix);
 				}
 
-				float LightShadowTransmittance(float3 pos, float initialStepSize)
+				float LightShadowTransmittance(float3 pos, float initialStepSize,float eCoeff)
 				{
-					int iter = 5;
+					int iter = 4;
 
 					float shadow = 1.0;
-					for (int currStep = 1; currStep < iter ; ++currStep)
+					for (int currStep = 0; currStep < iter ; ++currStep)
 					{
 						pos += currStep * initialStepSize * -sunDir;
-						float density = GetDensity(pos, (float(currStep-1)/float(iter))*3.0);
+						float density = GetDensity(pos, (float(currStep)/float(iter))*2.0);
 
-						shadow *= exp(-density * currStep* initialStepSize * extintionC);
+						shadow *= exp(-density * currStep* initialStepSize * eCoeff);
 
 					}
 								
@@ -424,12 +425,26 @@ Shader "Aetherius/RaymarchShader"
 					return exp(-loddedDensity*2.0);
 				}
 
-				float LightScatter(float3 currPos, float cosAngle)
+				float LightScatter(float3 currPos, float cosAngle,int i)
 				{
-					float shadow = LightShadowTransmittance(currPos, 100.0f);
+					//must be a<=b to be energy conserving
+					float a = 0.5;
+					float b = 0.75;
+					float c = 0.5;
+					float newExtinctionC = extintionC*pow(a,i);
+					float newScatterC = scatterC*pow(b,i);
 
+					float3 ambientSky = ambientColors[0] * ambientLightIntensity;
+					float3 ambientFloor = ambientColors[1] * ambientLightIntensity * 0.5;
 
-					return shadow * DoubleLobeScattering(cosAngle, 0.8, 0.5, 0.9);
+					float heightPercent = GetCloudLayerHeightSphere(currPos);
+					float t = saturate(Remap(heightPercent, 0.0, 1.0, 0.15, 1.0));
+					float3 ambientColor = lerp(ambientFloor, ambientSky, t) / (4.0 * 3.1415);
+
+					float3 l = lightColor * lightIntensity + ambientColor * 10 * heightPercent;
+					float shadow = LightShadowTransmittance(currPos, 100.0f,newExtinctionC);
+
+					return l* shadow * DoubleLobeScattering(cosAngle*pow(c,i), 0.3, 0.2, 0.7)*newScatterC;
 				}
 
 
@@ -445,8 +460,6 @@ Shader "Aetherius/RaymarchShader"
 					uv.x *= (_ScreenParams.x / _ScreenParams.y);
 					uv *= min(_ScreenParams.x, _ScreenParams.y) / blueNoiseW;
 
-					float3 ambientSky = ambientColors[0] * ambientLightIntensity;
-					float3 ambientFloor = ambientColors[1] * ambientLightIntensity * 0.5;
 
 					float3 startingPos = ro + rd * stepLength * blueNoiseTexture.Sample(samplerblueNoiseTexture, uv);
 					float3 currPos = startingPos;
@@ -467,18 +480,16 @@ Shader "Aetherius/RaymarchShader"
 
 							if (currDensity > 0.0)
 							{
-								float extintion = currDensity * extintionC;
-								float clampedExtinction = max(extintion, 0.0000001);
-								float transmittance = exp(-clampedExtinction * stepLength);
+								float extinction = currDensity * extintionC;
+								float clampedExtinction = max(extinction, 0.0000001);
+								float transmittance = exp(-clampedExtinction * stepLength);								
 
-								float heightPercent = GetCloudLayerHeightSphere(currPos);
-								float t = saturate(Remap(heightPercent,0.0,1.0,0.15,1.0));
-								float3 ambientColor = lerp(ambientFloor, ambientSky, t) /(4.0*3.1415);
-								
-								float3 l = lightColor * lightIntensity + ambientColor*10* heightPercent;
-								
-
-								float3 luminance = l * LightScatter(currPos, cosAngle) * currDensity;
+								float3 luminance = 0;
+								for (int i = 0; i < 2; ++i)
+								{
+									luminance += LightScatter(currPos, cosAngle,i);
+								}
+								luminance *= currDensity;
 
 								float3 integScatt = (luminance - luminance * transmittance) / clampedExtinction;
 								scatteredLuminance += scatteredtransmittance * integScatt;
