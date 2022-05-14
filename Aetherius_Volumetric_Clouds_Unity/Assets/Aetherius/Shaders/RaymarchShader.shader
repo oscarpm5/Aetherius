@@ -428,7 +428,7 @@ Shader "Aetherius/RaymarchShader"
 				float LightScatter(float3 currPos, float cosAngle,int i)
 				{
 					//must be a<=b to be energy conserving
-					float a = 0.5;
+					float a = 0.25;
 					float b = 0.75;
 					float c = 0.5;
 					float newExtinctionC = extintionC*pow(a,i);
