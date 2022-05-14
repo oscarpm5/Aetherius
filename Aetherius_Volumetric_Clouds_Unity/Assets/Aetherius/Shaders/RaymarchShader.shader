@@ -424,6 +424,15 @@ Shader "Aetherius/RaymarchShader"
 					return exp(-loddedDensity*2.0);
 				}
 
+				float LightScatter(float3 currPos, float cosAngle)
+				{
+					float shadow = LightShadowTransmittance(currPos, 100.0f);
+
+
+					return shadow * DoubleLobeScattering(cosAngle, 0.8, 0.5, 0.9);
+				}
+
+
 				float3 Raymarching(float3 col,float3 ro, float3 rd,float maxRayLength,float2 uv,float maxDepth,bool isMaxDepth) //where ro is ray origin & rd is ray direction
 				{
 
@@ -458,18 +467,18 @@ Shader "Aetherius/RaymarchShader"
 
 							if (currDensity > 0.0)
 							{
-								float shadow = LightShadowTransmittance(currPos, 100.0f);
 								float extintion = currDensity * extintionC;
 								float clampedExtinction = max(extintion, 0.0000001);
 								float transmittance = exp(-clampedExtinction * stepLength);
 
-
-								float3 l = lightColor * lightIntensity;
-								
-								float t = saturate(Remap(GetCloudLayerHeightSphere(currPos),0.0,1.0,0.15,1.0));
+								float heightPercent = GetCloudLayerHeightSphere(currPos);
+								float t = saturate(Remap(heightPercent,0.0,1.0,0.15,1.0));
 								float3 ambientColor = lerp(ambientFloor, ambientSky, t) /(4.0*3.1415);
+								
+								float3 l = lightColor * lightIntensity + ambientColor*10* heightPercent;
+								
 
-								float3 luminance = (l * shadow * DoubleLobeScattering(cosAngle, 0.8, 0.5, 0.9) + ambientColor * exp(-GetDensity(currPos, 2.0) * extintionC)) * currDensity;
+								float3 luminance = l * LightScatter(currPos, cosAngle) * currDensity;
 
 								float3 integScatt = (luminance - luminance * transmittance) / clampedExtinction;
 								scatteredLuminance += scatteredtransmittance * integScatt;
