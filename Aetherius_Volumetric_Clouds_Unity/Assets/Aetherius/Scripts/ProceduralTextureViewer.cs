@@ -4,49 +4,14 @@ using UnityEngine;
 
 namespace Aetherius
 {
-    public struct WMChannelData //TODO consider moving this to a different script?
-    {
-        //Perlin Related
-        public int perlinGridSize;
-        public int perlinOctaves;
-        public float perlinPersistence;
-        public float perlinLacunarity;
-
-        //Worley Related
-        public int worleyNumCellsA;
-        public int worleyNumCellsB;
-        public int worleyNumCellsC;
-        public float worleyPersistence;
-
-        //General
-        public Vector2 minMaxBounds;
-        public bool activeChannel;
-    }
+    
 
     [RequireComponent(typeof(Camera))]
     [ImageEffectAllowedInSceneView]
     [ExecuteInEditMode]
     public class ProceduralTextureViewer : MonoBehaviour
     {
-        public enum TEXTURE_CHANNEL
-        {
-            R,
-            G,
-            B,
-            A
-        }
-
-        public enum TEXTURE_TYPE
-        {
-            BASE_SHAPE,
-            DETAIL
-        }
-
-        public enum TEXTURE_DIMENSIONS
-        {
-            TEX_2D,
-            TEX_3D
-        }
+       
 
         //Display shader
         [Header("Texture Display")]
@@ -303,7 +268,7 @@ namespace Aetherius
             return true;
         }
 
-        public static void GenerateWeatherMap(int resolution, ref ComputeShader compShader, ref RenderTexture output, ref List<ComputeBuffer> deleteBuffers, int seed, RaymarchCamera.CLOUD_PRESET preset)
+        public static void GenerateWeatherMap(int resolution, ref ComputeShader compShader, ref RenderTexture output, ref List<ComputeBuffer> deleteBuffers, int seed, CLOUD_PRESET preset)
         {
             int dim = Mathf.Max(resolution, 8);
 
@@ -321,9 +286,9 @@ namespace Aetherius
             output.GenerateMips();
         }
 
-        private static void GenerateWeatherMapChannel(RaymarchCamera.CLOUD_PRESET preset, TEXTURE_CHANNEL channelToWriteTo, string kernelName, int kernelIndex, int dim, ref ComputeShader compShader, ref RenderTexture output, ref List<ComputeBuffer> deleteBuffers, int seed)
+        private static void GenerateWeatherMapChannel(CLOUD_PRESET preset, TEXTURE_CHANNEL channelToWriteTo, string kernelName, int kernelIndex, int dim, ref ComputeShader compShader, ref RenderTexture output, ref List<ComputeBuffer> deleteBuffers, int seed)
         {
-            WMChannelData data = GetWMChannelData(channelToWriteTo, preset);
+            WeatherMapChannelSettings data = GetWMChannelData(channelToWriteTo, preset);
 
             if (!data.activeChannel) //If channel isn't active just initialize to 0
                 return;
@@ -359,13 +324,13 @@ namespace Aetherius
             DeleteComputeBuffers(ref deleteBuffers);
         }
 
-        static WMChannelData GetWMChannelData(TEXTURE_CHANNEL channel, RaymarchCamera.CLOUD_PRESET preset) //TODO make this an external file?
+        static WeatherMapChannelSettings GetWMChannelData(TEXTURE_CHANNEL channel, CLOUD_PRESET preset) //TODO make this an external file?
         {
-            WMChannelData ret = new WMChannelData();
+            WeatherMapChannelSettings ret = new WeatherMapChannelSettings();
 
             switch (preset)
             {
-                case RaymarchCamera.CLOUD_PRESET.SPARSE:
+                case CLOUD_PRESET.SPARSE:
                     {
                         switch (channel)
                         {
@@ -445,7 +410,7 @@ namespace Aetherius
                         }
                     }
                     break;
-                case RaymarchCamera.CLOUD_PRESET.CLOUDY:
+                case CLOUD_PRESET.CLOUDY:
                     {
                         switch (channel)
                         {
@@ -525,7 +490,7 @@ namespace Aetherius
                         }
                     }
                     break;
-                case RaymarchCamera.CLOUD_PRESET.STORMY:
+                case CLOUD_PRESET.STORMY:
                     {
                         switch (channel)
                         {
@@ -605,7 +570,7 @@ namespace Aetherius
                         }
                     }
                     break;
-                case RaymarchCamera.CLOUD_PRESET.OVERCAST:
+                case CLOUD_PRESET.OVERCAST:
                     {
                         switch (channel)
                         {

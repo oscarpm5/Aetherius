@@ -97,7 +97,7 @@ namespace Aetherius
             }
 
             //If base texture & R channel show perlin
-            if (_myScript.displayType == ProceduralTextureViewer.TEXTURE_TYPE.BASE_SHAPE && _myScript.displayChannel == ProceduralTextureViewer.TEXTURE_CHANNEL.R)
+            if (_myScript.displayType == TEXTURE_TYPE.BASE_SHAPE && _myScript.displayChannel == TEXTURE_CHANNEL.R)
             {
                 currSettings = _myScript.perlinShapeSettings;
                 if (currSettings != null)

@@ -24,11 +24,9 @@ namespace Aetherius
         {
             DrawDefaultInspector();
 
-           
-
             switch (_myScript.mode)
             {
-                case RaymarchCamera.CLOUD_CONTROL.SIMPLE:
+                case CLOUD_CONTROL.SIMPLE:
                     {
                         using (EditorGUI.ChangeCheckScope check = new EditorGUI.ChangeCheckScope())
                         {
@@ -36,7 +34,7 @@ namespace Aetherius
 
                             if (check.changed) 
                             {
-                                _myScript.preset = (RaymarchCamera.CLOUD_PRESET)preset.intValue;
+                                _myScript.preset = (CLOUD_PRESET)preset.intValue;
                                 _myScript.StartWMTransition();
                             }
 
@@ -53,7 +51,7 @@ namespace Aetherius
                         }
                     }
                     break;
-                case RaymarchCamera.CLOUD_CONTROL.ADVANCED:
+                case CLOUD_CONTROL.ADVANCED:
                     {
                         using (EditorGUI.ChangeCheckScope check = new EditorGUI.ChangeCheckScope())
                         {

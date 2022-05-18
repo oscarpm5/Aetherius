@@ -5,8 +5,6 @@ using UnityEngine;
 namespace Aetherius
 {
 
-
-
     [System.Serializable]
     public class CloudShape
     {
@@ -22,19 +20,6 @@ namespace Aetherius
     [ExecuteInEditMode]
     public class RaymarchCamera : MonoBehaviour
     {
-        public enum CLOUD_CONTROL
-        {
-            SIMPLE,
-            ADVANCED
-        }
-
-        public enum CLOUD_PRESET
-        {
-            SPARSE,
-            CLOUDY,
-            STORMY,
-            OVERCAST
-        }
 
         private Camera _cam;
 
@@ -219,11 +204,6 @@ namespace Aetherius
             if (conekernel == null)
                 conekernel = GenerateConeKernels();
 
-            //GetComponent<ProceduralTextureViewer>().UpdateNoise();
-
-
-            //UpdateGradientLUTs();
-
             if (transitioning)
             {
                 rayMarchMaterial.SetTexture("weatherMapTextureNew", proceduralWMNew);
@@ -234,8 +214,8 @@ namespace Aetherius
 
 
             rayMarchMaterial.SetTexture("_MainTex", source); //input the rendered camera texture 
-            rayMarchMaterial.SetTexture("baseShapeTexture", noiseGen.GetTexture(ProceduralTextureViewer.TEXTURE_TYPE.BASE_SHAPE));
-            rayMarchMaterial.SetTexture("detailTexture", noiseGen.GetTexture(ProceduralTextureViewer.TEXTURE_TYPE.DETAIL));
+            rayMarchMaterial.SetTexture("baseShapeTexture", noiseGen.GetTexture(TEXTURE_TYPE.BASE_SHAPE));
+            rayMarchMaterial.SetTexture("detailTexture", noiseGen.GetTexture(TEXTURE_TYPE.DETAIL));
             rayMarchMaterial.SetTexture("weatherMapTexture", GetProceduralWM());
             rayMarchMaterial.SetTexture("blueNoiseTexture", blueNoise);
 
