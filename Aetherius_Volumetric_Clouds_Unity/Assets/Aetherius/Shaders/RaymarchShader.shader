@@ -80,6 +80,7 @@ Shader "Aetherius/RaymarchShader"
 			float3 ambientColors[2];
 			float4 coneKernel[6];
 			bool softerShadows;
+			float shadowSize;
 
 			StructuredBuffer<float> densityCurveBuffer;
 			int densityCurveBufferSize;
@@ -384,15 +385,6 @@ Shader "Aetherius/RaymarchShader"
 
 			}
 
-			float PowderEffect(float3 currPos)
-			{
-				float loddedDensity = GetDensity(currPos, 4.0);
-				float cloudHeightPercent = GetCloudLayerHeightSphere(currPos);//value between 0 & 1 showing where we are in the cloud
-				float depthProbability = 0.05 + pow(1.0 - exp(loddedDensity),2.0);
-				float verticalProbability = pow(Remap(cloudHeightPercent, 0.07, 0.14, 0.1, 1.0), 0.8);
-				return exp(-loddedDensity * 2.0);
-			}
-
 			float LightScatter(float3 currPos, float cosAngle,int i)
 			{
 				//must be a<=b to be energy conserving
@@ -414,11 +406,11 @@ Shader "Aetherius/RaymarchShader"
 				float shadow = 1.0;
 				if (softerShadows == true)
 				{
-					shadow = LightShadowTransmittanceCone(currPos, 100.0f, newExtinctionC);
+					shadow = LightShadowTransmittanceCone(currPos, shadowSize, newExtinctionC);
 				}
 				else 
 				{
-					shadow = LightShadowTransmittance(currPos, 100.0f, newExtinctionC);
+					shadow = LightShadowTransmittance(currPos, shadowSize, newExtinctionC);
 				}
 
 				return l * shadow * DoubleLobeScattering(cosAngle * pow(c,i), 0.3, 0.2, 0.7) * newScatterC;
@@ -488,7 +480,6 @@ Shader "Aetherius/RaymarchShader"
 				float hazeAmmount = saturate(Remap(length(atmosphereHazePos - initPosHaze), minHazeDist, maxHazeDist, 0.0, 1.0));
 
 				col = lerp(scatteredtransmittance * col + scatteredLuminance,col,1.0 - (1.0 - hazeAmmount) * (1.0 - hazeAmmount));
-				//col = scatteredtransmittance * col + scatteredLuminance;
 				return float3(col);
 			}
 
