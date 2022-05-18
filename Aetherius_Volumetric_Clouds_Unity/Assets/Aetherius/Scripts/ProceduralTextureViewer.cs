@@ -888,38 +888,7 @@ namespace Aetherius
         }
 
         //Textures ================================================================================
-        /*
-        //returns true if a texture has been created
-        bool GenerateTexture3D(int texResolution, ref RenderTexture myTexture, UnityEngine.Experimental.Rendering.GraphicsFormat format)
-        {
-            bool isNewlyCreated = false;
-            int res = Mathf.Max(texResolution, 8);
-            if (myTexture == null || !myTexture.IsCreated() || myTexture.height != res || myTexture.width != res || myTexture.volumeDepth != res || myTexture.graphicsFormat != format) //if texture doesnt exist or resolution has changed, recreate the texture
-            {
-                //Debug.Log("GeneratingTexture...");
 
-                if (myTexture != null)
-                {
-                    //Debug.Log("Deleting previous texture...");
-                    myTexture.Release();
-                    myTexture = null;
-                }
-
-                myTexture = new RenderTexture(res, res, 0);
-                myTexture.enableRandomWrite = true;//So it can be used by the compute shader
-                myTexture.dimension = UnityEngine.Rendering.TextureDimension.Tex3D;
-                myTexture.volumeDepth = res;
-                myTexture.filterMode = FilterMode.Trilinear;
-                myTexture.wrapMode = TextureWrapMode.Repeat;
-                myTexture.graphicsFormat = format;
-                myTexture.Create();
-
-                isNewlyCreated = true;
-
-            }
-            return isNewlyCreated;
-        }
-        */
         public static void ReleaseTexture(ref RenderTexture textureToRelease)
         {
             if (textureToRelease != null)
