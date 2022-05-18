@@ -79,6 +79,7 @@ Shader "Aetherius/RaymarchShader"
 			float ambientLightIntensity;
 			float3 ambientColors[2];
 			float4 coneKernel[6];
+			bool softerShadows;
 
 			StructuredBuffer<float> densityCurveBuffer;
 			int densityCurveBufferSize;
@@ -202,10 +203,6 @@ Shader "Aetherius/RaymarchShader"
 
 			float ShapeAlteringSimple(float heightPercent,int layer)
 			{
-				/*if (cumulusHorizon==true)
-				{
-					weatherMapCloud.b = max(weatherMapCloud.b, saturate(Remap(distance, cumulusHorizonGradient.x, cumulusHorizonGradient.y,0.0,1.0)));
-				}*/
 				if (layer == 0)
 				{
 					return DensityGradient(heightPercent, cloudLayerGradient1);
@@ -283,8 +280,6 @@ Shader "Aetherius/RaymarchShader"
 				float coudNoiseBaseB = cloudNoiseBase * ShapeAltering(cloudHeightPercent, 1);
 				float coudNoiseBaseC = cloudNoiseBase * ShapeAltering(cloudHeightPercent, 2);
 
-				//cloudNoiseBase *= ShapeAltering(cloudHeightPercent, weatherMapCloud,length(initialPos.xz - _WorldSpaceCameraPos.xz));
-
 				//Coverage
 				if (cumulusHorizon == true) //cumulonimbus towards horizon
 				{
@@ -315,26 +310,7 @@ Shader "Aetherius/RaymarchShader"
 
 				density = finalCloud * globalDensity;
 
-				//Tests
-
 				return density;
-			}
-
-			float DensityTowardsLightCone(float3 currPosition,float coneWidthScale)//cone width scale between 0 & 1
-			{
-				int iter = 6;
-				float accDensity = 0.0;
-				float stepSize = ((maxCloudHeight - minCloudHeight) * 0.5) / float(iter);//TODO make as variable (maybe when we have cone light samples?)
-				float3 startingPos = currPosition;
-				for (int currStep = 0; currStep < iter; ++currStep)
-				{
-					currPosition += -sunDir * stepSize + (stepSize * coneKernel[currStep].xyz * float(currStep) * coneWidthScale);
-					accDensity += GetDensity(currPosition,0.0) * stepSize;
-				}
-
-				accDensity += GetDensity(startingPos - sunDir * stepSize * 6.0 + (-sunDir * stepSize * 6 * 3 * coneWidthScale),0.0) * stepSize;
-
-				return accDensity;
 			}
 
 			float HenyeyGreenstein(float cosAngle, float g) //G ranges between -1 & 1
@@ -390,6 +366,24 @@ Shader "Aetherius/RaymarchShader"
 				return shadow;//TODO can lerp powder effect here (multiplying shadow) but might not be energy conserving!
 			}
 
+			float LightShadowTransmittanceCone(float3 pos, float initialStepSize, float eCoeff)
+			{
+				int iter = 4;
+
+				float shadow = 1.0;
+				for (int currStep = 0; currStep < iter; ++currStep)
+				{
+					float3 newPos = initialStepSize * -sunDir + (coneKernel[currStep].xyz * currStep);
+					pos += newPos; 
+					float density = GetDensity(pos, (float(currStep) / float(iter)) * 2.0);
+
+					shadow *= exp(-density * length(newPos) * eCoeff);
+				}
+
+				return shadow;//TODO can lerp powder effect here (multiplying shadow) but might not be energy conserving!
+
+			}
+
 			float PowderEffect(float3 currPos)
 			{
 				float loddedDensity = GetDensity(currPos, 4.0);
@@ -416,7 +410,16 @@ Shader "Aetherius/RaymarchShader"
 				float3 ambientColor = lerp(ambientFloor, ambientSky, t) / (4.0 * 3.1415);
 
 				float3 l = lightColor * lightIntensity + ambientColor * 10 * heightPercent;
-				float shadow = LightShadowTransmittance(currPos, 100.0f,newExtinctionC);
+
+				float shadow = 1.0;
+				if (softerShadows == true)
+				{
+					shadow = LightShadowTransmittanceCone(currPos, 100.0f, newExtinctionC);
+				}
+				else 
+				{
+					shadow = LightShadowTransmittance(currPos, 100.0f, newExtinctionC);
+				}
 
 				return l * shadow * DoubleLobeScattering(cosAngle * pow(c,i), 0.3, 0.2, 0.7) * newScatterC;
 			}

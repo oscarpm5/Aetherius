@@ -102,6 +102,7 @@ namespace Aetherius
         public float extintionC = 1.0f;
         public float scatterC = 1.0f;
         public float absorptionC = 1.0f;
+        public bool softerShadows = false;
 
         List<Vector4> conekernel;
 
@@ -255,6 +256,7 @@ namespace Aetherius
             rayMarchMaterial.SetFloat("extintionC", absorptionC + scatterC);
             rayMarchMaterial.SetFloat("lightIntensity", sunLight.intensity * lightIntensityMult);
             rayMarchMaterial.SetFloat("ambientLightIntensity", ambientLightIntensity);
+            rayMarchMaterial.SetInt("softerShadows", softerShadows? 1:0);
 
 
             Color[] c = new Color[2];
