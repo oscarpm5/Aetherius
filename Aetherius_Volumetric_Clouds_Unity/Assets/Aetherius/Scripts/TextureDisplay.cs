@@ -33,6 +33,11 @@ namespace Aetherius
         {
             get
             {
+                if(cloudManager==null)
+                {
+                    cloudManager = GetComponent<CloudManager>();
+
+                }
                 return ref cloudManager.textureGenerator;
             }
         }
