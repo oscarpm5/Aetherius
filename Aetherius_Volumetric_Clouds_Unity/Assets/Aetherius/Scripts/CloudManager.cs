@@ -4,7 +4,7 @@ using UnityEngine;
 
 namespace Aetherius
 {
-    [ExecuteInEditMode]
+    //[ExecuteInEditMode]
     public class CloudManager : MonoBehaviour
     {
 
@@ -99,23 +99,19 @@ namespace Aetherius
         {
             if (textureGenerator == null)
             {
-                textureGenerator = new TextureGenerator();
+                textureGenerator = new TextureGenerator();     
             }
-
+            textureGenerator.InitializeTextures();
             conekernel = GenerateConeKernels();
             textureGenerator.GenerateWeatherMap(256, ref textureGenerator.originalWM, wmSeed, preset);
+            textureGenerator.GenerateAllNoise();
         }
 
-
-        // Start is called before the first frame update
-        public void Start()
-        {
-
-        }
 
         // Update is called once per frame
         public void Update()
         {
+
             if (transitioning)
             {
                 if (currentTransitionTimeWM >= transitionTimeWM)
@@ -127,6 +123,18 @@ namespace Aetherius
                     currentTransitionTimeWM += Time.deltaTime;
                 }
             }
+        }
+
+        public void OnGUI()
+        {
+#if UNITY_EDITOR
+            // Ensure continuous Update calls.
+            if (!Application.isPlaying)
+            {
+                UnityEditor.EditorApplication.QueuePlayerLoopUpdate();
+                //UnityEditor.SceneView.RepaintAll();
+            }
+#endif
         }
 
         //TODO pass the preset as an argument in the future instead of picking the one in the class

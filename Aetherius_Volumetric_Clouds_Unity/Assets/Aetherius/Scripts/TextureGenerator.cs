@@ -4,11 +4,12 @@ using UnityEngine;
 
 namespace Aetherius
 {
-    [ExecuteInEditMode]
-    public class TextureGenerator : MonoBehaviour
+    [System.Serializable]
+    public class TextureGenerator 
     {
 
         public bool updateTextureAuto = false;
+        public bool _updateNoise;
         [Range(8, 512)]
         public int baseShapeResolution = 256;
         [Range(8, 512)]
@@ -20,11 +21,19 @@ namespace Aetherius
         public WorleySettings[] worleyDetailSettings = new WorleySettings[3];
 
         public List<ComputeBuffer> buffersToDelete;
-        public RenderTexture _baseShapeRenderTexture = null;
-        public RenderTexture _detailRenderTexture = null;
+        public RenderTexture _baseShapeRenderTexture=null;
+        public RenderTexture _detailRenderTexture=null;
 
-        public RenderTexture originalWM;
-        public RenderTexture newWM;
+        public RenderTexture originalWM = null;
+        public RenderTexture newWM = null;
+
+
+        public void InitializeTextures()
+        {
+            Utility.GenerateRenderTexture(baseShapeResolution, ref _baseShapeRenderTexture, TEXTURE_DIMENSIONS.TEX_3D);
+            Utility.GenerateRenderTexture(detailResolution, ref _detailRenderTexture, TEXTURE_DIMENSIONS.TEX_3D);
+            Utility.GenerateRenderTexture(256, ref originalWM, TEXTURE_DIMENSIONS.TEX_2D);
+        }
 
         public static Vector4 GetChannelMask(TEXTURE_CHANNEL channel)
         {
@@ -51,22 +60,7 @@ namespace Aetherius
             return ref originalWM;
         }
 
-        public void Awake()
-        {
-            GenerateAllNoise();
-        }
-
-        // Start is called before the first frame update
-        void Start()
-        {
-
-        }
-
-        // Update is called once per frame
-        void Update()
-        {
-
-        }
+      
 
         //Compute Buffers =========================================================================
        
@@ -89,7 +83,6 @@ namespace Aetherius
         public bool DispatchComputeShader(int kernelIndex, Vector3Int textureDimensions)
         {
             bool ret = Utility.DispatchComputeShader(ref computeShader, kernelIndex, textureDimensions);
-            DeleteComputeBuffers();
             return ret;
         }
 
@@ -217,7 +210,7 @@ namespace Aetherius
         }
 
         //TODO consider separating worley-perlin generation and mixing them later
-        void Generate3DPerlinWorley(int dimensions, ref RenderTexture targetTexture, TEXTURE_CHANNEL channelToWriteTo, TEXTURE_TYPE type)
+        public void Generate3DPerlinWorley(int dimensions, ref RenderTexture targetTexture, TEXTURE_CHANNEL channelToWriteTo, TEXTURE_TYPE type)
         {
             int dim = Mathf.Max(dimensions, 8);
             if (computeShader == null)
@@ -297,13 +290,14 @@ namespace Aetherius
             computeShader.SetTexture(kernelIndex, "result", output);
 
             DispatchComputeShader(kernelIndex, new Vector3Int(dim, dim, 1));
+            DeleteComputeBuffers();
         }
 
         public void GenerateWeatherMap(int resolution, ref RenderTexture output, int seed, CLOUD_PRESET preset)
         {
             int dim = Mathf.Max(resolution, 8);
 
-            Utility.GenerateRenderTexture(resolution, ref output, TEXTURE_DIMENSIONS.TEX_2D, UnityEngine.Experimental.Rendering.GraphicsFormat.R16G16B16A16_UNorm);
+            Utility.GenerateRenderTexture(resolution, ref output, TEXTURE_DIMENSIONS.TEX_2D);
 
             int kernelIndex = computeShader.FindKernel("GenerateWeatherMap");
 
@@ -329,7 +323,7 @@ namespace Aetherius
             computeShader.SetFloat("t", t);
             DispatchComputeShader(kernelIndex, new Vector3Int(dim, dim, 1));
             originalWM.GenerateMips();
-
+            DeleteComputeBuffers();
             return true;
         }
 
@@ -340,24 +334,52 @@ namespace Aetherius
             GenerateBaseShapeNoise();
             GenerateDetailNoise();
         }
+
         public void GenerateBaseShapeNoise()
         {
             //Base Shape Texture
-            Utility.GenerateRenderTexture(baseShapeResolution, ref _baseShapeRenderTexture, TEXTURE_DIMENSIONS.TEX_3D, UnityEngine.Experimental.Rendering.GraphicsFormat.R16G16B16A16_UNorm);
+            Utility.GenerateRenderTexture(baseShapeResolution, ref _baseShapeRenderTexture, TEXTURE_DIMENSIONS.TEX_3D);
             Generate3DPerlinWorley(baseShapeResolution, ref _baseShapeRenderTexture, TEXTURE_CHANNEL.R, TEXTURE_TYPE.BASE_SHAPE);
             Generate3DWorley(baseShapeResolution, ref _baseShapeRenderTexture, TEXTURE_CHANNEL.G, TEXTURE_TYPE.BASE_SHAPE);
             Generate3DWorley(baseShapeResolution, ref _baseShapeRenderTexture, TEXTURE_CHANNEL.B, TEXTURE_TYPE.BASE_SHAPE);
             Generate3DWorley(baseShapeResolution, ref _baseShapeRenderTexture, TEXTURE_CHANNEL.A, TEXTURE_TYPE.BASE_SHAPE);
             _baseShapeRenderTexture.GenerateMips();
+            DeleteComputeBuffers();
         }
         public void GenerateDetailNoise()
         {
             //Detail Texture
-            Utility.GenerateRenderTexture(detailResolution, ref _detailRenderTexture, TEXTURE_DIMENSIONS.TEX_3D, UnityEngine.Experimental.Rendering.GraphicsFormat.R16G16B16A16_UNorm);
+            Utility.GenerateRenderTexture(detailResolution, ref _detailRenderTexture, TEXTURE_DIMENSIONS.TEX_3D);
             Generate3DWorley(detailResolution, ref _detailRenderTexture, TEXTURE_CHANNEL.R, TEXTURE_TYPE.DETAIL);
             Generate3DWorley(detailResolution, ref _detailRenderTexture, TEXTURE_CHANNEL.G, TEXTURE_TYPE.DETAIL);
             Generate3DWorley(detailResolution, ref _detailRenderTexture, TEXTURE_CHANNEL.B, TEXTURE_TYPE.DETAIL);
             _detailRenderTexture.GenerateMips();
+            DeleteComputeBuffers();
+        }
+
+        public void NoiseSettingsChanged()
+        {
+            if (updateTextureAuto)
+            {
+                _updateNoise = true;
+            }
+        }
+        public void ValidateUpdate()
+        {
+            if (!updateTextureAuto)
+            {
+                _updateNoise = false;
+            }
+        }
+
+        public void CleanUp()
+        {
+            DeleteComputeBuffers();
+            Utility.ReleaseTexture(ref _baseShapeRenderTexture);
+            Utility.ReleaseTexture(ref _detailRenderTexture);
+            Utility.ReleaseTexture(ref originalWM);
+            Utility.ReleaseTexture(ref newWM);
+
         }
 
     }

@@ -99,7 +99,7 @@ namespace Aetherius
             return true;
         }
 
-        public static bool GenerateRenderTexture(int texResolution, ref RenderTexture myTexture, TEXTURE_DIMENSIONS dimensions, UnityEngine.Experimental.Rendering.GraphicsFormat format, FilterMode filterMode = FilterMode.Trilinear)
+        public static bool GenerateRenderTexture(int texResolution, ref RenderTexture myTexture, TEXTURE_DIMENSIONS dimensions, UnityEngine.Experimental.Rendering.GraphicsFormat format = UnityEngine.Experimental.Rendering.GraphicsFormat.R16G16B16A16_UNorm, FilterMode filterMode = FilterMode.Trilinear)
         {
             bool isNewlyCreated = false;
             int res = Mathf.Max(texResolution, 8);

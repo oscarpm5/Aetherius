@@ -82,7 +82,6 @@ Shader "Aetherius/DisplayPreview"
 				}
 
 				return col;
-
 			}
 			ENDCG
 		}
