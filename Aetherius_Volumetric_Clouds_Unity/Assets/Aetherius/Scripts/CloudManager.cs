@@ -22,7 +22,7 @@ namespace Aetherius
         public int wmSeed = 307;
         public bool windDisplacesWeatherMap = true;
         public bool cumulusHorizon = false;
-        public Vector2 cumulusHorizonGradient = new Vector2(18000,75000);
+        public Vector2 cumulusHorizonGradient = new Vector2(18000, 75000);
         //WS Cloud Layers
         public Vector4 cloudLayerGradient1 = new Vector4(0.0f, 0.05f, 0.1f, 0.3f);
         public Vector4 cloudLayerGradient2 = new Vector4(0.2f, 0.3f, 0.3f, 0.45f);
@@ -69,6 +69,8 @@ namespace Aetherius
         public float shadowSize = 100.0f;
         public bool softerShadows = false;
 
+        public TextureGenerator textureGenerator;
+
         public List<Vector4> conekernel;
         private List<Vector4> GenerateConeKernels()
         {
@@ -93,20 +95,26 @@ namespace Aetherius
             }
         }
 
-        private void Awake()
+        public void Awake()
         {
+            if (textureGenerator == null)
+            {
+                textureGenerator = new TextureGenerator();
+            }
+
             conekernel = GenerateConeKernels();
+            textureGenerator.GenerateWeatherMap(256, ref textureGenerator.originalWM, wmSeed, preset);
         }
 
 
         // Start is called before the first frame update
-        void Start()
+        public void Start()
         {
 
         }
 
         // Update is called once per frame
-        void Update()
+        public void Update()
         {
             if (transitioning)
             {
@@ -122,20 +130,20 @@ namespace Aetherius
         }
 
         //TODO pass the preset as an argument in the future instead of picking the one in the class
-        public void StartWMTransition(int duration=-1)//If duration = -1 interpret this as no argument
+        public void StartWMTransition(int duration = -1)//If duration = -1 interpret this as no argument
         {
             if (transitioning) //if a transition was ocurring already generate a texture with the status of the transition currently and lerp with that
             {
-                ProceduralTextureViewer.LerpWM(256, ref noiseGen.computeShader, ref proceduralWM, ref proceduralWMNew, Mathf.Clamp01(currentTransitionTimeWM / transitionTimeWM), ref toDeleteCompBuffers);
+                textureGenerator.LerpWM(256, Mathf.Clamp01(currentTransitionTimeWM / transitionTimeWM));
                 Debug.Log("Changing Transition on the fly!");
 
             }
 
-            if(duration!=-1)
+            if (duration != -1)
             {
                 transitionTimeWM = duration;
             }
-            GenerateWM(ref proceduralWMNew);
+            textureGenerator.GenerateWeatherMap(256, ref textureGenerator.newWM, wmSeed, preset);
             currentTransitionTimeWM = 0.0f;
             transitioning = true;
             Debug.Log("TransitionStarted!");
@@ -148,23 +156,22 @@ namespace Aetherius
                 return;
 
 
-            if (proceduralWMNew != null)
+            if (textureGenerator.newWM != null)
             {
-                ProceduralTextureViewer.ReleaseTexture(ref proceduralWMNew);
+                Utility.ReleaseTexture(ref textureGenerator.newWM);
             }
-            GenerateWM(ref proceduralWM); //TODO provisional solution, texture gets erased when assigning: proceduralWM = proceduralWMNew
-
+            textureGenerator.GenerateWeatherMap(256, ref textureGenerator.originalWM, wmSeed, preset); //TODO provisional solution, texture gets erased when assigning: proceduralWM = proceduralWMNew
 
             transitioning = false;
             currentTransitionTimeWM = 0.0f;
             Debug.Log("TransitionEnded!");
         }
 
-        public void CreateLUTBuffer(int samples, ref AnimationCurve curve, string name)
+        public void CreateLUTBuffer(int samples, ref AnimationCurve curve, string name, ref Material mat)
         {
             List<float> fTest = DensityGradientLutFromCurve(ref curve, samples);
-            ComputeBuffer newBuff = ProceduralTextureViewer.CreateComputeBuffer(ref toDeleteCompBuffers, sizeof(float), fTest.ToArray());
-            rayMarchMaterial.SetBuffer(name, newBuff);
+            ComputeBuffer newBuff = textureGenerator.CreateComputeBuffer(sizeof(float), fTest.ToArray());
+            mat.SetBuffer(name, newBuff);
         }
         private List<float> DensityGradientLutFromCurve(ref AnimationCurve curve, int samples)
         {
@@ -179,7 +186,80 @@ namespace Aetherius
 
         public void SetMaterialProperties(ref Material mat)
         {
-            //TODO
+            if (transitioning)
+            {
+                mat.SetTexture("weatherMapTextureNew", textureGenerator.newWM);
+                mat.SetFloat("transitionLerpT", Mathf.Clamp01(currentTransitionTimeWM / transitionTimeWM));
+            }
+            mat.SetInt("transitioningWM", transitioning ? 1 : 0);
+
+
+            mat.SetTexture("baseShapeTexture", textureGenerator.GetTexture(TEXTURE_TYPE.BASE_SHAPE));
+            mat.SetTexture("detailTexture", textureGenerator.GetTexture(TEXTURE_TYPE.DETAIL));
+            mat.SetTexture("weatherMapTexture", textureGenerator.GetWM(wmSeed, preset));
+            mat.SetTexture("blueNoiseTexture", blueNoise);
+
+
+            mat.SetFloat("minCloudHeight", minCloudHeightMeters);
+            mat.SetFloat("maxCloudHeight", maxCloudHeightMeters);
+            mat.SetInt("maxRayVisibilityDist", maxRayVisibilityDist);
+
+            mat.SetFloat("baseShapeSize", currentShape.baseShapeSize);
+            mat.SetFloat("detailSize", currentShape.detailSize);
+            mat.SetFloat("weatherMapSize", currentShape.weatherMapSize);
+
+            mat.SetFloat("globalCoverage", currentShape.globalCoverage);
+            mat.SetFloat("globalDensity", currentShape.globalDensity);
+
+            mat.SetVector("sunDir", sunLight.transform.rotation * Vector3.forward);
+            mat.SetFloat("absorptionC", absorptionC);
+            mat.SetFloat("scatterC", scatterC);
+            mat.SetFloat("extintionC", absorptionC + scatterC);
+            mat.SetFloat("lightIntensity", sunLight.intensity * lightIntensityMult);
+            mat.SetFloat("ambientLightIntensity", ambientLightIntensity);
+            mat.SetInt("softerShadows", softerShadows ? 1 : 0);
+            mat.SetFloat("shadowSize", shadowSize);
+
+
+
+            Color[] c = new Color[2];
+            Vector3[] dirs = new Vector3[2];
+            dirs[0] = Vector3.up;
+            dirs[1] = Vector3.down;
+
+
+            RenderSettings.ambientProbe.Evaluate(dirs, c);
+            List<Vector4> ambientColors = new List<Vector4>();
+            ambientColors.Add(c[0]);
+            ambientColors.Add(c[1]);
+
+            mat.SetVector("lightColor", sunLight.color);
+            mat.SetVectorArray("ambientColors", ambientColors);
+            mat.SetVectorArray("coneKernel", conekernel);
+
+
+            mat.SetVector("windDir", windDirection);
+            mat.SetInt("windDisplacesWeatherMap", windDisplacesWeatherMap ? 1 : 0);
+            mat.SetFloat("baseShapeWindMult", baseShapeWindMult);
+            mat.SetFloat("detailShapeWindMult", detailShapeWindMult);
+            mat.SetFloat("skewAmmount", skewAmmount);
+
+            mat.SetInt("mode", (int)mode);
+
+            int planetRadiusMeters = planetRadiusKm * 1000;
+            mat.SetVector("planetAtmos", new Vector3(-planetRadiusMeters, planetRadiusMeters + minCloudHeightMeters, planetRadiusMeters + maxCloudHeightMeters));//Center of the planet, radius of min cloud sphere, radius of max cloud sphere
+            mat.SetInt("cumulusHorizon", cumulusHorizon ? 1 : 0);
+            mat.SetVector("cumulusHorizonGradient", cumulusHorizonGradient);
+            mat.SetVector("cloudLayerGradient1", cloudLayerGradient1);
+            mat.SetVector("cloudLayerGradient2", cloudLayerGradient2);
+            mat.SetVector("cloudLayerGradient3", cloudLayerGradient3);
+
+
+            int lutBufferSize = 256;
+            //TODO add the otheres here too
+            CreateLUTBuffer(lutBufferSize, ref densityCurve1, "densityCurveBuffer", ref mat);
+            mat.SetInt("densityCurveBufferSize", lutBufferSize);
+
         }
 
     }

@@ -4,8 +4,12 @@ using UnityEngine;
 
 namespace Aetherius
 {
+    [RequireComponent(typeof(Camera))]
+    [ImageEffectAllowedInSceneView]
+    [ExecuteInEditMode]
     public class TextureDisplay : MonoBehaviour
     {
+        [SerializeField]
         public TextureGenerator myGenerator;
         
         public TEXTURE_CHANNEL displayChannel;
@@ -40,10 +44,6 @@ namespace Aetherius
             }
         }
 
-        public RenderTexture GetTexture(TEXTURE_TYPE type)
-        {
-            return (type == TEXTURE_TYPE.BASE_SHAPE) ? myGenerator._baseShapeRenderTexture : myGenerator._detailRenderTexture;
-        }
 
         public WorleySettings activeWorleySettings
         {
@@ -58,29 +58,17 @@ namespace Aetherius
             }
         }
 
-
-        // Start is called before the first frame update
-        void Start()
-        {
-
-        }
-
-        // Update is called once per frame
-        void Update()
-        {
-
-        }
-
-        private void OnRenderImage(RenderTexture source, RenderTexture destination)
+        public void OnRenderImage(RenderTexture source, RenderTexture destination)
         {
             if (material == null || !displayTexture)
             {
                 Graphics.Blit(source, destination);
+                Debug.Log("material is null");
                 return;
             }
 
 
-            material.SetTexture("_DisplayTex3D", GetTexture(displayType)); //input the procedural texture
+            material.SetTexture("_DisplayTex3D", myGenerator.GetTexture(displayType)); //input the procedural texture
             material.SetFloat("slice3DTex", textureSlice);
             material.SetFloat("debugTextureSize", debugDisplaySize);
             material.SetFloat("tileAmmount", tileAmmount);

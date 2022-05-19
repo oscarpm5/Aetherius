@@ -53,14 +53,16 @@ namespace Aetherius
                 Debug.LogWarning("Couldn't render clouds. Check that the script has both a shader and a cloud manager assigned.");
                 return;
             }
-            
+
+
+            rayMarchMaterial.SetTexture("_MainTex", source); //input the rendered camera texture 
+
             Material mat = rayMarchMaterial; //TODO this may cause problems?
             _cloudManager.SetMaterialProperties(ref mat);
 
             Graphics.Blit(source, destination, rayMarchMaterial);
 
-            ProceduralTextureViewer.DeleteComputeBuffers(ref toDeleteCompBuffers);
-
+            _cloudManager.textureGenerator.DeleteComputeBuffers();
         }
 
     }
