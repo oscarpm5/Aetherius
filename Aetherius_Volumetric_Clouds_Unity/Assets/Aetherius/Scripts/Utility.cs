@@ -38,4 +38,14 @@ namespace Aetherius
         TEX_3D
     }
 
+    [System.Serializable]
+    public class CloudShape //TODO convert to serializable object?
+    {
+        public float baseShapeSize = 10000.0f; //Advanced
+        public float detailSize = 1500.0f; //Advanced
+        public float globalCoverage = 0.5f; //Advanced
+        public float globalDensity = 0.2f; //Advanced
+        public float weatherMapSize = 36000.0f; //Advanced
+    }
+
 }

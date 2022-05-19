@@ -5,16 +5,6 @@ using UnityEngine;
 namespace Aetherius
 {
 
-    [System.Serializable]
-    public class CloudShape
-    {
-        public float baseShapeSize = 10000.0f; //Advanced
-        public float detailSize = 1500.0f; //Advanced
-        public float globalCoverage = 0.5f; //Advanced
-        public float globalDensity = 0.2f; //Advanced
-        public float weatherMapSize = 36000.0f; //Advanced
-    }
-
     [RequireComponent(typeof(Camera))]
     [ImageEffectAllowedInSceneView]
     [ExecuteInEditMode]
@@ -284,28 +274,6 @@ namespace Aetherius
             ProceduralTextureViewer.DeleteComputeBuffers(ref toDeleteCompBuffers);
         }
 
-
-        private Matrix4x4 CamFrustrumFromCam(Camera cam)
-        {
-            Matrix4x4 frustum = Matrix4x4.identity;
-            float foV = Mathf.Tan(cam.fieldOfView * Mathf.Deg2Rad * 0.5f);
-
-            Vector3 goUp = Vector3.up * foV;
-            Vector3 goRight = Vector3.right * foV * cam.aspect;
-
-
-            Vector3 TL = (-Vector3.forward - goRight + goUp); //TOP LEFT CORNER
-            Vector3 TR = (-Vector3.forward + goRight + goUp); //TOP RIGHT CORNER
-            Vector3 BR = (-Vector3.forward + goRight - goUp); //BOTTOM RIGHT CORNER
-            Vector3 BL = (-Vector3.forward - goRight - goUp); //BOTTOM LEFT CORNER
-
-            frustum.SetRow(0, TL);
-            frustum.SetRow(1, TR);
-            frustum.SetRow(2, BR);
-            frustum.SetRow(3, BL);
-
-            return frustum;
-        }
 
         private List<Vector4> GenerateConeKernels()
         {
