@@ -15,10 +15,9 @@ namespace Aetherius
         private SerializedProperty mode;
         private SerializedProperty preset;
 
+
+
         private SerializedProperty textureGenerator;
-        private SerializedProperty perlinSetting;
-        private SerializedProperty worleyShapeSettings;
-        private SerializedProperty worleyDetailSettings;
 
         bool showScriptableObjectSettings = false;
 
@@ -28,14 +27,175 @@ namespace Aetherius
             mode = serializedObject.FindProperty("mode");
             preset = serializedObject.FindProperty("preset");
 
+
             textureGenerator = serializedObject.FindProperty("textureGenerator");
-
-            perlinSetting = textureGenerator.FindPropertyRelative("perlinShapeSettings");
-            worleyShapeSettings = textureGenerator.FindPropertyRelative("worleyShapeSettings");
-            worleyDetailSettings = textureGenerator.FindPropertyRelative("worleyDetailSettings");
-
-
         }
+
+        void StartSection(string sectionLabel)
+        {
+            EditorGUILayout.Separator();
+            EditorGUILayout.LabelField(sectionLabel, EditorStyles.boldLabel);
+            EditorGUI.indentLevel++;
+        }
+
+        void EndSection()
+        {
+            EditorGUI.indentLevel--;
+        }
+
+        void AtmosphereSection()
+        {
+            StartSection("Atmosphere");
+            _myScript.planetRadiusKm = Mathf.Max(EditorGUILayout.IntField("Planet Radius", _myScript.planetRadiusKm), 0);
+            _myScript.minCloudHeightMeters = EditorGUILayout.FloatField("Lowest Cloud Altitude", _myScript.minCloudHeightMeters);
+            _myScript.maxCloudHeightMeters = EditorGUILayout.FloatField("Highest Cloud Altitude", _myScript.maxCloudHeightMeters);
+
+            _myScript.cumulusHorizon = EditorGUILayout.Toggle(new GUIContent("Cumulus Clouds At The Horizon", "Option to make more epic cloudscapes, making the clouds toward the horizon appear more imposing"), _myScript.cumulusHorizon);
+            if (_myScript.cumulusHorizon == true)
+            {
+                _myScript.cumulusHorizonGradient = EditorGUILayout.Vector2Field(new GUIContent("Start / End cumulus",
+                    "Distance in meters of the start and end of the cumulus gradient from the camera towards the horizon"),
+                    _myScript.cumulusHorizonGradient);
+            }
+
+            EndSection();
+        }
+        void WindSection()
+        {
+            StartSection("Wind");
+            _myScript.windDirection = EditorGUILayout.Vector3Field("WindDirection", _myScript.windDirection);
+            _myScript.baseShapeWindMult = EditorGUILayout.FloatField("Base Shape Wind Multiplier", _myScript.baseShapeWindMult);
+            _myScript.detailShapeWindMult = EditorGUILayout.FloatField("Detail Shape Wind Multiplier", _myScript.detailShapeWindMult);
+            _myScript.windDisplacesWeatherMap = EditorGUILayout.Toggle("Wind Displaces Clouds", _myScript.windDisplacesWeatherMap);
+            _myScript.skewAmmount = EditorGUILayout.FloatField("Skew Ammount", _myScript.skewAmmount);
+
+            EndSection();
+        }
+
+        void LightSection()
+        {
+            StartSection("Light");
+
+            _myScript.sunLight = (Light)EditorGUILayout.ObjectField("Sun Light", _myScript.sunLight, typeof(Light), true);
+            _myScript.lightIntensityMult = EditorGUILayout.FloatField("Light Intensity Multiplier", _myScript.lightIntensityMult);
+            _myScript.ambientLightIntensity = Mathf.Max(EditorGUILayout.FloatField("Ambient Light Intensity Multiplier", _myScript.ambientLightIntensity), 0.0f);
+            _myScript.scatterC = Mathf.Max(EditorGUILayout.FloatField("Scatter Coefficient", _myScript.scatterC), 0.0f);
+            _myScript.absorptionC = Mathf.Max(EditorGUILayout.FloatField("Absorption Coefficient", _myScript.absorptionC), 0.0f);
+
+
+            _myScript.shadowSize = Mathf.Max(EditorGUILayout.FloatField("Shadow Step Distance", _myScript.shadowSize), 0.0f);
+            _myScript.softerShadows = EditorGUILayout.Toggle("Softer Shadows", _myScript.softerShadows);
+
+
+            EndSection();
+        }
+
+        void QualitySection()
+        {
+            StartSection("Quality");
+            _myScript.maxRayVisibilityDist = Mathf.Max(EditorGUILayout.IntField("Max Ray Distance", _myScript.maxRayVisibilityDist), 0);
+            _myScript.blueNoise = (Texture2D)EditorGUILayout.ObjectField("Blue Noise", _myScript.blueNoise, typeof(Texture2D), false);
+
+            EndSection();
+        }
+
+        void TextureGenerationSection()
+        {
+            StartSection("Texture Generation");
+
+            _myScript.textureGenerator.computeShader = (ComputeShader)EditorGUILayout.ObjectField("Compute Shader", _myScript.textureGenerator.computeShader, typeof(ComputeShader), false);
+            _myScript.wmSeed = EditorGUILayout.IntField("Cloudscape Seed", _myScript.wmSeed);
+
+            showScriptableObjectSettings = EditorGUILayout.Foldout(showScriptableObjectSettings, "Scriptable Objects Noise Settings", true);
+            if (showScriptableObjectSettings)
+            {
+                //Base Shape Noise
+                using (EditorGUI.ChangeCheckScope check = new EditorGUI.ChangeCheckScope())
+                {
+
+                    EditorGUILayout.BeginVertical();
+                    EditorGUILayout.LabelField("Base Shape Noise Settings", EditorStyles.boldLabel);
+
+                    EditorGUILayout.BeginHorizontal();
+                    EditorGUILayout.BeginVertical();
+                    _myScript.textureGenerator.perlinShapeSettings = (ImprovedPerlinSettings)EditorGUILayout.ObjectField(GUIContent.none, _myScript.textureGenerator.perlinShapeSettings, typeof(ImprovedPerlinSettings), false);
+                    _myScript.textureGenerator.worleyShapeSettings[0] = (WorleySettings)EditorGUILayout.ObjectField(GUIContent.none, _myScript.textureGenerator.worleyShapeSettings[0], typeof(WorleySettings), false);
+                    EditorGUILayout.EndVertical();
+                    EditorGUILayout.LabelField("R Channel", EditorStyles.boldLabel);
+                    EditorGUILayout.EndHorizontal();
+
+                    EditorGUILayout.BeginHorizontal();
+                    _myScript.textureGenerator.worleyShapeSettings[1] = (WorleySettings)EditorGUILayout.ObjectField(GUIContent.none, _myScript.textureGenerator.worleyShapeSettings[1], typeof(WorleySettings), false);
+                    EditorGUILayout.LabelField("G Channel", EditorStyles.boldLabel);
+                    EditorGUILayout.EndHorizontal();
+
+                    EditorGUILayout.BeginHorizontal();
+                    _myScript.textureGenerator.worleyShapeSettings[2] = (WorleySettings)EditorGUILayout.ObjectField(GUIContent.none, _myScript.textureGenerator.worleyShapeSettings[2], typeof(WorleySettings), false);
+                    EditorGUILayout.LabelField("B Channel", EditorStyles.boldLabel);
+                    EditorGUILayout.EndHorizontal();
+
+                    EditorGUILayout.BeginHorizontal();
+                    _myScript.textureGenerator.worleyShapeSettings[3] = (WorleySettings)EditorGUILayout.ObjectField(GUIContent.none, _myScript.textureGenerator.worleyShapeSettings[3], typeof(WorleySettings), false);
+
+                    EditorGUILayout.LabelField("A Channel", EditorStyles.boldLabel);
+                    EditorGUILayout.EndHorizontal();
+
+                    if (check.changed && _myScript.textureGenerator.updateTextureAuto) //If we changed any parameters of the resolution property, update its noise
+                    {
+                        _myScript.textureGenerator.GenerateBaseShapeNoise();
+                    }
+
+                    EditorGUILayout.EndVertical();
+                }                
+                EditorGUILayout.Separator();
+
+                //Detail Shape Noise
+                using (EditorGUI.ChangeCheckScope check = new EditorGUI.ChangeCheckScope())
+                {
+
+                    EditorGUILayout.BeginVertical();
+                    EditorGUILayout.LabelField("Detail Shape Noise Settings", EditorStyles.boldLabel);
+
+                    EditorGUILayout.BeginHorizontal();
+                    _myScript.textureGenerator.worleyDetailSettings[0] = (WorleySettings)EditorGUILayout.ObjectField(GUIContent.none, _myScript.textureGenerator.worleyDetailSettings[0], typeof(WorleySettings), false);
+                    EditorGUILayout.LabelField("R Channel", EditorStyles.boldLabel);
+                    EditorGUILayout.EndHorizontal();
+
+                    EditorGUILayout.BeginHorizontal();
+                    _myScript.textureGenerator.worleyDetailSettings[1] = (WorleySettings)EditorGUILayout.ObjectField(GUIContent.none, _myScript.textureGenerator.worleyDetailSettings[1], typeof(WorleySettings), false);
+                    EditorGUILayout.LabelField("G Channel", EditorStyles.boldLabel);
+                    EditorGUILayout.EndHorizontal();
+
+                    EditorGUILayout.BeginHorizontal();
+                    _myScript.textureGenerator.worleyDetailSettings[2] = (WorleySettings)EditorGUILayout.ObjectField(GUIContent.none, _myScript.textureGenerator.worleyDetailSettings[2], typeof(WorleySettings), false);
+                    EditorGUILayout.LabelField("B Channel", EditorStyles.boldLabel);
+                    EditorGUILayout.EndHorizontal();
+
+                    if (check.changed && _myScript.textureGenerator.updateTextureAuto) //If we changed any parameters of the resolution property, update its noise
+                    {
+                        _myScript.textureGenerator.GenerateDetailNoise();
+
+                    }
+
+                    EditorGUILayout.EndVertical();
+                }
+
+            }
+
+
+            if (GUILayout.Button("GenerateWM"))
+            {
+                _myScript.textureGenerator.GenerateWeatherMap(256, ref _myScript.textureGenerator.originalWM, _myScript.wmSeed, _myScript.preset);
+                Debug.Log("Manual WM Update!");
+            }
+
+
+
+
+            EndSection();
+        }
+
+
 
         public override void OnInspectorGUI()
         {
@@ -54,6 +214,8 @@ namespace Aetherius
                 }
 
             }
+
+            EditorGUI.indentLevel++;
             switch (_myScript.mode)
             {
                 case CLOUD_CONTROL.SIMPLE:
@@ -74,7 +236,7 @@ namespace Aetherius
                         }
 
 
-                        //TODO won't be able to edit these in the near future?
+                        //TODO won't be able to edit these in the near future
                         /*
                         _myScript.simple.baseShapeSize = EditorGUILayout.IntField("Base Shape Size",(int)_myScript.simple.baseShapeSize);
                         _myScript.simple.detailSize = EditorGUILayout.IntField("Detail Shape Size", (int)_myScript.simple.detailSize);
@@ -83,18 +245,6 @@ namespace Aetherius
                         _myScript.simple.weatherMapSize = EditorGUILayout.IntField("Weather Map Size", (int)_myScript.simple.weatherMapSize);
                         */
 
-
-                        
-
-
-
-                        _myScript.cumulusHorizon = EditorGUILayout.ToggleLeft(new GUIContent("Cumulus Horizon", "Option to make more epic cloudscapes, making the clouds toward the horizon appear more imposing"), _myScript.cumulusHorizon);
-                        if (_myScript.cumulusHorizon == true)
-                        {
-                            _myScript.cumulusHorizonGradient = EditorGUILayout.Vector2Field(new GUIContent("Start / End cumulus",
-                                "Distance in meters of the start and end of the cumulus gradient from the camera towards the horizon"),
-                                _myScript.cumulusHorizonGradient);
-                        }
                     }
                     break;
                 case CLOUD_CONTROL.ADVANCED:
@@ -123,95 +273,20 @@ namespace Aetherius
                     break;
 
             }
-
-            if (GUILayout.Button("GenerateWM"))
-            {
-                _myScript.textureGenerator.GenerateWeatherMap(256, ref _myScript.textureGenerator.originalWM, _myScript.wmSeed, _myScript.preset);
-                Debug.Log("Manual WM Update!");
-            }
+            EditorGUI.indentLevel--;
 
 
-            //Texture Generator related
+            AtmosphereSection();
 
-            showScriptableObjectSettings = EditorGUILayout.Foldout(showScriptableObjectSettings, "Scriptable Objects Noise Settings",true);
-            if (showScriptableObjectSettings)
-            {
+            WindSection();
 
+            LightSection();
 
+            QualitySection();
 
-                //Base Shape Noise
-                using (EditorGUI.ChangeCheckScope check = new EditorGUI.ChangeCheckScope())
-                {
+            TextureGenerationSection();
 
-                    EditorGUILayout.BeginVertical("Base Shape Noise Settings");
-                    EditorGUILayout.LabelField("Base Shape Noise Settings", EditorStyles.boldLabel);
-
-                    EditorGUILayout.BeginHorizontal();
-                    EditorGUILayout.BeginVertical("Channel");
-                    EditorGUILayout.PropertyField(perlinSetting, GUIContent.none);
-                    EditorGUILayout.PropertyField(worleyShapeSettings.GetArrayElementAtIndex(0), GUIContent.none);
-                    EditorGUILayout.EndVertical();
-                    EditorGUILayout.LabelField("R Channel", EditorStyles.boldLabel);
-                    EditorGUILayout.EndHorizontal();
-
-                    EditorGUILayout.BeginHorizontal();
-                    EditorGUILayout.PropertyField(worleyShapeSettings.GetArrayElementAtIndex(1), GUIContent.none);
-                    EditorGUILayout.LabelField("G Channel", EditorStyles.boldLabel);
-                    EditorGUILayout.EndHorizontal();
-
-                    EditorGUILayout.BeginHorizontal();
-                    EditorGUILayout.PropertyField(worleyShapeSettings.GetArrayElementAtIndex(2), GUIContent.none);
-                    EditorGUILayout.LabelField("B Channel", EditorStyles.boldLabel);
-                    EditorGUILayout.EndHorizontal();
-
-                    EditorGUILayout.BeginHorizontal();
-                    EditorGUILayout.PropertyField(worleyShapeSettings.GetArrayElementAtIndex(3), GUIContent.none);
-                    EditorGUILayout.LabelField("A Channel", EditorStyles.boldLabel);
-                    EditorGUILayout.EndHorizontal();
-
-                    if (check.changed && _myScript.textureGenerator.updateTextureAuto) //If we changed any parameters of the resolution property, update its noise
-                    {
-                        _myScript.textureGenerator.GenerateBaseShapeNoise();
-                    }
-
-                    EditorGUILayout.EndVertical();
-                }
-
-                EditorGUILayout.Separator();
-
-                //Detail Shape Noise
-                using (EditorGUI.ChangeCheckScope check = new EditorGUI.ChangeCheckScope())
-                {
-
-                    EditorGUILayout.BeginVertical("Detail Shape Noise Settings");
-                    EditorGUILayout.LabelField("Detail Shape Noise Settings", EditorStyles.boldLabel);
-
-                    EditorGUILayout.BeginHorizontal();
-                    EditorGUILayout.PropertyField(worleyDetailSettings.GetArrayElementAtIndex(0), GUIContent.none);
-                    EditorGUILayout.LabelField("R Channel", EditorStyles.boldLabel);
-                    EditorGUILayout.EndHorizontal();
-
-                    EditorGUILayout.BeginHorizontal();
-                    EditorGUILayout.PropertyField(worleyDetailSettings.GetArrayElementAtIndex(1), GUIContent.none);
-                    EditorGUILayout.LabelField("G Channel", EditorStyles.boldLabel);
-                    EditorGUILayout.EndHorizontal();
-
-                    EditorGUILayout.BeginHorizontal();
-                    EditorGUILayout.PropertyField(worleyDetailSettings.GetArrayElementAtIndex(2), GUIContent.none);
-                    EditorGUILayout.LabelField("B Channel", EditorStyles.boldLabel);
-                    EditorGUILayout.EndHorizontal();
-
-                    if (check.changed && _myScript.textureGenerator.updateTextureAuto) //If we changed any parameters of the resolution property, update its noise
-                    {
-                        _myScript.textureGenerator.GenerateDetailNoise();
-
-                    }
-
-                    EditorGUILayout.EndVertical();
-                }
-
-            }
-
+           
         }
 
 

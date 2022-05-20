@@ -60,7 +60,9 @@ namespace Aetherius
         //WS Transition
         [HideInInspector]
         public bool transitioning = false;
+        [HideInInspector]
         public float transitionTimeWM = 10.0f;
+        [HideInInspector]
         public float currentTransitionTimeWM = 0.0f;
 
         //Atmosphere
