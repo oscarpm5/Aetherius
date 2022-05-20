@@ -38,7 +38,7 @@ RenderSettings:
   m_ReflectionIntensity: 1
   m_CustomReflection: {fileID: 0}
   m_Sun: {fileID: 705507994}
-  m_IndirectSpecularColor: {r: 0.45116407, g: 0.49980855, b: 0.56778973, a: 1}
+  m_IndirectSpecularColor: {r: 0.44153824, g: 0.49040216, b: 0.5704147, a: 1}
   m_UseRadianceAmbientProbe: 0
 --- !u!157 &3
 LightmapSettings:
@@ -218,7 +218,43 @@ Transform:
   m_Father: {fileID: 0}
   m_RootOrder: 3
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!84 &257976220
+--- !u!84 &146645693
+RenderTexture:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: 
+  m_ImageContentsHash:
+    serializedVersion: 2
+    Hash: 00000000000000000000000000000000
+  m_ForcedFallbackFormat: 4
+  m_DownscaleFallback: 0
+  m_IsAlphaChannelOptional: 0
+  serializedVersion: 3
+  m_Width: 256
+  m_Height: 256
+  m_AntiAliasing: 1
+  m_MipCount: -1
+  m_DepthFormat: 0
+  m_ColorFormat: 24
+  m_MipMap: 1
+  m_GenerateMips: 0
+  m_SRGB: 0
+  m_UseDynamicScale: 0
+  m_BindMS: 0
+  m_EnableCompatibleFormat: 1
+  m_TextureSettings:
+    serializedVersion: 2
+    m_FilterMode: 2
+    m_Aniso: 1
+    m_MipBias: 0
+    m_WrapU: 0
+    m_WrapV: 0
+    m_WrapW: 0
+  m_Dimension: 3
+  m_VolumeDepth: 256
+--- !u!84 &248934251
 RenderTexture:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -531,14 +567,14 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 705507993}
-  m_LocalRotation: {x: -0.58607537, y: 0.17376381, z: -0.780577, w: -0.1304659}
+  m_LocalRotation: {x: 0.31937385, y: -0.67716986, z: 0.42536488, w: 0.5084349}
   m_LocalPosition: {x: -2.08, y: 6.6, z: -0.61}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 0}
   m_RootOrder: 0
-  m_LocalEulerAnglesHint: {x: -925.1, y: -1546.2, z: 0}
---- !u!84 &751473918
+  m_LocalEulerAnglesHint: {x: -1375.73, y: -1546.2, z: 0}
+--- !u!84 &708371955
 RenderTexture:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -574,7 +610,43 @@ RenderTexture:
     m_WrapW: 0
   m_Dimension: 3
   m_VolumeDepth: 32
---- !u!84 &1345260371
+--- !u!84 &1045581406
+RenderTexture:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: 
+  m_ImageContentsHash:
+    serializedVersion: 2
+    Hash: 00000000000000000000000000000000
+  m_ForcedFallbackFormat: 4
+  m_DownscaleFallback: 0
+  m_IsAlphaChannelOptional: 0
+  serializedVersion: 3
+  m_Width: 32
+  m_Height: 32
+  m_AntiAliasing: 1
+  m_MipCount: -1
+  m_DepthFormat: 0
+  m_ColorFormat: 24
+  m_MipMap: 1
+  m_GenerateMips: 0
+  m_SRGB: 0
+  m_UseDynamicScale: 0
+  m_BindMS: 0
+  m_EnableCompatibleFormat: 1
+  m_TextureSettings:
+    serializedVersion: 2
+    m_FilterMode: 2
+    m_Aniso: 1
+    m_MipBias: 0
+    m_WrapU: 0
+    m_WrapV: 0
+    m_WrapW: 0
+  m_Dimension: 3
+  m_VolumeDepth: 32
+--- !u!84 &1049684967
 RenderTexture:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -608,9 +680,9 @@ RenderTexture:
     m_WrapU: 0
     m_WrapV: 0
     m_WrapW: 0
-  m_Dimension: 3
-  m_VolumeDepth: 256
---- !u!84 &1641936860
+  m_Dimension: 2
+  m_VolumeDepth: 1
+--- !u!84 &1209320018
 RenderTexture:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -741,78 +813,6 @@ Transform:
   m_Father: {fileID: 0}
   m_RootOrder: 2
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!84 &1905679883
-RenderTexture:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_Name: 
-  m_ImageContentsHash:
-    serializedVersion: 2
-    Hash: 00000000000000000000000000000000
-  m_ForcedFallbackFormat: 4
-  m_DownscaleFallback: 0
-  m_IsAlphaChannelOptional: 0
-  serializedVersion: 3
-  m_Width: 256
-  m_Height: 256
-  m_AntiAliasing: 1
-  m_MipCount: -1
-  m_DepthFormat: 0
-  m_ColorFormat: 24
-  m_MipMap: 1
-  m_GenerateMips: 0
-  m_SRGB: 0
-  m_UseDynamicScale: 0
-  m_BindMS: 0
-  m_EnableCompatibleFormat: 1
-  m_TextureSettings:
-    serializedVersion: 2
-    m_FilterMode: 2
-    m_Aniso: 1
-    m_MipBias: 0
-    m_WrapU: 0
-    m_WrapV: 0
-    m_WrapW: 0
-  m_Dimension: 2
-  m_VolumeDepth: 1
---- !u!84 &1947035804
-RenderTexture:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_Name: 
-  m_ImageContentsHash:
-    serializedVersion: 2
-    Hash: 00000000000000000000000000000000
-  m_ForcedFallbackFormat: 4
-  m_DownscaleFallback: 0
-  m_IsAlphaChannelOptional: 0
-  serializedVersion: 3
-  m_Width: 32
-  m_Height: 32
-  m_AntiAliasing: 1
-  m_MipCount: -1
-  m_DepthFormat: 0
-  m_ColorFormat: 24
-  m_MipMap: 1
-  m_GenerateMips: 0
-  m_SRGB: 0
-  m_UseDynamicScale: 0
-  m_BindMS: 0
-  m_EnableCompatibleFormat: 1
-  m_TextureSettings:
-    serializedVersion: 2
-    m_FilterMode: 2
-    m_Aniso: 1
-    m_MipBias: 0
-    m_WrapU: 0
-    m_WrapV: 0
-    m_WrapW: 0
-  m_Dimension: 3
-  m_VolumeDepth: 32
 --- !u!1001 &1947899101
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -826,7 +826,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 3966771012703584864, guid: 36bd72bc9d6cf0e4892a525917a60b36, type: 3}
       propertyPath: m_Enabled
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 3966771012703584866, guid: 36bd72bc9d6cf0e4892a525917a60b36, type: 3}
       propertyPath: mode
@@ -854,88 +854,88 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 3966771012703584866, guid: 36bd72bc9d6cf0e4892a525917a60b36, type: 3}
       propertyPath: conekernel.Array.data[0].x
-      value: 0.70116556
+      value: 0.08865082
       objectReference: {fileID: 0}
     - target: {fileID: 3966771012703584866, guid: 36bd72bc9d6cf0e4892a525917a60b36, type: 3}
       propertyPath: conekernel.Array.data[0].y
-      value: -0.28261477
+      value: 0.021218315
       objectReference: {fileID: 0}
     - target: {fileID: 3966771012703584866, guid: 36bd72bc9d6cf0e4892a525917a60b36, type: 3}
       propertyPath: conekernel.Array.data[0].z
-      value: 0.65459585
+      value: -0.99583673
       objectReference: {fileID: 0}
     - target: {fileID: 3966771012703584866, guid: 36bd72bc9d6cf0e4892a525917a60b36, type: 3}
       propertyPath: conekernel.Array.data[1].x
-      value: -0.45620418
+      value: -0.14179364
       objectReference: {fileID: 0}
     - target: {fileID: 3966771012703584866, guid: 36bd72bc9d6cf0e4892a525917a60b36, type: 3}
       propertyPath: conekernel.Array.data[1].y
-      value: -0.8269742
+      value: 0.54314667
       objectReference: {fileID: 0}
     - target: {fileID: 3966771012703584866, guid: 36bd72bc9d6cf0e4892a525917a60b36, type: 3}
       propertyPath: conekernel.Array.data[1].z
-      value: -0.32862055
+      value: -0.82757854
       objectReference: {fileID: 0}
     - target: {fileID: 3966771012703584866, guid: 36bd72bc9d6cf0e4892a525917a60b36, type: 3}
       propertyPath: conekernel.Array.data[2].x
-      value: 0.3398043
+      value: 0.073001765
       objectReference: {fileID: 0}
     - target: {fileID: 3966771012703584866, guid: 36bd72bc9d6cf0e4892a525917a60b36, type: 3}
       propertyPath: conekernel.Array.data[2].y
-      value: 0.8680853
+      value: -0.9972931
       objectReference: {fileID: 0}
     - target: {fileID: 3966771012703584866, guid: 36bd72bc9d6cf0e4892a525917a60b36, type: 3}
       propertyPath: conekernel.Array.data[2].z
-      value: 0.36188528
+      value: -0.00878489
       objectReference: {fileID: 0}
     - target: {fileID: 3966771012703584866, guid: 36bd72bc9d6cf0e4892a525917a60b36, type: 3}
       propertyPath: conekernel.Array.data[3].x
-      value: -0.8801988
+      value: 0.7813665
       objectReference: {fileID: 0}
     - target: {fileID: 3966771012703584866, guid: 36bd72bc9d6cf0e4892a525917a60b36, type: 3}
       propertyPath: conekernel.Array.data[3].y
-      value: 0.21510038
+      value: -0.17181459
       objectReference: {fileID: 0}
     - target: {fileID: 3966771012703584866, guid: 36bd72bc9d6cf0e4892a525917a60b36, type: 3}
       propertyPath: conekernel.Array.data[3].z
-      value: 0.42306253
+      value: -0.5999551
       objectReference: {fileID: 0}
     - target: {fileID: 3966771012703584866, guid: 36bd72bc9d6cf0e4892a525917a60b36, type: 3}
       propertyPath: conekernel.Array.data[4].x
-      value: -0.62460244
+      value: -0.37898812
       objectReference: {fileID: 0}
     - target: {fileID: 3966771012703584866, guid: 36bd72bc9d6cf0e4892a525917a60b36, type: 3}
       propertyPath: conekernel.Array.data[4].y
-      value: -0.59500253
+      value: 0.43222433
       objectReference: {fileID: 0}
     - target: {fileID: 3966771012703584866, guid: 36bd72bc9d6cf0e4892a525917a60b36, type: 3}
       propertyPath: conekernel.Array.data[4].z
-      value: -0.50581
+      value: 0.81826043
       objectReference: {fileID: 0}
     - target: {fileID: 3966771012703584866, guid: 36bd72bc9d6cf0e4892a525917a60b36, type: 3}
       propertyPath: conekernel.Array.data[5].x
-      value: -0.31307125
+      value: 0.6530934
       objectReference: {fileID: 0}
     - target: {fileID: 3966771012703584866, guid: 36bd72bc9d6cf0e4892a525917a60b36, type: 3}
       propertyPath: conekernel.Array.data[5].y
-      value: 0.9470643
+      value: -0.7517413
       objectReference: {fileID: 0}
     - target: {fileID: 3966771012703584866, guid: 36bd72bc9d6cf0e4892a525917a60b36, type: 3}
       propertyPath: conekernel.Array.data[5].z
-      value: -0.07110345
+      value: 0.09140098
       objectReference: {fileID: 0}
     - target: {fileID: 3966771012703584866, guid: 36bd72bc9d6cf0e4892a525917a60b36, type: 3}
       propertyPath: textureGenerator.originalWM
       value: 
-      objectReference: {fileID: 1905679883}
+      objectReference: {fileID: 248934251}
     - target: {fileID: 3966771012703584866, guid: 36bd72bc9d6cf0e4892a525917a60b36, type: 3}
       propertyPath: textureGenerator._detailRenderTexture
       value: 
-      objectReference: {fileID: 751473918}
+      objectReference: {fileID: 708371955}
     - target: {fileID: 3966771012703584866, guid: 36bd72bc9d6cf0e4892a525917a60b36, type: 3}
       propertyPath: textureGenerator._baseShapeRenderTexture
       value: 
-      objectReference: {fileID: 1345260371}
+      objectReference: {fileID: 1209320018}
     - target: {fileID: 3966771012703584867, guid: 36bd72bc9d6cf0e4892a525917a60b36, type: 3}
       propertyPath: _material
       value: 
