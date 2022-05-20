@@ -10,14 +10,12 @@ namespace Aetherius
     public class CloudManagerEditor : Editor
     {
         private CloudManager _myScript;
-        private Editor _editor;
 
         private SerializedProperty mode;
         private SerializedProperty preset;
 
 
 
-        private SerializedProperty textureGenerator;
 
         bool showScriptableObjectSettings = false;
 
@@ -27,8 +25,6 @@ namespace Aetherius
             mode = serializedObject.FindProperty("mode");
             preset = serializedObject.FindProperty("preset");
 
-
-            textureGenerator = serializedObject.FindProperty("textureGenerator");
         }
 
         void StartSection(string sectionLabel)
@@ -140,7 +136,7 @@ namespace Aetherius
                     EditorGUILayout.LabelField("A Channel", EditorStyles.boldLabel);
                     EditorGUILayout.EndHorizontal();
 
-                    if (check.changed && _myScript.textureGenerator.updateTextureAuto) //If we changed any parameters of the resolution property, update its noise
+                    if (check.changed) //If we changed any parameters of the resolution property, update its noise
                     {
                         _myScript.textureGenerator.GenerateBaseShapeNoise();
                     }
@@ -171,7 +167,7 @@ namespace Aetherius
                     EditorGUILayout.LabelField("B Channel", EditorStyles.boldLabel);
                     EditorGUILayout.EndHorizontal();
 
-                    if (check.changed && _myScript.textureGenerator.updateTextureAuto) //If we changed any parameters of the resolution property, update its noise
+                    if (check.changed) //If we changed any parameters of the resolution property, update its noise
                     {
                         _myScript.textureGenerator.GenerateDetailNoise();
 
@@ -183,15 +179,6 @@ namespace Aetherius
             }
 
 
-            if (GUILayout.Button("GenerateWM"))
-            {
-                _myScript.textureGenerator.GenerateWeatherMap(256, ref _myScript.textureGenerator.originalWM, _myScript.wmSeed, _myScript.preset);
-                Debug.Log("Manual WM Update!");
-            }
-
-
-
-
             EndSection();
         }
 
@@ -199,8 +186,6 @@ namespace Aetherius
 
         public override void OnInspectorGUI()
         {
-            DrawDefaultInspector();
-
             using (EditorGUI.ChangeCheckScope check = new EditorGUI.ChangeCheckScope())
             {
                 EditorGUILayout.PropertyField(mode);

@@ -24,13 +24,7 @@ namespace Aetherius
 
         public override void OnInspectorGUI()
         {
-            bool updateTextureAuto = _myScript.textureGenerator.updateTextureAuto;
             DrawDefaultInspector();
-
-            if (updateTextureAuto != _myScript.textureGenerator.updateTextureAuto) //Update of bool "updateTextureAuto" variable in the default Inspector, but we dont want that variable to be below the inspector so we have to keep it there
-            {
-                _myScript.textureGenerator.ValidateUpdate();
-            }
 
             _baseShapeResPower = (int)Mathf.Log(_myScript.textureGenerator.baseShapeResolution, 2.0f);
             _detailResPower = (int)Mathf.Log(_myScript.textureGenerator.detailResolution, 2.0f);
@@ -43,7 +37,7 @@ namespace Aetherius
                 _baseShapeResPower = EditorGUILayout.IntSlider("Power", _baseShapeResPower, 3, 9);
                 _myScript.textureGenerator.baseShapeResolution = (int)Mathf.Pow(2.0f, _baseShapeResPower);
 
-                if (check.changed && _myScript.textureGenerator.updateTextureAuto) //If we changed any parameters of the resolution property, update its noise
+                if (check.changed) //If we changed any parameters of the resolution property, update its noise
                 {
                     _myScript.textureGenerator.GenerateBaseShapeNoise();
                 }
@@ -58,21 +52,12 @@ namespace Aetherius
                 _detailResPower = EditorGUILayout.IntSlider("Power", _detailResPower, 3, 9);
                 _myScript.textureGenerator.detailResolution = (int)Mathf.Pow(2.0f, _detailResPower);
 
-                if (check.changed && _myScript.textureGenerator.updateTextureAuto) //If we changed any parameters of the resolution property, update its noise
+                if (check.changed) //If we changed any parameters of the resolution property, update its noise
                 {
                     _myScript.textureGenerator.GenerateDetailNoise();
                 }
 
                 EditorGUILayout.EndVertical();
-            }
-
-            if (!_myScript.textureGenerator.updateTextureAuto)
-            {
-                if (GUILayout.Button("GenerateTexture"))
-                {
-                    _myScript.textureGenerator.GenerateAllNoise();
-                    Debug.Log("Manual Update!");
-                }
             }
 
             //Show scriptable object editor
@@ -90,7 +75,14 @@ namespace Aetherius
 
                     if (check.changed) //If we changed any parameters of the scriptable object, update its noise
                     {
-                        _myScript.textureGenerator.NoiseSettingsChanged();
+                        if (_myScript.displayType == TEXTURE_TYPE.BASE_SHAPE)
+                        {
+                            _myScript.textureGenerator.GenerateBaseShapeNoise();
+                        }
+                        else
+                        {
+                            _myScript.textureGenerator.GenerateDetailNoise();
+                        }
                     }
                 }
             }
@@ -112,7 +104,7 @@ namespace Aetherius
 
                         if (check.changed) //If we changed any parameters of the scriptable object, update its noise
                         {
-                            _myScript.textureGenerator.NoiseSettingsChanged();
+                            _myScript.textureGenerator.GenerateBaseShapeNoise();
                         }
                     }
                 }

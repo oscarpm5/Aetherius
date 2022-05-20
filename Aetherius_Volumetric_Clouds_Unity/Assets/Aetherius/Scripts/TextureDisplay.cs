@@ -5,6 +5,7 @@ using UnityEngine;
 namespace Aetherius
 {
     [RequireComponent(typeof(Camera))]
+    [RequireComponent(typeof(CloudManager))]
     [ImageEffectAllowedInSceneView]
     [ExecuteInEditMode]
     public class TextureDisplay : MonoBehaviour
@@ -103,45 +104,7 @@ namespace Aetherius
 
             Graphics.Blit(source, destination, material);
         }
-
-        public void UpdateNoise()
-        {
-            if (textureGenerator._updateNoise == true)
-            {
-                textureGenerator._updateNoise = false;
-
-                if (displayType == TEXTURE_TYPE.BASE_SHAPE) //We only update the texture that is being displayed as is the one being edited
-                {
-                    if (Utility.GenerateRenderTexture(textureGenerator.baseShapeResolution, ref textureGenerator._baseShapeRenderTexture,TEXTURE_DIMENSIONS.TEX_3D))
-                    {
-                        textureGenerator.GenerateBaseShapeNoise();
-                        return;
-                    }
-
-
-                    if (displayChannel == TEXTURE_CHANNEL.R)
-                    {
-                        textureGenerator.Generate3DPerlinWorley(textureGenerator._baseShapeRenderTexture.height, ref textureGenerator._baseShapeRenderTexture, displayChannel, displayType);
-                    }
-                    else
-                    {
-                        textureGenerator.Generate3DWorley(textureGenerator._baseShapeRenderTexture.height, ref textureGenerator._baseShapeRenderTexture, displayChannel, displayType);
-                    }
-
-
-                }
-                else
-                {
-                    if (Utility.GenerateRenderTexture(textureGenerator.detailResolution, ref textureGenerator._detailRenderTexture, TEXTURE_DIMENSIONS.TEX_3D))
-                    {
-                        textureGenerator.GenerateDetailNoise();
-                        return;
-                    }
-
-                    textureGenerator.Generate3DWorley(textureGenerator._detailRenderTexture.height, ref textureGenerator._detailRenderTexture, displayChannel, displayType);
-                }
-            }
-        }
+       
 
     }
 }

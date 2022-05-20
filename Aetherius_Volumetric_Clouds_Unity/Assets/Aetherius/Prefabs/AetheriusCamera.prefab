@@ -15,9 +15,9 @@ GameObject:
   - component: {fileID: 3966771012703584879}
   - component: {fileID: 3966771012703584878}
   - component: {fileID: 3966771012703584865}
-  - component: {fileID: 3966771012703584867}
   - component: {fileID: 3966771012703584866}
   - component: {fileID: 3966771012703584864}
+  - component: {fileID: 3966771012703584867}
   m_Layer: 0
   m_Name: AetheriusCamera
   m_TagString: MainCamera
@@ -258,30 +258,6 @@ MonoBehaviour:
   speed: 100
   rotSpeed: 10
   sprintMultiplier: 100
---- !u!114 &3966771012703584867
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 3966771012703584872}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: ae6abc2087f62b249a5c7081b065d9d5, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  cloudManager: {fileID: 3966771012703584866}
-  displayChannel: 0
-  displayType: 0
-  displayPreviewShader: {fileID: 4800000, guid: 2205b0981fb20cc48a4293e9f98062fd, type: 3}
-  displayTexture: 0
-  displayGrayscale: 0
-  displayAllChannels: 0
-  debugDisplaySize: 1
-  tileAmmount: 1
-  textureLOD: 0
-  textureSlice: 0
-  _material: {fileID: 0}
 --- !u!114 &3966771012703584866
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -435,8 +411,6 @@ MonoBehaviour:
   shadowSize: 100
   softerShadows: 0
   textureGenerator:
-    updateTextureAuto: 0
-    _updateNoise: 0
     baseShapeResolution: 256
     detailResolution: 32
     computeShader: {fileID: 7200000, guid: 2ae0c58880eea7044a62d375123f3294, type: 3}
@@ -476,3 +450,27 @@ MonoBehaviour:
   _shader: {fileID: 4800000, guid: 0062334ff4afa1a42b65d127e5405941, type: 3}
   _material: {fileID: 0}
   _cloudManager: {fileID: 3966771012703584866}
+--- !u!114 &3966771012703584867
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3966771012703584872}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ae6abc2087f62b249a5c7081b065d9d5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  cloudManager: {fileID: 3966771012703584866}
+  displayChannel: 0
+  displayType: 0
+  displayPreviewShader: {fileID: 4800000, guid: 2205b0981fb20cc48a4293e9f98062fd, type: 3}
+  displayTexture: 0
+  displayGrayscale: 0
+  displayAllChannels: 0
+  debugDisplaySize: 1
+  tileAmmount: 1
+  textureLOD: 0
+  textureSlice: 0
+  _material: {fileID: 0}

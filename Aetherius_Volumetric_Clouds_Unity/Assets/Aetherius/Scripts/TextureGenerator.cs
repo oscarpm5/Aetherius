@@ -8,9 +8,7 @@ namespace Aetherius
     public class TextureGenerator 
     {
 
-        public bool updateTextureAuto = false;
 
-        public bool _updateNoise;
         [Range(8, 512)]
         public int baseShapeResolution = 256;
         [Range(8, 512)]
@@ -357,21 +355,6 @@ namespace Aetherius
             Generate3DWorley(detailResolution, ref _detailRenderTexture, TEXTURE_CHANNEL.B, TEXTURE_TYPE.DETAIL);
             _detailRenderTexture.GenerateMips();
             DeleteComputeBuffers();
-        }
-
-        public void NoiseSettingsChanged()
-        {
-            if (updateTextureAuto)
-            {
-                _updateNoise = true;
-            }
-        }
-        public void ValidateUpdate()
-        {
-            if (!updateTextureAuto)
-            {
-                _updateNoise = false;
-            }
         }
 
         public void CleanUp()
