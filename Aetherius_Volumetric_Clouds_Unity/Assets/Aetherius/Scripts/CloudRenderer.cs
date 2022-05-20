@@ -12,6 +12,7 @@ namespace Aetherius
 
         private Camera _cam;
         public Shader _shader;
+        [HideInInspector]
         public Material _material;
 
         [SerializeField]

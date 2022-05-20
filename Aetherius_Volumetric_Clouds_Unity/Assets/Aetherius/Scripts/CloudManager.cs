@@ -12,7 +12,9 @@ namespace Aetherius
         [HideInInspector]
         public CLOUD_PRESET preset = CLOUD_PRESET.SPARSE;
 
+        [HideInInspector]
         public CloudShape simple;
+        [HideInInspector]
         public CloudShape advanced;
 
         //Ray March
@@ -80,7 +82,7 @@ namespace Aetherius
         public float absorptionC = 0.0f;
         public float shadowSize = 100.0f;
         public bool softerShadows = false;
-
+        
         public TextureGenerator textureGenerator;
         [HideInInspector]
         public List<Vector4> conekernel;
@@ -117,6 +119,10 @@ namespace Aetherius
             conekernel = GenerateConeKernels();
             textureGenerator.GenerateWeatherMap(256, ref textureGenerator.originalWM, wmSeed, preset);
             textureGenerator.GenerateAllNoise();
+
+
+            sunLight = RenderSettings.sun;
+
         }
 
 

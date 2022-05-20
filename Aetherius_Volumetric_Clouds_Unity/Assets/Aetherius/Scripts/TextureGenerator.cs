@@ -9,6 +9,7 @@ namespace Aetherius
     {
 
         public bool updateTextureAuto = false;
+
         public bool _updateNoise;
         [Range(8, 512)]
         public int baseShapeResolution = 256;
@@ -30,6 +31,7 @@ namespace Aetherius
 
         public void InitializeTextures()
         {
+
             Utility.GenerateRenderTexture(baseShapeResolution, ref _baseShapeRenderTexture, TEXTURE_DIMENSIONS.TEX_3D);
             Utility.GenerateRenderTexture(detailResolution, ref _detailRenderTexture, TEXTURE_DIMENSIONS.TEX_3D);
             Utility.GenerateRenderTexture(256, ref originalWM, TEXTURE_DIMENSIONS.TEX_2D);
