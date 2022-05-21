@@ -5,12 +5,10 @@ using UnityEngine;
 namespace Aetherius
 {
     [RequireComponent(typeof(Camera))]
-    [RequireComponent(typeof(CloudManager))]
     [ImageEffectAllowedInSceneView]
     [ExecuteInEditMode]
     public class TextureDisplay : MonoBehaviour
     {
-        [HideInInspector]
         public CloudManager cloudManager;
 
         public TEXTURE_CHANNEL displayChannel;
@@ -27,7 +25,6 @@ namespace Aetherius
         public int textureLOD = 0;
         [Range(0.0f, 1.0f)]
         public float textureSlice = 1.0f;
-        [SerializeField, HideInInspector]
         private Material _material;
 
         public ref TextureGenerator textureGenerator

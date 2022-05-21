@@ -100,6 +100,7 @@ namespace Aetherius
 
         public void OnEnable()
         {
+
             if (textureGenerator == null)
             {
                 textureGenerator = new TextureGenerator();     

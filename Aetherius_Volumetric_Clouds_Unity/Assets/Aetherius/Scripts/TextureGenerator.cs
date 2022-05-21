@@ -13,7 +13,6 @@ namespace Aetherius
         public int baseShapeResolution = 256;
         [Range(8, 512)]
         public int detailResolution = 32;
-        
         public ComputeShader computeShader = null;
         public ImprovedPerlinSettings perlinShapeSettings;
         public WorleySettings[] worleyShapeSettings = new WorleySettings[4];
