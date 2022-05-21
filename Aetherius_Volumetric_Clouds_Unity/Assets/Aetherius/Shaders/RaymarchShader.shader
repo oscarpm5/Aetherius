@@ -429,7 +429,7 @@ Shader "Aetherius/RaymarchShader"
 					shadow = LightShadowTransmittance(currPos, shadowSize, newExtinctionC);
 				}
 
-				return l * shadow * DoubleLobeScattering(cosAngle * pow(c,i), 0.3, 0.2, 0.7) * newScatterC + ambientSky* t *shadow* (1.0/4.0*3.1415) * newScatterC;
+				return l * shadow * DoubleLobeScattering(cosAngle * pow(c,i), 0.3, 0.15, 0.5) * newScatterC + ambientSky* t *shadow* (1.0/4.0*3.1415) * newScatterC;
 			}
 
 			float3 Raymarching(float3 col,float3 ro, float3 rd,float maxRayLength,float2 uv,float maxDepth,bool isMaxDepth) //where ro is ray origin & rd is ray direction

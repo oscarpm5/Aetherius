@@ -38,7 +38,7 @@ RenderSettings:
   m_ReflectionIntensity: 1
   m_CustomReflection: {fileID: 0}
   m_Sun: {fileID: 705507994}
-  m_IndirectSpecularColor: {r: 0.44153824, g: 0.49040216, b: 0.5704147, a: 1}
+  m_IndirectSpecularColor: {r: 0.4513964, g: 0.50048107, b: 0.5701472, a: 1}
   m_UseRadianceAmbientProbe: 0
 --- !u!157 &3
 LightmapSettings:
@@ -123,42 +123,6 @@ NavMeshSettings:
     debug:
       m_Flags: 0
   m_NavMeshData: {fileID: 0}
---- !u!84 &93221203
-RenderTexture:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_Name: 
-  m_ImageContentsHash:
-    serializedVersion: 2
-    Hash: 00000000000000000000000000000000
-  m_ForcedFallbackFormat: 4
-  m_DownscaleFallback: 0
-  m_IsAlphaChannelOptional: 0
-  serializedVersion: 3
-  m_Width: 32
-  m_Height: 32
-  m_AntiAliasing: 1
-  m_MipCount: -1
-  m_DepthFormat: 0
-  m_ColorFormat: 24
-  m_MipMap: 1
-  m_GenerateMips: 0
-  m_SRGB: 0
-  m_UseDynamicScale: 0
-  m_BindMS: 0
-  m_EnableCompatibleFormat: 1
-  m_TextureSettings:
-    serializedVersion: 2
-    m_FilterMode: 2
-    m_Aniso: 1
-    m_MipBias: 0
-    m_WrapU: 0
-    m_WrapV: 0
-    m_WrapW: 0
-  m_Dimension: 3
-  m_VolumeDepth: 32
 --- !u!1 &136962943
 GameObject:
   m_ObjectHideFlags: 0
@@ -445,6 +409,42 @@ Transform:
   m_Father: {fileID: 0}
   m_RootOrder: 1
   m_LocalEulerAnglesHint: {x: 45, y: 45, z: 45}
+--- !u!84 &530791787
+RenderTexture:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: 
+  m_ImageContentsHash:
+    serializedVersion: 2
+    Hash: 00000000000000000000000000000000
+  m_ForcedFallbackFormat: 4
+  m_DownscaleFallback: 0
+  m_IsAlphaChannelOptional: 0
+  serializedVersion: 3
+  m_Width: 256
+  m_Height: 256
+  m_AntiAliasing: 1
+  m_MipCount: -1
+  m_DepthFormat: 0
+  m_ColorFormat: 24
+  m_MipMap: 1
+  m_GenerateMips: 0
+  m_SRGB: 0
+  m_UseDynamicScale: 0
+  m_BindMS: 0
+  m_EnableCompatibleFormat: 1
+  m_TextureSettings:
+    serializedVersion: 2
+    m_FilterMode: 2
+    m_Aniso: 1
+    m_MipBias: 0
+    m_WrapU: 0
+    m_WrapV: 0
+    m_WrapW: 0
+  m_Dimension: 3
+  m_VolumeDepth: 256
 --- !u!1 &705507993
 GameObject:
   m_ObjectHideFlags: 0
@@ -531,14 +531,14 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 705507993}
-  m_LocalRotation: {x: 0.31937385, y: -0.67716986, z: 0.42536488, w: 0.5084349}
+  m_LocalRotation: {x: 0.19078352, y: -0.5712072, z: 0.13861218, w: 0.78620017}
   m_LocalPosition: {x: -2.08, y: 6.6, z: -0.61}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 0}
   m_RootOrder: 0
-  m_LocalEulerAnglesHint: {x: -1375.73, y: -1546.2, z: 0}
---- !u!84 &753025176
+  m_LocalEulerAnglesHint: {x: -1412.72, y: -1512, z: 0}
+--- !u!84 &915474654
 RenderTexture:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -552,8 +552,8 @@ RenderTexture:
   m_DownscaleFallback: 0
   m_IsAlphaChannelOptional: 0
   serializedVersion: 3
-  m_Width: 256
-  m_Height: 256
+  m_Width: 32
+  m_Height: 32
   m_AntiAliasing: 1
   m_MipCount: -1
   m_DepthFormat: 0
@@ -573,8 +573,8 @@ RenderTexture:
     m_WrapV: 0
     m_WrapW: 0
   m_Dimension: 3
-  m_VolumeDepth: 256
---- !u!84 &1277478135
+  m_VolumeDepth: 32
+--- !u!84 &1013569038
 RenderTexture:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -1005,17 +1005,17 @@ MonoBehaviour:
     - {fileID: 11400000, guid: 1e13bd58664b3ec448d391dd9a041f51, type: 2}
     - {fileID: 11400000, guid: 3d04b3037c1a4a640b7ac77a0decf1c4, type: 2}
     - {fileID: 11400000, guid: cdb03daae29d1a74f9d322db4dace868, type: 2}
-    _baseShapeRenderTexture: {fileID: 753025176}
-    _detailRenderTexture: {fileID: 93221203}
-    originalWM: {fileID: 1277478135}
+    _baseShapeRenderTexture: {fileID: 530791787}
+    _detailRenderTexture: {fileID: 915474654}
+    originalWM: {fileID: 1013569038}
     newWM: {fileID: 0}
   conekernel:
-  - {x: 0.73522455, y: -0.52047205, z: 0.43422768, w: 0}
-  - {x: -0.30959606, y: 0.080134764, z: -0.94748545, w: 0}
-  - {x: -0.72698504, y: -0.18025923, z: -0.66257024, w: 0}
-  - {x: -0.3848568, y: 0.877152, z: 0.28720996, w: 0}
-  - {x: 0.44371256, y: 0.78517276, z: 0.4319987, w: 0}
-  - {x: -0.3388633, y: 0.7775831, z: -0.52965665, w: 0}
+  - {x: 0.68016446, y: -0.6923882, z: -0.24078, w: 0}
+  - {x: -0.38786414, y: 0.5172895, z: -0.7628715, w: 0}
+  - {x: 0.54651314, y: 0.073858134, z: 0.83418727, w: 0}
+  - {x: -0.5637397, y: 0.42137516, z: -0.71038055, w: 0}
+  - {x: 0.5108868, y: 0.61336493, z: -0.60231066, w: 0}
+  - {x: -0.6841165, y: -0.66926163, z: 0.28995463, w: 0}
 --- !u!114 &1107285944527061099
 MonoBehaviour:
   m_ObjectHideFlags: 0
