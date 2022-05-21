@@ -259,7 +259,7 @@ namespace Aetherius
         //Weather Map Related =====================================================================
         private void GenerateWeatherMapChannel(CLOUD_PRESET preset, TEXTURE_CHANNEL channelToWriteTo, int kernelIndex, int dim, ref RenderTexture output, int seed)
         {
-            WeatherMapChannelSettings data = Utility.GetWMChannelData(channelToWriteTo, preset);
+            WeatherMapChannelSettingsData data = Utility.GetWMChannelData(channelToWriteTo, preset);
 
             if (!data.activeChannel) //If channel isn't active just initialize to 0
                 return;

@@ -155,9 +155,9 @@ namespace Aetherius
         }
 
         //TODO replace for Scriptable Object Assets
-        public static WeatherMapChannelSettings GetWMChannelData(TEXTURE_CHANNEL channel, CLOUD_PRESET preset) //TODO make this an external file?
+        public static WeatherMapChannelSettingsData GetWMChannelData(TEXTURE_CHANNEL channel, CLOUD_PRESET preset) //TODO make this an external file?
         {
-            WeatherMapChannelSettings ret = new WeatherMapChannelSettings();
+            WeatherMapChannelSettingsData ret = new WeatherMapChannelSettingsData();
 
             switch (preset)
             {

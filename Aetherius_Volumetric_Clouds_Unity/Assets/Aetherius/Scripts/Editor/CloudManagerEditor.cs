@@ -100,7 +100,12 @@ namespace Aetherius
             StartSection("Texture Generation");
 
             _myScript.textureGenerator.computeShader = (ComputeShader)EditorGUILayout.ObjectField("Compute Shader", _myScript.textureGenerator.computeShader, typeof(ComputeShader), false);
-            _myScript.wmSeed = EditorGUILayout.IntField("Cloudscape Seed", _myScript.wmSeed);
+            int newSeed= EditorGUILayout.IntField("Cloudscape Seed", _myScript.wmSeed);
+            if(_myScript.wmSeed !=newSeed)
+            {
+                _myScript.wmSeed = newSeed;
+                _myScript.textureGenerator.GenerateWeatherMap(256, ref _myScript.textureGenerator.originalWM, _myScript.wmSeed, _myScript.preset);
+            }
 
             showScriptableObjectSettings = EditorGUILayout.Foldout(showScriptableObjectSettings, "Scriptable Objects Noise Settings", true);
             if (showScriptableObjectSettings)
