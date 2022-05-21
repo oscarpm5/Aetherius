@@ -21,39 +21,28 @@ namespace Aetherius
         //Weather System
         public int wmSeed = 307;
         public bool windDisplacesWeatherMap = true;
-        [HideInInspector]
         public bool cumulusHorizon = false;
-        [HideInInspector]
         public Vector2 cumulusHorizonGradient = new Vector2(18000, 75000);
         //WS Cloud Layers
-        [HideInInspector]
         public Vector4 cloudLayerGradient1 = new Vector4(0.0f, 0.05f, 0.1f, 0.3f);
-        [HideInInspector]
         public Vector4 cloudLayerGradient2 = new Vector4(0.2f, 0.3f, 0.3f, 0.45f);
-        [HideInInspector]
         public Vector4 cloudLayerGradient3 = new Vector4(0.0f, 0.1f, 0.7f, 1.0f);
 
-        [HideInInspector]
         public float densityCurveMultiplier1 = 1.0f;
-        [HideInInspector]
         public float densityCurveMultiplier2 = 1.0f;
-        [HideInInspector]
         public float densityCurveMultiplier3 = 1.0f;
-        [HideInInspector]
         public AnimationCurve densityCurve1 = new AnimationCurve( //Only in advanced mode
           new Keyframe[3] {
                 new Keyframe(0.0f,0.0f,14.5f,14.5f),
                 new Keyframe(0.2f,1.0f,0.15f,0.15f),
                 new Keyframe(1.0f,0.0f,-3.0f,-3.0f)}
           );
-        [HideInInspector]
         public AnimationCurve densityCurve2 = new AnimationCurve( //Only in advanced mode //TODO change parameters
          new Keyframe[3] {
                 new Keyframe(0.0f,0.0f,14.5f,14.5f),
                 new Keyframe(0.2f,1.0f,0.15f,0.15f),
                 new Keyframe(1.0f,0.0f,-3.0f,-3.0f)}
          );
-        [HideInInspector]
         public AnimationCurve densityCurve3 = new AnimationCurve( //Only in advanced mode //TODO change parameters
          new Keyframe[3] {
                 new Keyframe(0.0f,0.0f,14.5f,14.5f),
@@ -61,11 +50,8 @@ namespace Aetherius
                 new Keyframe(1.0f,0.0f,-3.0f,-3.0f)}
          );
         //WS Transition
-        [HideInInspector]
         public bool transitioning = false;
-        [HideInInspector]
         public float transitionTimeWM = 10.0f;
-        [HideInInspector]
         public float currentTransitionTimeWM = 0.0f;
 
         //Atmosphere
@@ -81,7 +67,6 @@ namespace Aetherius
         public Light sunLight;
         public float lightIntensityMult = 6.5f;
         public float ambientLightIntensity = 1.0f;
-        [HideInInspector]
         public float extintionC = 0.0f;
         public float scatterC = 0.1f;
         public float absorptionC = 0.0f;
@@ -89,7 +74,6 @@ namespace Aetherius
         public bool softerShadows = false;
         
         public TextureGenerator textureGenerator;
-        [HideInInspector]
         public List<Vector4> conekernel;
         private List<Vector4> GenerateConeKernels()
         {
@@ -114,7 +98,7 @@ namespace Aetherius
             }
         }
 
-        public void Awake()
+        public void OnEnable()
         {
             if (textureGenerator == null)
             {

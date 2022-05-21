@@ -6,13 +6,12 @@ using UnityEditor;
 namespace Aetherius
 {
     [CustomEditor(typeof(CloudManager))]
-    [CanEditMultipleObjects]
     public class CloudManagerEditor : Editor
     {
-        private CloudManager _myScript;
+        CloudManager _myScript;
 
-        private SerializedProperty mode;
-        private SerializedProperty preset;
+        SerializedProperty mode;
+        SerializedProperty preset;
 
 
 
@@ -100,8 +99,8 @@ namespace Aetherius
             StartSection("Texture Generation");
 
             _myScript.textureGenerator.computeShader = (ComputeShader)EditorGUILayout.ObjectField("Compute Shader", _myScript.textureGenerator.computeShader, typeof(ComputeShader), false);
-            int newSeed= EditorGUILayout.IntField("Cloudscape Seed", _myScript.wmSeed);
-            if(_myScript.wmSeed !=newSeed)
+            int newSeed = EditorGUILayout.IntField("Cloudscape Seed", _myScript.wmSeed);
+            if (_myScript.wmSeed != newSeed)
             {
                 _myScript.wmSeed = newSeed;
                 _myScript.textureGenerator.GenerateWeatherMap(256, ref _myScript.textureGenerator.originalWM, _myScript.wmSeed, _myScript.preset);
@@ -147,7 +146,7 @@ namespace Aetherius
                     }
 
                     EditorGUILayout.EndVertical();
-                }                
+                }
                 EditorGUILayout.Separator();
 
                 //Detail Shape Noise
@@ -191,10 +190,22 @@ namespace Aetherius
 
         public override void OnInspectorGUI()
         {
+
+            //serializedObject.Update();
+            
+            
+            //Debug code TODO delete
+            {
+                //EditorGUILayout.BeginVertical("GroupBox");
+                //DrawDefaultInspector();
+                //EditorGUILayout.EndVertical();
+            }
+
+
+
             using (EditorGUI.ChangeCheckScope check = new EditorGUI.ChangeCheckScope())
             {
                 EditorGUILayout.PropertyField(mode);
-
                 if (check.changed)
                 {
                     if (_myScript.mode != (CLOUD_CONTROL)mode.intValue)
@@ -202,8 +213,8 @@ namespace Aetherius
                         _myScript.mode = (CLOUD_CONTROL)mode.intValue;
                     }
                 }
-
             }
+
 
             EditorGUI.indentLevel++;
             switch (_myScript.mode)
@@ -247,7 +258,7 @@ namespace Aetherius
                         _myScript.advanced.weatherMapSize = EditorGUILayout.IntField("Weather Map Size", (int)_myScript.advanced.weatherMapSize);
 
                         _myScript.densityCurveMultiplier1 = EditorGUILayout.FloatField("Layer1 Density Multiplier", _myScript.densityCurveMultiplier1);
-                        _myScript.densityCurve1 = EditorGUILayout.CurveField("Layer1 Density Profile",_myScript.densityCurve1);
+                        _myScript.densityCurve1 = EditorGUILayout.CurveField("Layer1 Density Profile", _myScript.densityCurve1);
                         _myScript.densityCurveMultiplier2 = EditorGUILayout.FloatField("Layer2 Density Multiplier", _myScript.densityCurveMultiplier2);
                         _myScript.densityCurve2 = EditorGUILayout.CurveField("Layer2 Density Profile", _myScript.densityCurve2);
                         _myScript.densityCurveMultiplier3 = EditorGUILayout.FloatField("Layer3 Density Multiplier", _myScript.densityCurveMultiplier3);
@@ -272,7 +283,7 @@ namespace Aetherius
 
             TextureGenerationSection();
 
-           
+            //serializedObject.ApplyModifiedProperties();
         }
 
 
