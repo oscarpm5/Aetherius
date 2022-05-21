@@ -246,19 +246,15 @@ namespace Aetherius
                         _myScript.advanced.globalDensity = EditorGUILayout.FloatField("Global Density", _myScript.advanced.globalDensity);
                         _myScript.advanced.weatherMapSize = EditorGUILayout.IntField("Weather Map Size", (int)_myScript.advanced.weatherMapSize);
 
+                        _myScript.densityCurveMultiplier1 = EditorGUILayout.FloatField("Layer1 Density Multiplier", _myScript.densityCurveMultiplier1);
+                        _myScript.densityCurve1 = EditorGUILayout.CurveField("Layer1 Density Profile",_myScript.densityCurve1);
+                        _myScript.densityCurveMultiplier2 = EditorGUILayout.FloatField("Layer2 Density Multiplier", _myScript.densityCurveMultiplier2);
+                        _myScript.densityCurve2 = EditorGUILayout.CurveField("Layer2 Density Profile", _myScript.densityCurve2);
+                        _myScript.densityCurveMultiplier3 = EditorGUILayout.FloatField("Layer3 Density Multiplier", _myScript.densityCurveMultiplier3);
+                        _myScript.densityCurve3 = EditorGUILayout.CurveField("Layer3 Density Profile", _myScript.densityCurve3);
 
 
-                        using (EditorGUI.ChangeCheckScope check = new EditorGUI.ChangeCheckScope())
-                        {
-                            AnimationCurve newCurve = EditorGUILayout.CurveField(_myScript.densityCurve1);
 
-                            if (check.changed) //If we changed any parameters of the resolution property, update its noise
-                            {
-                                //_myScript.GenerateBaseShapeNoise();
-                                _myScript.textureGenerator.GenerateWeatherMap(256, ref _myScript.textureGenerator.originalWM, _myScript.wmSeed, _myScript.preset);//TODO test line
-                            }
-
-                        }
                     }
                     break;
 

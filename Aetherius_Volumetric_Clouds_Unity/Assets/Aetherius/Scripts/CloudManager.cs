@@ -9,12 +9,9 @@ namespace Aetherius
     {
 
         public CLOUD_CONTROL mode = CLOUD_CONTROL.SIMPLE;
-        [HideInInspector]
         public CLOUD_PRESET preset = CLOUD_PRESET.SPARSE;
 
-        [HideInInspector]
         public CloudShape simple;
-        [HideInInspector]
         public CloudShape advanced;
 
         //Ray March
@@ -36,6 +33,12 @@ namespace Aetherius
         [HideInInspector]
         public Vector4 cloudLayerGradient3 = new Vector4(0.0f, 0.1f, 0.7f, 1.0f);
 
+        [HideInInspector]
+        public float densityCurveMultiplier1 = 1.0f;
+        [HideInInspector]
+        public float densityCurveMultiplier2 = 1.0f;
+        [HideInInspector]
+        public float densityCurveMultiplier3 = 1.0f;
         [HideInInspector]
         public AnimationCurve densityCurve1 = new AnimationCurve( //Only in advanced mode
           new Keyframe[3] {
@@ -284,9 +287,16 @@ namespace Aetherius
 
 
             int lutBufferSize = 256;
-            //TODO add the otheres here too
-            CreateLUTBuffer(lutBufferSize, ref densityCurve1, "densityCurveBuffer", ref mat);
-            mat.SetInt("densityCurveBufferSize", lutBufferSize);
+            CreateLUTBuffer(lutBufferSize, ref densityCurve1, "densityCurveBuffer1", ref mat);
+            mat.SetInt("densityCurveBufferSize1", lutBufferSize);
+            mat.SetFloat("densityCurveMultiplier1", densityCurveMultiplier1);
+            CreateLUTBuffer(lutBufferSize, ref densityCurve2, "densityCurveBuffer2", ref mat);
+            mat.SetInt("densityCurveBufferSize2", lutBufferSize);
+            mat.SetFloat("densityCurveMultiplier2", densityCurveMultiplier2);
+            CreateLUTBuffer(lutBufferSize, ref densityCurve3, "densityCurveBuffer3", ref mat);
+            mat.SetInt("densityCurveBufferSize3", lutBufferSize);
+            mat.SetFloat("densityCurveMultiplier3", densityCurveMultiplier3);
+
 
         }
 

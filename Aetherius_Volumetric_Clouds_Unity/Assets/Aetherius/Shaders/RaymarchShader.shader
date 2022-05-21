@@ -82,8 +82,15 @@ Shader "Aetherius/RaymarchShader"
 			bool softerShadows;
 			float shadowSize;
 
-			StructuredBuffer<float> densityCurveBuffer;
-			int densityCurveBufferSize;
+			StructuredBuffer<float> densityCurveBuffer1;
+			int densityCurveBufferSize1;
+			float densityCurveMultiplier1;
+			StructuredBuffer<float> densityCurveBuffer2;
+			int densityCurveBufferSize2;
+			float densityCurveMultiplier2;
+			StructuredBuffer<float> densityCurveBuffer3;
+			int densityCurveBufferSize3;
+			float densityCurveMultiplier3;
 
 			int mode;
 
@@ -220,7 +227,18 @@ Shader "Aetherius/RaymarchShader"
 
 			float ShapeAlteringAdvanced(float heightPercent,int layer)//TODO adapt with more than 1 layer
 			{
-				return  densityCurveBuffer[heightPercent * densityCurveBufferSize];
+				if (layer == 0)
+				{
+					return  densityCurveBuffer1[heightPercent * densityCurveBufferSize1]* densityCurveMultiplier1;
+				}
+				else if (layer == 1)
+				{
+					return  densityCurveBuffer2[heightPercent * densityCurveBufferSize2]* densityCurveMultiplier2;
+				}
+				else
+				{
+					return  densityCurveBuffer3[heightPercent * densityCurveBufferSize3]* densityCurveMultiplier3;
+				}
 			}
 
 			float ShapeAltering(float heightPercent,int layer) //Makes Clouds have more shape at the top & be more round towards the bottom, the weather map also influences the density
