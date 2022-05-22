@@ -256,7 +256,7 @@ Shader "Aetherius/RaymarchShader"
 				return (Remap(heightPercent,0.0,1.0,0.25,1.0)) * densityBottom * densityTop * weatherMapDensity * globalCoverage * 2.0;
 			}
 
-			float GetDensity(float3 currPos,float sampleLvl)
+			float GetDensity(float3 currPos,float sampleLvl,bool onlyBase)
 			{
 				//sample lvl incremented with dist
 				sampleLvl += min(length(currPos - _WorldSpaceCameraPos) / 200000.0,4);//TODO expose these variables?
@@ -270,10 +270,9 @@ Shader "Aetherius/RaymarchShader"
 				if (transitioningWM == true)
 					weatherMapCloud = lerp(weatherMapCloud, weatherMapTextureNew.SampleLevel(samplerweatherMapTextureNew, (skewPos.xz / weatherMapSize) + windOffset.xz * windDisplacesWeatherMap, sampleLvl), transitionLerpT);
 
-				float4 lowFreqNoise = baseShapeTexture.SampleLevel(samplerbaseShapeTexture, (currPos / baseShapeSize) + windOffset * baseShapeWindMult, sampleLvl);
-				float4 highFreqNoise = detailTexture.SampleLevel(samplerdetailTexture, (currPos / detailSize) + windOffset * detailShapeWindMult, sampleLvl);
 
 				//Cloud Base shape
+				float4 lowFreqNoise = baseShapeTexture.SampleLevel(samplerbaseShapeTexture, (currPos / baseShapeSize) + windOffset * baseShapeWindMult, sampleLvl);
 				float lowFreqFBM = (lowFreqNoise.g * 0.625) + (lowFreqNoise.b * 0.25) + (lowFreqNoise.a * 0.125);
 				float cloudNoiseBase = (Remap(lowFreqNoise.r, lowFreqFBM - 1.0, 1.0,0.0 , 1.0));
 
@@ -284,27 +283,30 @@ Shader "Aetherius/RaymarchShader"
 					weatherMapCloud.b = max(weatherMapCloud.b, saturate(Remap(length(initialPos.xz - _WorldSpaceCameraPos.xz), cumulusHorizonGradient.x, cumulusHorizonGradient.y, 0.0, 1.0)));
 				}
 
-				float cloudCoverageA = (weatherMapCloud.r);
-				float cloudCoverageB = (weatherMapCloud.g);
-				float cloudCoverageC = (weatherMapCloud.b);
+				
+				float baseCloudWithCoverageA = (Remap(cloudNoiseBase * shapeAltering.x, 1.0 - weatherMapCloud.r, 1.0, 0.0, 1.0));
+				float baseCloudWithCoverageB = (Remap(cloudNoiseBase * shapeAltering.y, 1.0 - weatherMapCloud.g, 1.0, 0.0, 1.0));
+				float baseCloudWithCoverageC = (Remap(cloudNoiseBase * shapeAltering.z, 1.0 - weatherMapCloud.b, 1.0, 0.0, 1.0));
 
-				float baseCloudWithCoverageA = (Remap(cloudNoiseBase * shapeAltering.x, 1.0 - cloudCoverageA  , 1.0, 0.0, 1.0));
-				float baseCloudWithCoverageB = (Remap(cloudNoiseBase * shapeAltering.y, 1.0 - cloudCoverageB , 1.0, 0.0, 1.0));
-				float baseCloudWithCoverageC = (Remap(cloudNoiseBase * shapeAltering.z, 1.0 - cloudCoverageC , 1.0, 0.0, 1.0));
-
-				baseCloudWithCoverageA *= DensityAltering(cloudHeightPercent, cloudCoverageA);
-				baseCloudWithCoverageB *= DensityAltering(cloudHeightPercent, cloudCoverageB);
-				baseCloudWithCoverageC *= DensityAltering(cloudHeightPercent, cloudCoverageC);
+				baseCloudWithCoverageA *= DensityAltering(cloudHeightPercent, weatherMapCloud.r);
+				baseCloudWithCoverageB *= DensityAltering(cloudHeightPercent, weatherMapCloud.g);
+				baseCloudWithCoverageC *= DensityAltering(cloudHeightPercent, weatherMapCloud.b);
 
 				float baseCloudWithCoverage = max(max(baseCloudWithCoverageA, baseCloudWithCoverageB) ,baseCloudWithCoverageC);
 
-				////Detail Shape
-				float highFreqFBM = (highFreqNoise.r * 0.625) + (highFreqNoise.g * 0.25) + (highFreqNoise.b * 0.125);
-				float detailNoise = (lerp(highFreqFBM,1.0 - highFreqFBM,saturate(cloudHeightPercent * 10.0)));
-				detailNoise *= Remap(saturate(globalCoverage), 0.0, 1.0, 0.1, 0.3);
+				float finalCloud = baseCloudWithCoverage;
+				
+				if (!onlyBase)
+				{
+					////Detail Shape
+					float4 highFreqNoise = detailTexture.SampleLevel(samplerdetailTexture, (currPos / detailSize) + windOffset * detailShapeWindMult, sampleLvl);
+					float highFreqFBM = (highFreqNoise.r * 0.625) + (highFreqNoise.g * 0.25) + (highFreqNoise.b * 0.125);
+					float detailNoise = (lerp(highFreqFBM,1.0 - highFreqFBM,saturate(cloudHeightPercent * 10.0)));
+					detailNoise *= Remap(saturate(globalCoverage), 0.0, 1.0, 0.1, 0.3);
 
-				//Detail - Base Shape
-				float finalCloud = saturate(Remap(baseCloudWithCoverage, detailNoise, 1.0,0.0, 1.0));
+					//Detail - Base Shape
+					finalCloud = saturate(Remap(baseCloudWithCoverage, detailNoise, 1.0,0.0, 1.0));
+				}
 
 				density = finalCloud * globalDensity;
 
@@ -356,7 +358,7 @@ Shader "Aetherius/RaymarchShader"
 				for (int currStep = 0; currStep < iter; ++currStep)
 				{
 					pos += currStep * initialStepSize * -sunDir;
-					float density = GetDensity(pos, (float(currStep) / float(iter)) * 2.0);
+					float density = GetDensity(pos, (float(currStep) / float(iter)) * 2.0,false);
 
 					shadow *= exp(-density * currStep * initialStepSize * eCoeff);
 				}
@@ -373,7 +375,7 @@ Shader "Aetherius/RaymarchShader"
 				{
 					float3 newPos = initialStepSize * -sunDir + (coneKernel[currStep].xyz * currStep);
 					pos += newPos; 
-					float density = GetDensity(pos, (float(currStep) / float(iter)) * 2.0);
+					float density = GetDensity(pos, (float(currStep) / float(iter)) * 2.0,false);
 
 					shadow *= exp(-density * length(newPos) * eCoeff);
 				}
@@ -434,7 +436,7 @@ Shader "Aetherius/RaymarchShader"
 				{
 					if (IsPosVisible(currPos, maxDepth,isMaxDepth))//TODO why cant atmos ray be out of here?
 					{
-						float currDensity = GetDensity(currPos,0.0);
+						float currDensity = GetDensity(currPos,0.0,false);
 
 						if (scatteredtransmittance >= 0.99)
 							atmosphereHazePos = currPos;
