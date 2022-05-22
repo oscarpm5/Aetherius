@@ -209,47 +209,29 @@ Shader "Aetherius/RaymarchShader"
 				return saturate(Remap(heightPercent, parameters.x, parameters.y, 0.0, 1.0)) * saturate(Remap(heightPercent, parameters.z, parameters.w, 1.0, 0.0));
 			}
 
-			float ShapeAlteringSimple(float heightPercent,int layer)
+			float3 ShapeAlteringSimple(float heightPercent)
 			{
-				if (layer == 0)
-				{
-					return DensityGradient(heightPercent, cloudLayerGradient1);
-				}
-				else if (layer == 1)
-				{
-					return DensityGradient(heightPercent, cloudLayerGradient2);
-				}
-				else
-				{
-					return DensityGradient(heightPercent, cloudLayerGradient3);
-				}
+				return float3(DensityGradient(heightPercent, cloudLayerGradient1),
+					DensityGradient(heightPercent, cloudLayerGradient2),
+					DensityGradient(heightPercent, cloudLayerGradient3));
 			}
 
-			float ShapeAlteringAdvanced(float heightPercent,int layer)//TODO adapt with more than 1 layer
+			float3 ShapeAlteringAdvanced(float heightPercent)//TODO adapt with more than 1 layer
 			{
-				if (layer == 0)
-				{
-					return  densityCurveBuffer1[heightPercent * densityCurveBufferSize1]* densityCurveMultiplier1;
-				}
-				else if (layer == 1)
-				{
-					return  densityCurveBuffer2[heightPercent * densityCurveBufferSize2]* densityCurveMultiplier2;
-				}
-				else
-				{
-					return  densityCurveBuffer3[heightPercent * densityCurveBufferSize3]* densityCurveMultiplier3;
-				}
+				return float3(densityCurveBuffer1[heightPercent * densityCurveBufferSize1] * densityCurveMultiplier1,
+					densityCurveBuffer2[heightPercent * densityCurveBufferSize2] * densityCurveMultiplier2,
+					densityCurveBuffer3[heightPercent * densityCurveBufferSize3] * densityCurveMultiplier3);
 			}
 
-			float ShapeAltering(float heightPercent,int layer) //Makes Clouds have more shape at the top & be more round towards the bottom, the weather map also influences the density
+			float3 ShapeAltering(float heightPercent) //Makes Clouds have more shape at the top & be more round towards the bottom, the weather map also influences the density
 			{
 				if (mode == 0)//Simple mode
 				{
-					return ShapeAlteringSimple(heightPercent, layer);
+					return ShapeAlteringSimple(heightPercent);
 				}
 
 				//Advanced mode
-				return ShapeAlteringAdvanced(heightPercent,layer);
+				return ShapeAlteringAdvanced(heightPercent);
 			}
 
 			//value between 0 & 1 showing where we are in the cloud layer
@@ -295,10 +277,7 @@ Shader "Aetherius/RaymarchShader"
 				float lowFreqFBM = (lowFreqNoise.g * 0.625) + (lowFreqNoise.b * 0.25) + (lowFreqNoise.a * 0.125);
 				float cloudNoiseBase = (Remap(lowFreqNoise.r, lowFreqFBM - 1.0, 1.0,0.0 , 1.0));
 
-				float coudNoiseBaseA = cloudNoiseBase * ShapeAltering(cloudHeightPercent, 0);
-				float coudNoiseBaseB = cloudNoiseBase * ShapeAltering(cloudHeightPercent, 1);
-				float coudNoiseBaseC = cloudNoiseBase * ShapeAltering(cloudHeightPercent, 2);
-
+				float3 shapeAltering = ShapeAltering(cloudHeightPercent);
 				//Coverage
 				if (cumulusHorizon == true) //cumulonimbus towards horizon
 				{
@@ -309,9 +288,9 @@ Shader "Aetherius/RaymarchShader"
 				float cloudCoverageB = (weatherMapCloud.g);
 				float cloudCoverageC = (weatherMapCloud.b);
 
-				float baseCloudWithCoverageA = (Remap(coudNoiseBaseA, 1.0 - cloudCoverageA  , 1.0, 0.0, 1.0));
-				float baseCloudWithCoverageB = (Remap(coudNoiseBaseB, 1.0 - cloudCoverageB , 1.0, 0.0, 1.0));
-				float baseCloudWithCoverageC = (Remap(coudNoiseBaseC, 1.0 - cloudCoverageC , 1.0, 0.0, 1.0));
+				float baseCloudWithCoverageA = (Remap(cloudNoiseBase * shapeAltering.x, 1.0 - cloudCoverageA  , 1.0, 0.0, 1.0));
+				float baseCloudWithCoverageB = (Remap(cloudNoiseBase * shapeAltering.y, 1.0 - cloudCoverageB , 1.0, 0.0, 1.0));
+				float baseCloudWithCoverageC = (Remap(cloudNoiseBase * shapeAltering.z, 1.0 - cloudCoverageC , 1.0, 0.0, 1.0));
 
 				baseCloudWithCoverageA *= DensityAltering(cloudHeightPercent, cloudCoverageA);
 				baseCloudWithCoverageB *= DensityAltering(cloudHeightPercent, cloudCoverageB);
