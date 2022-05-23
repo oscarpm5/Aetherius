@@ -371,11 +371,11 @@ Shader "Aetherius/RaymarchShader"
 				return ((1.0 - g2) / pow(1.0 + g2 - 2.0 * g * cosAngle, 1.5)) / (4 * 3.1415);
 			}
 
-			int CalculateStepsForRay(float3 ro,float3 rd)
+			int CalculateStepsForRay(float3 ro,float3 rd,float t)
 			{
 				float3 planetOrigin = float3(0.0,planetAtmos.x,0.0);
 
-				float3 planetNorm = normalize(ro - planetOrigin);
+				float3 planetNorm = normalize(ro + rd*t*0.5 - planetOrigin);
 
 				float d = abs(dot(planetNorm, rd));
 
@@ -465,55 +465,99 @@ Shader "Aetherius/RaymarchShader"
 				return l * shadow * DoubleLobeScattering(cosAngle * pow(c,i), 0.3, 0.15, 0.5) * newScatterC + ambientSky* t *shadow* (1.0/4.0*3.1415) * newScatterC;
 			}
 
-			float3 Raymarching(float3 col,float3 rd, AtmosIntersection atmosIntersection,float2 uv,float maxDepth,bool isMaxDepth)
+
+			void RaymarchThroughAtmos(float3 pos,float3 rd, int maxSteps,
+				float stepLengthBase,float maxDepth,float cosAngle,bool isMaxDepth,
+				inout float scatTransmittance, inout float3 scatLuminance,out float3 atmosphereHazePos)
 			{
-				uint blueNoiseW;
-				uint blueNoiseH;
-				blueNoiseTexture.GetDimensions(blueNoiseW, blueNoiseH);
 
-				int maxStepsRay = CalculateStepsForRay(atmosIntersection.r1o,rd);
-				float stepLength = CalculateMaxRayDist(atmosIntersection.r1m) / float(maxStepsRay);
-				uv.x *= (_ScreenParams.x / _ScreenParams.y);
-				uv *= min(_ScreenParams.x, _ScreenParams.y) / blueNoiseW;
-
-				float3 startingPos = atmosIntersection.r1o + rd * stepLength * blueNoiseTexture.Sample(samplerblueNoiseTexture, uv);
-				float3 currPos = startingPos;
-				float cosAngle = dot(-rd,sunDir);//We assume they are normalized
-
-				float3 scatteredLuminance = float3(0.0, 0.0, 0.0);
-				float scatteredtransmittance = 1.0;
-
-				float3 atmosphereHazePos = startingPos;
-				[loop] for (int currStep = 0; currStep < maxStepsRay; ++currStep)
+				for (int t = 0; t < maxSteps; ++t)
 				{
-					if (IsPosVisible(currPos, maxDepth,isMaxDepth))//TODO why cant atmos ray be out of here?
+					if (IsPosVisible(pos, maxDepth, isMaxDepth))//Checks if an object is occluding the raymarch
 					{
-						float currDensity = GetDensity(currPos,0.0,false);
+						float currDensity = GetDensity(pos, 0.0, false);
 
-						if (scatteredtransmittance >= 0.99)
-							atmosphereHazePos = currPos;
+						if (scatTransmittance >= 0.9)
+							atmosphereHazePos = pos;
 
 						if (currDensity > 0.0)
 						{
 							float extinction = currDensity * extintionC;
 							float clampedExtinction = max(extinction, 0.0000001);
-							float transmittance = exp(-clampedExtinction * stepLength);
+							float transmittance = exp(-clampedExtinction * stepLengthBase);
 
-							float3 luminance = float3(0.0,0.0,0.0);
+							float3 luminance = float3(0.0, 0.0, 0.0);
 							for (int i = 0; i < 2; ++i)
 							{
-								luminance += LightScatter(currPos, cosAngle,i);
+								luminance += LightScatter(pos, cosAngle, i);
 							}
 							luminance *= currDensity;
 
 							float3 integScatt = (luminance - luminance * transmittance) / clampedExtinction;
-							scatteredLuminance += scatteredtransmittance * integScatt;
+							scatLuminance += scatTransmittance * integScatt;
 
-							scatteredtransmittance *= transmittance;
+							scatTransmittance *= transmittance;
 						}
+
+
 					}
-					currPos += rd * stepLength;
+					pos += rd * stepLengthBase;
 				}
+			}
+
+
+			float3 Raymarching(float3 col,float3 rd, AtmosIntersection atmosIntersection,float2 uv,float maxDepth,bool isMaxDepth)
+			{
+				uint blueNoiseW;
+				uint blueNoiseH;
+				blueNoiseTexture.GetDimensions(blueNoiseW, blueNoiseH);
+				uv.x *= (_ScreenParams.x / _ScreenParams.y);
+				uv *= min(_ScreenParams.x, _ScreenParams.y) / blueNoiseW;
+				float blueNoiseOffset = blueNoiseTexture.Sample(samplerblueNoiseTexture, uv);
+				float cosAngle = dot(-rd,sunDir);//We assume they are normalized
+
+
+				int maxStepsRay = CalculateStepsForRay(atmosIntersection.r1o,rd, atmosIntersection.r1m);
+				float stepLength = CalculateMaxRayDist(atmosIntersection.r1m) / float(maxStepsRay);
+
+				float3 startingPos = atmosIntersection.r1o + rd * stepLength * blueNoiseOffset;
+				float scatteredtransmittance = 1.0;
+				float3 scatteredLuminance = float3(0.0, 0.0, 0.0);
+
+				float3 atmosphereHazePos;
+
+				RaymarchThroughAtmos(startingPos, rd, maxStepsRay, stepLength,maxDepth,cosAngle,isMaxDepth, scatteredtransmittance, scatteredLuminance, atmosphereHazePos);
+
+				//[loop] for (int currStep = 0; currStep < maxStepsRay; ++currStep)
+				//{
+				//	if (IsPosVisible(currPos, maxDepth,isMaxDepth))//TODO why cant atmos ray be out of here?
+				//	{
+				//		float currDensity = GetDensity(currPos,0.0,false);
+
+				//		if (scatteredtransmittance >= 0.9)
+				//			atmosphereHazePos = currPos;
+
+				//		if (currDensity > 0.0)
+				//		{
+				//			float extinction = currDensity * extintionC;
+				//			float clampedExtinction = max(extinction, 0.0000001);
+				//			float transmittance = exp(-clampedExtinction * stepLength);
+
+				//			float3 luminance = float3(0.0,0.0,0.0);
+				//			for (int i = 0; i < 2; ++i)
+				//			{
+				//				luminance += LightScatter(currPos, cosAngle,i);
+				//			}
+				//			luminance *= currDensity;
+
+				//			float3 integScatt = (luminance - luminance * transmittance) / clampedExtinction;
+				//			scatteredLuminance += scatteredtransmittance * integScatt;
+
+				//			scatteredtransmittance *= transmittance;
+				//		}
+				//	}
+				//	currPos += rd * stepLength;
+				//}
 
 				float minHazeDist = maxRayVisibilityDist * 0.5;//TODO consider making this public
 				float maxHazeDist = maxRayVisibilityDist;//Horizon max view
