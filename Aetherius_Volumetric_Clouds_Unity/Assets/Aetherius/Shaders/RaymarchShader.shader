@@ -116,6 +116,18 @@ Shader "Aetherius/RaymarchShader"
 			Texture2D<float4> weatherMapTextureNew;
 			SamplerState samplerweatherMapTextureNew;
 
+			struct AtmosIntersection
+			{
+				float3 r1o;//origin
+				float r1m;//magnitude
+
+				bool hasRay2;
+
+				float3 r2o;//origin
+				float r2m;//magnitude
+			};
+
+
 			float2 GetAtmosphereIntersection(float3 ro,float3 rd,float3 sphO, float r)//returns -1 when no intersection has been found
 			{
 				float t0 = -1.0;
@@ -150,8 +162,10 @@ Shader "Aetherius/RaymarchShader"
 			}
 
 			//outputs a ro + the length of the ray, returns false if no intersection has been found
-			bool GetRayAtmosphere(float3 ro,float3 rd,out float3 rayOrigin, out float rayLength)
+			bool GetRayAtmosphere(float3 ro,float3 rd, out AtmosIntersection intersection)
 			{
+				intersection.hasRay2 = false;
+
 				float3 planetO = float3(0.0, planetAtmos.x,0.0);
 				float d = length(ro - planetO);//distance btween camera and the planet center
 
@@ -166,41 +180,79 @@ Shader "Aetherius/RaymarchShader"
 						return false;
 					}
 
-					rayOrigin = ro + rd * innerAtmT.y;//second hit as 1st will always be behind camera in this case
-					rayLength = outerAtmT.y - innerAtmT.y;//second hit as 1st will always be behind camera in this case
+					intersection.r1o = ro + rd* innerAtmT.y;//second hit as 1st will always be behind camera in this case
+					intersection.r1m = outerAtmT.y - innerAtmT.y;//second hit as 1st will always be behind camera in this case
 
 					return true;
 				}
 
 				if (d < planetAtmos.z) //if camera is inside the atmosphere
 				{
-					rayOrigin = ro;
+					intersection.r1o = ro;
 
-					if (max(groundT.x, groundT.y) != -1.0)
+					if (innerAtmT.x > 0.0)
 					{
-						rayLength = min(innerAtmT.x, innerAtmT.y);
+						intersection.r1m = innerAtmT.x;
+
+						if (groundT.x < 0.0) //If no ground collision, secondary ray
+						{
+							intersection.hasRay2 = true;
+							intersection.r2o = ro + rd * innerAtmT.y;
+							intersection.r2m = outerAtmT.y - innerAtmT.y;
+						}
+
+
 						return true;
 					}
 
-					rayLength = outerAtmT.y;//only care about 2nd intersection as 1s will always be behind camera
+					intersection.r1m = outerAtmT.y;
+
+
+
+
+					//if (max(groundT.x, groundT.y) != -1.0)
+					//{
+					//	rayLength = min(innerAtmT.x, innerAtmT.y);
+					//	return true;
+					//}
+
+					//rayLength = outerAtmT.y;//only care about 2nd intersection as 1s will always be behind camera
 
 					return true;
 				}
 
 				//If camera is above atmosphere
 
-				if (max(outerAtmT.x, outerAtmT.y) == -1.0)
-					return false;//No hit!
+				if (outerAtmT.x < 0.0)
+					return false;//No hit or behind camera!
 
-				rayOrigin = ro + rd * outerAtmT.x;
+				intersection.r1o = ro + rd * outerAtmT.x;
 
-				if (max(groundT.x,groundT.y) != -1.0) //if there is an intersection with the innerAtm shell
+				if (innerAtmT.x > 0.0)
 				{
-					rayLength = innerAtmT.x - outerAtmT.x;
+
+					intersection.r1m = innerAtmT.x - outerAtmT.x;
+
+
+					if (groundT.x < 0.0) //If no ground collision, secondary ray
+					{
+						intersection.hasRay2 = true;
+						intersection.r2o = ro + rd * innerAtmT.y;
+						intersection.r2m = outerAtmT.y - innerAtmT.y;
+					}
+
 					return true;
 				}
 
-				rayLength = outerAtmT.y - outerAtmT.x;
+				intersection.r1m = outerAtmT.y - outerAtmT.x;
+
+				//if (max(groundT.x,groundT.y) != -1.0) //if there is an intersection with the innerAtm shell
+				//{
+				//	rayLength = innerAtmT.x - outerAtmT.x;
+				//	return true;
+				//}
+
+				//rayLength = outerAtmT.y - outerAtmT.x;
 				return true;
 			}
 
@@ -413,18 +465,18 @@ Shader "Aetherius/RaymarchShader"
 				return l * shadow * DoubleLobeScattering(cosAngle * pow(c,i), 0.3, 0.15, 0.5) * newScatterC + ambientSky* t *shadow* (1.0/4.0*3.1415) * newScatterC;
 			}
 
-			float3 Raymarching(float3 col,float3 ro, float3 rd,float maxRayLength,float2 uv,float maxDepth,bool isMaxDepth) //where ro is ray origin & rd is ray direction
+			float3 Raymarching(float3 col,float3 rd, AtmosIntersection atmosIntersection,float2 uv,float maxDepth,bool isMaxDepth)
 			{
 				uint blueNoiseW;
 				uint blueNoiseH;
 				blueNoiseTexture.GetDimensions(blueNoiseW, blueNoiseH);
 
-				int maxStepsRay = CalculateStepsForRay(ro,rd);
-				float stepLength = CalculateMaxRayDist(maxRayLength) / float(maxStepsRay);
+				int maxStepsRay = CalculateStepsForRay(atmosIntersection.r1o,rd);
+				float stepLength = CalculateMaxRayDist(atmosIntersection.r1m) / float(maxStepsRay);
 				uv.x *= (_ScreenParams.x / _ScreenParams.y);
 				uv *= min(_ScreenParams.x, _ScreenParams.y) / blueNoiseW;
 
-				float3 startingPos = ro + rd * stepLength * blueNoiseTexture.Sample(samplerblueNoiseTexture, uv);
+				float3 startingPos = atmosIntersection.r1o + rd * stepLength * blueNoiseTexture.Sample(samplerblueNoiseTexture, uv);
 				float3 currPos = startingPos;
 				float cosAngle = dot(-rd,sunDir);//We assume they are normalized
 
@@ -495,14 +547,18 @@ Shader "Aetherius/RaymarchShader"
 				depthMeters = length(posWorld - _WorldSpaceCameraPos);//depth in meters
 
 				float t = 0.0;
+				AtmosIntersection atmosIntersection;
+				bool isAtmosRay = GetRayAtmosphere(rayOrigin, rayDirection, atmosIntersection);
 
-				bool isAtmosRay = GetRayAtmosphere(rayOrigin, rayDirection, rayOrigin, t);
-
-				if (!isAtmosRay || t <= 0.0)
+				if (!isAtmosRay || atmosIntersection.r1m <= 0.0)
+				{
 					return fixed4(col, 1.0);
-
-				float3 result = Raymarching(col,rayOrigin, rayDirection,t,i.uv, depthMeters,linearDepth >= 1.0);
-				return fixed4(result,1.0);
+				}
+				else 
+				{
+					float3 result = Raymarching(col,rayDirection, atmosIntersection,i.uv, depthMeters,linearDepth >= 1.0);
+					return fixed4(result,1.0);
+				}
 			}
 	ENDCG
 			}
