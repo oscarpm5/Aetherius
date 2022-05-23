@@ -473,7 +473,7 @@ Shader "Aetherius/RaymarchShader"
 
 				for (int t = 0; t < maxSteps; ++t)
 				{
-					if (IsPosVisible(pos, maxDepth, isMaxDepth))//Checks if an object is occluding the raymarch
+					if (IsPosVisible(pos, maxDepth, isMaxDepth) && scatTransmittance > 0.0)//Checks if an object is occluding the raymarch
 					{
 						float currDensity = GetDensity(pos, 0.0, false);
 
@@ -526,38 +526,7 @@ Shader "Aetherius/RaymarchShader"
 
 				float3 atmosphereHazePos;
 
-				RaymarchThroughAtmos(startingPos, rd, maxStepsRay, stepLength,maxDepth,cosAngle,isMaxDepth, scatteredtransmittance, scatteredLuminance, atmosphereHazePos);
-
-				//[loop] for (int currStep = 0; currStep < maxStepsRay; ++currStep)
-				//{
-				//	if (IsPosVisible(currPos, maxDepth,isMaxDepth))//TODO why cant atmos ray be out of here?
-				//	{
-				//		float currDensity = GetDensity(currPos,0.0,false);
-
-				//		if (scatteredtransmittance >= 0.9)
-				//			atmosphereHazePos = currPos;
-
-				//		if (currDensity > 0.0)
-				//		{
-				//			float extinction = currDensity * extintionC;
-				//			float clampedExtinction = max(extinction, 0.0000001);
-				//			float transmittance = exp(-clampedExtinction * stepLength);
-
-				//			float3 luminance = float3(0.0,0.0,0.0);
-				//			for (int i = 0; i < 2; ++i)
-				//			{
-				//				luminance += LightScatter(currPos, cosAngle,i);
-				//			}
-				//			luminance *= currDensity;
-
-				//			float3 integScatt = (luminance - luminance * transmittance) / clampedExtinction;
-				//			scatteredLuminance += scatteredtransmittance * integScatt;
-
-				//			scatteredtransmittance *= transmittance;
-				//		}
-				//	}
-				//	currPos += rd * stepLength;
-				//}
+				RaymarchThroughAtmos(startingPos, rd, maxStepsRay, stepLength,maxDepth,cosAngle,isMaxDepth, scatteredtransmittance, scatteredLuminance, atmosphereHazePos);			
 
 				float minHazeDist = maxRayVisibilityDist * 0.5;//TODO consider making this public
 				float maxHazeDist = maxRayVisibilityDist;//Horizon max view
