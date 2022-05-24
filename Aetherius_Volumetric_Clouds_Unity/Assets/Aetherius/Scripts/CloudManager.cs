@@ -72,7 +72,7 @@ namespace Aetherius
         public float absorptionC = 0.0f;
         public float shadowSize = 100.0f;
         public bool softerShadows = false;
-        
+
         public TextureGenerator textureGenerator;
         public List<Vector4> conekernel;
         private List<Vector4> GenerateConeKernels()
@@ -103,7 +103,7 @@ namespace Aetherius
 
             if (textureGenerator == null)
             {
-                textureGenerator = new TextureGenerator();     
+                textureGenerator = new TextureGenerator();
             }
             textureGenerator.InitializeTextures();
             conekernel = GenerateConeKernels();
@@ -218,7 +218,7 @@ namespace Aetherius
 
             mat.SetFloat("minCloudHeight", minCloudHeightMeters);
             mat.SetFloat("maxCloudHeight", maxCloudHeightMeters);
-            mat.SetInt("maxRayVisibilityDist", maxRayVisibilityDist);
+            mat.SetFloat("maxRayUserDist", maxRayVisibilityDist);
 
             mat.SetFloat("baseShapeSize", currentShape.baseShapeSize);
             mat.SetFloat("detailSize", currentShape.detailSize);
@@ -263,7 +263,10 @@ namespace Aetherius
             mat.SetInt("mode", (int)mode);
 
             int planetRadiusMeters = planetRadiusKm * 1000;
-            mat.SetVector("planetAtmos", new Vector3(-planetRadiusMeters, planetRadiusMeters + minCloudHeightMeters, planetRadiusMeters + maxCloudHeightMeters));//Center of the planet, radius of min cloud sphere, radius of max cloud sphere
+            Vector3 planetAtmos = new Vector3(planetRadiusMeters, planetRadiusMeters + minCloudHeightMeters, planetRadiusMeters + maxCloudHeightMeters);//Center of the planet, radius of min cloud sphere, radius of max cloud sphere
+            mat.SetVector("planetAtmos", planetAtmos);
+            mat.SetFloat("maxRayPossibleDist", Mathf.Sqrt(Mathf.Pow(planetAtmos.z, 2) - Mathf.Pow(planetAtmos.y, 2)) * 2.0f); //maximum ray length on the cloud layer
+            mat.SetFloat("maxRayPossibleGroundDist", Mathf.Sqrt(Mathf.Pow(planetAtmos.z, 2) - Mathf.Pow(planetAtmos.x, 2)) * 2.0f);//maximum ray length of a ray travelling trough the atmosphere without touching the ground 
             mat.SetInt("cumulusHorizon", cumulusHorizon ? 1 : 0);
             mat.SetVector("cumulusHorizonGradient", cumulusHorizonGradient);
             mat.SetVector("cloudLayerGradient1", cloudLayerGradient1);

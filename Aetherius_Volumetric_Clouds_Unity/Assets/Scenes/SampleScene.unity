@@ -574,7 +574,7 @@ Transform:
   m_Father: {fileID: 0}
   m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: -1412.72, y: -1512, z: 0}
---- !u!84 &814736212
+--- !u!84 &1642631716
 RenderTexture:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -1007,15 +1007,15 @@ MonoBehaviour:
     - {fileID: 11400000, guid: cdb03daae29d1a74f9d322db4dace868, type: 2}
     _baseShapeRenderTexture: {fileID: 174470984}
     _detailRenderTexture: {fileID: 212192067}
-    originalWM: {fileID: 814736212}
+    originalWM: {fileID: 1642631716}
     newWM: {fileID: 0}
   conekernel:
-  - {x: -0.51487076, y: -0.2734008, z: 0.8125024, w: 0}
-  - {x: -0.415166, y: 0.052516334, z: 0.90822864, w: 0}
-  - {x: -0.7234511, y: 0.2883072, z: -0.6272938, w: 0}
-  - {x: 0.6729527, y: -0.7281879, z: 0.12991154, w: 0}
-  - {x: -0.87105256, y: 0.48518163, z: 0.07659161, w: 0}
-  - {x: -0.17161347, y: -0.57912153, z: -0.7969737, w: 0}
+  - {x: -0.8368035, y: 0.28024924, z: -0.4703406, w: 0}
+  - {x: 0.3402039, y: 0.9158337, z: -0.21333039, w: 0}
+  - {x: 0.66032517, y: 0.17250966, z: -0.7308974, w: 0}
+  - {x: -0.12189582, y: -0.91374546, z: 0.3875701, w: 0}
+  - {x: 0.75376153, y: -0.5561151, z: 0.3501136, w: 0}
+  - {x: -0.46363452, y: -0.06842894, z: -0.8833802, w: 0}
 --- !u!114 &1107285944527061099
 MonoBehaviour:
   m_ObjectHideFlags: 0
