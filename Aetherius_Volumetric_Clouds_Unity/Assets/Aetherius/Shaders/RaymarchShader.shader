@@ -528,6 +528,18 @@ Shader "Aetherius/RaymarchShader"
 
 				RaymarchThroughAtmos(startingPos, rd, maxStepsRay, stepLength,maxDepth,cosAngle,isMaxDepth, scatteredtransmittance, scatteredLuminance, atmosphereHazePos);			
 
+				if (atmosIntersection.hasRay2)
+				{
+
+					maxStepsRay = CalculateStepsForRay(atmosIntersection.r2o, rd, atmosIntersection.r2m);
+					stepLength = CalculateMaxRayDist(atmosIntersection.r2m) / float(maxStepsRay);
+
+					startingPos = atmosIntersection.r2o + rd * stepLength * blueNoiseOffset;
+				
+					RaymarchThroughAtmos(startingPos, rd, maxStepsRay, stepLength, maxDepth, cosAngle, isMaxDepth, scatteredtransmittance, scatteredLuminance, atmosphereHazePos);
+				}
+
+
 				float minHazeDist = maxRayVisibilityDist * 0.5;//TODO consider making this public
 				float maxHazeDist = maxRayVisibilityDist;//Horizon max view
 
