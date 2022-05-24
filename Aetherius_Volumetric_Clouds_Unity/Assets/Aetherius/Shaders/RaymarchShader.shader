@@ -118,6 +118,8 @@ Shader "Aetherius/RaymarchShader"
 
 			struct AtmosIntersection
 			{
+				bool startsInAtmos;
+
 				float3 r1o;//origin
 				float r1m;//magnitude
 
@@ -165,6 +167,7 @@ Shader "Aetherius/RaymarchShader"
 			bool GetRayAtmosphere(float3 ro,float3 rd, out AtmosIntersection intersection)
 			{
 				intersection.hasRay2 = false;
+				intersection.startsInAtmos = false;
 
 				float3 planetO = float3(0.0, planetAtmos.x,0.0);
 				float d = length(ro - planetO);//distance btween camera and the planet center
@@ -175,6 +178,8 @@ Shader "Aetherius/RaymarchShader"
 
 				if (d < planetAtmos.y)//if camera is under the atmosphere
 				{
+					intersection.startsInAtmos = true;
+
 					if (max(groundT.x, groundT.y) != -1.0) //if collision is with ground return false
 					{
 						return false;
@@ -188,6 +193,7 @@ Shader "Aetherius/RaymarchShader"
 
 				if (d < planetAtmos.z) //if camera is inside the atmosphere
 				{
+					intersection.startsInAtmos = true;
 					intersection.r1o = ro;
 
 					if (innerAtmT.x > 0.0)
@@ -225,6 +231,8 @@ Shader "Aetherius/RaymarchShader"
 
 				if (outerAtmT.x < 0.0)
 					return false;//No hit or behind camera!
+
+				intersection.startsInAtmos = false;
 
 				intersection.r1o = ro + rd * outerAtmT.x;
 
@@ -467,8 +475,9 @@ Shader "Aetherius/RaymarchShader"
 
 
 			void RaymarchThroughAtmos(float3 pos,float3 rd, int maxSteps,
-				float stepLengthBase,float maxDepth,float cosAngle,bool isMaxDepth,
-				inout float scatTransmittance, inout float3 scatLuminance,out float3 atmosphereHazePos)
+				float stepLengthBase,float maxDepth,float cosAngle,bool isMaxDepth, 
+				inout bool atmosphereHazeAssigned,
+				inout float scatTransmittance, inout float3 scatLuminance, inout float3 atmosphereHazePos)
 			{
 
 				for (int t = 0; t < maxSteps; ++t)
@@ -477,8 +486,11 @@ Shader "Aetherius/RaymarchShader"
 					{
 						float currDensity = GetDensity(pos, 0.0, false);
 
-						if (scatTransmittance >= 0.9)
+						if (scatTransmittance <= 0.9 && atmosphereHazeAssigned == false)
+						{
 							atmosphereHazePos = pos;
+							atmosphereHazeAssigned = true;
+						}
 
 						if (currDensity > 0.0)
 						{
@@ -524,36 +536,37 @@ Shader "Aetherius/RaymarchShader"
 				float scatteredtransmittance = 1.0;
 				float3 scatteredLuminance = float3(0.0, 0.0, 0.0);
 
-				float3 atmosphereHazePos;
+				float3 atmosphereHazePos = float3(0.0, 0.0, 0.0);
+				bool atmosphereHazeAssigned = false;
 
-				RaymarchThroughAtmos(startingPos, rd, maxStepsRay, stepLength,maxDepth,cosAngle,isMaxDepth, scatteredtransmittance, scatteredLuminance, atmosphereHazePos);			
+				RaymarchThroughAtmos(startingPos, rd, maxStepsRay, stepLength,maxDepth,cosAngle,isMaxDepth, atmosphereHazeAssigned, scatteredtransmittance, scatteredLuminance, atmosphereHazePos);
 
 				if (atmosIntersection.hasRay2)
 				{
-
 					maxStepsRay = CalculateStepsForRay(atmosIntersection.r2o, rd, atmosIntersection.r2m);
 					stepLength = CalculateMaxRayDist(atmosIntersection.r2m) / float(maxStepsRay);
 
 					startingPos = atmosIntersection.r2o + rd * stepLength * blueNoiseOffset;
 				
-					RaymarchThroughAtmos(startingPos, rd, maxStepsRay, stepLength, maxDepth, cosAngle, isMaxDepth, scatteredtransmittance, scatteredLuminance, atmosphereHazePos);
+					RaymarchThroughAtmos(startingPos, rd, maxStepsRay, stepLength, maxDepth, cosAngle, isMaxDepth, atmosphereHazeAssigned, scatteredtransmittance, scatteredLuminance, atmosphereHazePos);
 				}
 
-
-				float minHazeDist = maxRayVisibilityDist * 0.5;//TODO consider making this public
-				float maxHazeDist = maxRayVisibilityDist;//Horizon max view
-
-				float3 initPosHaze = _WorldSpaceCameraPos;
-				float3 vecFromPlanetCenter = _WorldSpaceCameraPos - float3(0.0, planetAtmos.x, 0.0);
-
-				if (length(vecFromPlanetCenter) > planetAtmos.z)//if positon is outside the atmosphere
+				float ammountTravelledThroughAtmos = 0.0;
+				if (atmosIntersection.startsInAtmos)
 				{
-					initPosHaze = startingPos;
+					ammountTravelledThroughAtmos = length(atmosphereHazePos - _WorldSpaceCameraPos);
+				}
+				else 
+				{
+					ammountTravelledThroughAtmos = length(atmosphereHazePos - atmosIntersection.r1o);
 				}
 
-				float hazeAmmount = saturate(Remap(length(atmosphereHazePos - initPosHaze), minHazeDist, maxHazeDist, 0.0, 1.0));
+				float minHazeDist = maxRayVisibilityDist*0.25;//TODO consider making this public
+				float maxHazeDist = maxRayVisibilityDist;//Horizon max view
+				float hazeAmmount = saturate(Remap(ammountTravelledThroughAtmos, minHazeDist, maxHazeDist, 0.0, 1.0));
 
-				col = lerp(scatteredtransmittance * col + scatteredLuminance,col,1.0 - (1.0 - hazeAmmount) * (1.0 - hazeAmmount));
+				col = lerp(scatteredtransmittance * col + scatteredLuminance, col, 1.0 - (1.0-hazeAmmount)*(1.0-hazeAmmount));
+
 				return float3(col);
 			}
 
