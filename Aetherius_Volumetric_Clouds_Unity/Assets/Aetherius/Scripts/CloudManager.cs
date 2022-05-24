@@ -15,7 +15,7 @@ namespace Aetherius
         public CloudShape advanced;
 
         //Ray March
-        public int maxRayVisibilityDist = 50000;
+        public int maxRayVisibilityDist = 50000; //ray distance through the cloud layer
         public Texture2D blueNoise;
 
         //Weather System
@@ -62,6 +62,7 @@ namespace Aetherius
         public float skewAmmount = 0.1f;
         public Vector3 windDirection = new Vector3(0.01f, 0.025f, 0.005f);
         public int planetRadiusKm = 6371;
+        public Vector2Int hazeVisibilityAtmos = new Vector2Int(50000,100000); //distance through the atmosphere layer
 
         //Lighting
         public Light sunLight;
@@ -219,6 +220,9 @@ namespace Aetherius
             mat.SetFloat("minCloudHeight", minCloudHeightMeters);
             mat.SetFloat("maxCloudHeight", maxCloudHeightMeters);
             mat.SetFloat("maxRayUserDist", maxRayVisibilityDist);
+            mat.SetFloat("hazeMinDist", hazeVisibilityAtmos.x);
+            mat.SetFloat("hazeMaxDist", hazeVisibilityAtmos.y);
+
 
             mat.SetFloat("baseShapeSize", currentShape.baseShapeSize);
             mat.SetFloat("detailSize", currentShape.detailSize);

@@ -112,6 +112,8 @@ Shader "Aetherius/RaymarchShader"
 			float maxRayUserDist;
 			float maxRayPossibleDist;
 			float maxRayPossibleGroundDist;
+			float hazeMinDist;
+			float hazeMaxDist;
 
 			bool transitioningWM;
 			float transitionLerpT;
@@ -559,13 +561,14 @@ Shader "Aetherius/RaymarchShader"
 					ammountTravelledThroughAtmos = length(atmosphereHazePos - atmosIntersection.r1o);
 				}
 
-				float atmosphereVisibDist = maxRayPossibleGroundDist;
-				if (maxRayUserDist != 0.0)
+				float atmosphereVisibDist = maxRayPossibleGroundDist*0.5;
+				if (hazeMaxDist > 0.0)
 				{
-					atmosphereVisibDist = min(maxRayUserDist, maxRayPossibleGroundDist);
+					atmosphereVisibDist = min(hazeMaxDist, atmosphereVisibDist);
 				}
-				float minHazeDist = atmosphereVisibDist *0.25;//TODO consider making this public
+
 				float maxHazeDist = atmosphereVisibDist;//Horizon max view
+				float minHazeDist = hazeMinDist;//TODO consider making this public
 				float hazeAmmount = saturate(Remap(ammountTravelledThroughAtmos, minHazeDist, maxHazeDist, 0.0, 1.0));
 
 				col = lerp(scatteredtransmittance * col + scatteredLuminance, col, 1.0 - (1.0-hazeAmmount)*(1.0-hazeAmmount));

@@ -44,6 +44,8 @@ namespace Aetherius
             _myScript.planetRadiusKm = Mathf.Max(EditorGUILayout.IntField("Planet Radius", _myScript.planetRadiusKm), 0);
             _myScript.minCloudHeightMeters = EditorGUILayout.FloatField("Lowest Cloud Altitude", _myScript.minCloudHeightMeters);
             _myScript.maxCloudHeightMeters = EditorGUILayout.FloatField("Highest Cloud Altitude", _myScript.maxCloudHeightMeters);
+            _myScript.hazeVisibilityAtmos = EditorGUILayout.Vector2IntField(new GUIContent("Atmospheric Haze Distance",
+                "(X) distance at wich haze starts; (Y) distance at wich haze ends (If 0, default horizon distance is used. Use negative values to get rid of the haze)."), _myScript.hazeVisibilityAtmos);
 
             _myScript.cumulusHorizon = EditorGUILayout.Toggle(new GUIContent("Cumulus Clouds At The Horizon", "Option to make more epic cloudscapes, making the clouds toward the horizon appear more imposing"), _myScript.cumulusHorizon);
             if (_myScript.cumulusHorizon == true)
