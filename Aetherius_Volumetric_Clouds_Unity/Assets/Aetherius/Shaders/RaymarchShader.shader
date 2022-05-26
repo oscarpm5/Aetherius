@@ -7,13 +7,14 @@ Shader "Aetherius/RaymarchShader"
 		SubShader
 	{
 		// No culling or depth
-		Cull Off ZWrite Off ZTest Always
+		Cull Off ZWrite Off ZTest Off
 
 		Pass
 		{
 			CGPROGRAM
 			#pragma vertex vert
 			#pragma fragment frag
+			#pragma enable_d3d11_debug_symbols //TODO delete when finished debugging
 
 			#include "UnityCG.cginc"
 
@@ -133,7 +134,6 @@ Shader "Aetherius/RaymarchShader"
 				float r2m;//magnitude
 			};
 
-
 			float2 GetAtmosphereIntersection(float3 ro,float3 rd,float3 sphO, float r)//returns -1 when no intersection has been found
 			{
 				float t0 = -1.0;
@@ -170,8 +170,12 @@ Shader "Aetherius/RaymarchShader"
 			//outputs a ro + the length of the ray, returns false if no intersection has been found
 			bool GetRayAtmosphere(float3 ro,float3 rd, out AtmosIntersection intersection)
 			{
-				intersection.hasRay2 = false;
 				intersection.startsInAtmos = false;
+				intersection.r1o = ro;
+				intersection.r2o = ro;
+				intersection.hasRay2 = false;
+				intersection.r1m = 0.0;
+				intersection.r2m = 0.0;
 
 				float3 planetO = float3(0.0, -planetAtmos.x,0.0);
 				float d = length(ro - planetO);//distance btween camera and the planet center
@@ -189,7 +193,7 @@ Shader "Aetherius/RaymarchShader"
 						return false;
 					}
 
-					intersection.r1o = ro + rd* innerAtmT.y;//second hit as 1st will always be behind camera in this case
+					intersection.r1o = ro + rd * innerAtmT.y;//second hit as 1st will always be behind camera in this case
 					intersection.r1m = outerAtmT.y - innerAtmT.y;//second hit as 1st will always be behind camera in this case
 
 					return true;
@@ -211,12 +215,10 @@ Shader "Aetherius/RaymarchShader"
 							intersection.r2m = outerAtmT.y - innerAtmT.y;
 						}
 
-
 						return true;
 					}
 
 					intersection.r1m = outerAtmT.y;
-
 
 					return true;
 				}
@@ -232,9 +234,7 @@ Shader "Aetherius/RaymarchShader"
 
 				if (innerAtmT.x > 0.0)
 				{
-
 					intersection.r1m = innerAtmT.x - outerAtmT.x;
-
 
 					if (groundT.x < 0.0) //If no ground collision, secondary ray
 					{
@@ -324,7 +324,6 @@ Shader "Aetherius/RaymarchShader"
 				if (transitioningWM == true)
 					weatherMapCloud = lerp(weatherMapCloud, weatherMapTextureNew.SampleLevel(samplerweatherMapTextureNew, (skewPos.xz / weatherMapSize) + windOffset.xz * windDisplacesWeatherMap, sampleLvl), transitionLerpT);
 
-
 				//Cloud Base shape
 				float4 lowFreqNoise = baseShapeTexture.SampleLevel(samplerbaseShapeTexture, (currPos / baseShapeSize) + windOffset * baseShapeWindMult, sampleLvl);
 				float lowFreqFBM = (lowFreqNoise.g * 0.625) + (lowFreqNoise.b * 0.25) + (lowFreqNoise.a * 0.125);
@@ -337,7 +336,6 @@ Shader "Aetherius/RaymarchShader"
 					weatherMapCloud.b = max(weatherMapCloud.b, saturate(Remap(length(initialPos.xz - _WorldSpaceCameraPos.xz), cumulusHorizonGradient.x, cumulusHorizonGradient.y, 0.0, 1.0)));
 				}
 
-				
 				float baseCloudWithCoverageA = (Remap(cloudNoiseBase * shapeAltering.x, 1.0 - weatherMapCloud.r, 1.0, 0.0, 1.0));
 				float baseCloudWithCoverageB = (Remap(cloudNoiseBase * shapeAltering.y, 1.0 - weatherMapCloud.g, 1.0, 0.0, 1.0));
 				float baseCloudWithCoverageC = (Remap(cloudNoiseBase * shapeAltering.z, 1.0 - weatherMapCloud.b, 1.0, 0.0, 1.0));
@@ -349,7 +347,7 @@ Shader "Aetherius/RaymarchShader"
 				float baseCloudWithCoverage = max(max(baseCloudWithCoverageA, baseCloudWithCoverageB) ,baseCloudWithCoverageC);
 
 				float finalCloud = baseCloudWithCoverage;
-				
+
 				if (!onlyBase)
 				{
 					////Detail Shape
@@ -390,7 +388,6 @@ Shader "Aetherius/RaymarchShader"
 				{
 					return min(maxRayUserDist, rayLength);
 				}
-
 			}
 
 			bool IsPosVisible(float3 pos,float maxDepth,bool isMaxDepth)
@@ -432,14 +429,13 @@ Shader "Aetherius/RaymarchShader"
 				for (int currStep = 0; currStep < iter; ++currStep)
 				{
 					float3 newPos = initialStepSize * -sunDir + (coneKernel[currStep].xyz * currStep);
-					pos += newPos; 
+					pos += newPos;
 					float density = GetDensity(pos, (float(currStep) / float(iter)) * 2.0,false);
 
 					shadow *= exp(-density * length(newPos) * eCoeff);
 				}
 
 				return shadow;//TODO can lerp powder effect here (multiplying shadow) but might not be energy conserving!
-
 			}
 
 			float3 LightScatter(float3 currPos, float cosAngle,int i)
@@ -463,21 +459,19 @@ Shader "Aetherius/RaymarchShader"
 				{
 					shadow = LightShadowTransmittanceCone(currPos, shadowSize, newExtinctionC);
 				}
-				else 
+				else
 				{
 					shadow = LightShadowTransmittance(currPos, shadowSize, newExtinctionC);
 				}
 
-				return l * shadow * DoubleLobeScattering(cosAngle * pow(c,i), 0.3, 0.15, 0.5) * newScatterC + ambientSky* t *shadow* (1.0/4.0*3.1415) * newScatterC;
+				return l * shadow * DoubleLobeScattering(cosAngle * pow(c,i), 0.3, 0.15, 0.5) * newScatterC + ambientSky * t * shadow * (1.0 / 4.0 * 3.1415) * newScatterC;
 			}
 
-
 			void RaymarchThroughAtmos(float3 pos,float3 rd, int maxSteps,
-				float stepLengthBase,float maxDepth,float cosAngle,bool isMaxDepth, 
+				float stepLengthBase,float maxDepth,float cosAngle,bool isMaxDepth,
 				inout bool atmosphereHazeAssigned,
 				inout float scatTransmittance, inout float3 scatLuminance, inout float3 atmosphereHazePos)
 			{
-
 				for (int t = 0; t < maxSteps; ++t)
 				{
 					if (IsPosVisible(pos, maxDepth, isMaxDepth) && scatTransmittance > 0.0)//Checks if an object is occluding the raymarch
@@ -508,13 +502,10 @@ Shader "Aetherius/RaymarchShader"
 
 							scatTransmittance *= transmittance;
 						}
-
-
 					}
 					pos += rd * stepLengthBase;
 				}
 			}
-
 
 			float3 Raymarching(float3 col,float3 rd, AtmosIntersection atmosIntersection,float2 uv,float maxDepth,bool isMaxDepth)
 			{
@@ -525,9 +516,6 @@ Shader "Aetherius/RaymarchShader"
 				uv *= min(_ScreenParams.x, _ScreenParams.y) / blueNoiseW;
 				float blueNoiseOffset = blueNoiseTexture.Sample(samplerblueNoiseTexture, uv);
 				float cosAngle = dot(-rd,sunDir);//We assume they are normalized
-
-
-
 
 				float maxStepsRay = CalculateStepsForRay(atmosIntersection.r1m);
 				float stepLength = CalculateMaxRayDist(atmosIntersection.r1m) / maxStepsRay;
@@ -547,7 +535,7 @@ Shader "Aetherius/RaymarchShader"
 					stepLength = CalculateMaxRayDist(atmosIntersection.r2m) / maxStepsRay;
 
 					startingPos = atmosIntersection.r2o + rd * stepLength * blueNoiseOffset;
-				
+
 					RaymarchThroughAtmos(startingPos, rd, maxStepsRay, stepLength, maxDepth, cosAngle, isMaxDepth, atmosphereHazeAssigned, scatteredtransmittance, scatteredLuminance, atmosphereHazePos);
 				}
 
@@ -556,12 +544,12 @@ Shader "Aetherius/RaymarchShader"
 				{
 					ammountTravelledThroughAtmos = length(atmosphereHazePos - _WorldSpaceCameraPos);
 				}
-				else 
+				else
 				{
 					ammountTravelledThroughAtmos = length(atmosphereHazePos - atmosIntersection.r1o);
 				}
 
-				float atmosphereVisibDist = maxRayPossibleGroundDist*0.5;
+				float atmosphereVisibDist = maxRayPossibleGroundDist * 0.5;
 				if (hazeMaxDist > 0.0)
 				{
 					atmosphereVisibDist = min(hazeMaxDist, atmosphereVisibDist);
@@ -571,7 +559,7 @@ Shader "Aetherius/RaymarchShader"
 				float minHazeDist = hazeMinDist;//TODO consider making this public
 				float hazeAmmount = saturate(Remap(ammountTravelledThroughAtmos, minHazeDist, maxHazeDist, 0.0, 1.0));
 
-				col = lerp(scatteredtransmittance * col + scatteredLuminance, col, 1.0 - (1.0-hazeAmmount)*(1.0-hazeAmmount));
+				col = lerp(scatteredtransmittance * col + scatteredLuminance, col, 1.0 - (1.0 - hazeAmmount) * (1.0 - hazeAmmount));
 
 				return float3(col);
 			}
@@ -598,7 +586,7 @@ Shader "Aetherius/RaymarchShader"
 				{
 					return fixed4(col, 1.0);
 				}
-				else 
+				else
 				{
 					float3 result = Raymarching(col,rayDirection, atmosIntersection,i.uv, depthMeters,linearDepth >= 1.0);
 					return fixed4(result,1.0);
