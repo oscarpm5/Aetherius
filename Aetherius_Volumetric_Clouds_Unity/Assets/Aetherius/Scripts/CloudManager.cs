@@ -62,7 +62,7 @@ namespace Aetherius
         public float skewAmmount = 0.1f;
         public Vector3 windDirection = new Vector3(0.01f, 0.025f, 0.005f);
         public int planetRadiusKm = 6371;
-        public Vector2Int hazeVisibilityAtmos = new Vector2Int(50000,100000); //distance through the atmosphere layer
+        public Vector2Int hazeVisibilityAtmos = new Vector2Int(50000, 100000); //distance through the atmosphere layer
 
         //Lighting
         public Light sunLight;
@@ -235,25 +235,34 @@ namespace Aetherius
             mat.SetFloat("absorptionC", absorptionC);
             mat.SetFloat("scatterC", scatterC);
             mat.SetFloat("extintionC", absorptionC + scatterC);
-            mat.SetFloat("lightIntensity", sunLight.intensity * lightIntensityMult);
-            mat.SetFloat("ambientLightIntensity", ambientLightIntensity);
             mat.SetInt("softerShadows", softerShadows ? 1 : 0);
             mat.SetFloat("shadowSize", shadowSize);
 
 
 
-            Color[] c = new Color[2];
-            Vector3[] dirs = new Vector3[2];
+            Color[] c = new Color[3];
+            Vector3[] dirs = new Vector3[3];
             dirs[0] = Vector3.up;
             dirs[1] = Vector3.down;
+            dirs[2] = sunLight.transform.rotation * Vector3.back;
 
-
+            RenderSettings.ambientMode = UnityEngine.Rendering.AmbientMode.Skybox;
             RenderSettings.ambientProbe.Evaluate(dirs, c);
             List<Vector4> ambientColors = new List<Vector4>();
-            ambientColors.Add(c[0]);
-            ambientColors.Add(c[1]);
+            ambientColors.Add(c[0]);//Up
+            ambientColors.Add(c[1]);//Down
+            ambientColors.Add(c[2]);//SunDir
 
-            mat.SetVector("lightColor", sunLight.color);
+            float weightedGrayscaleAmbientSky = 0.299f * ambientColors[0].x + 0.587f * ambientColors[0].y + 0.114f * ambientColors[0].z;
+            float weightedGrayscaleAmbientSun = 0.299f * ambientColors[2].x + 0.587f * ambientColors[2].y + 0.114f * ambientColors[2].z;
+            float weightedGrayscaleAmbient = Mathf.Max(weightedGrayscaleAmbientSun , weightedGrayscaleAmbientSky);
+
+            for (int i = 0; i < ambientColors.Count; ++i)
+            {
+                ambientColors[i] *= ambientLightIntensity;
+            }
+
+            mat.SetVector("lightColor", sunLight.color * sunLight.intensity * lightIntensityMult * weightedGrayscaleAmbient);
             mat.SetVectorArray("ambientColors", ambientColors);
             mat.SetVectorArray("coneKernel", conekernel);
 

@@ -75,10 +75,8 @@ Shader "Aetherius/RaymarchShader"
 			float absorptionC;
 			float scatterC;
 
-			float lightIntensity;
 			float3 lightColor;
-			float ambientLightIntensity;
-			float3 ambientColors[2];
+			float3 ambientColors[3];
 			float4 coneKernel[6];
 			bool softerShadows;
 			float shadowSize;
@@ -441,18 +439,18 @@ Shader "Aetherius/RaymarchShader"
 			float3 LightScatter(float3 currPos, float cosAngle,int i)
 			{
 				//must be a<=b to be energy conserving
-				float a = 0.25;
-				float b = 0.75;
-				float c = 0.5;
+				const float a = 0.25;
+				const float b = 0.75;
+				const float c = 0.5;
 				float newExtinctionC = extintionC * pow(a,i);
 				float newScatterC = scatterC * pow(b,i);
 
-				float3 ambientSky = ambientColors[0].xyz * ambientLightIntensity;
-				float3 ambientFloor = ambientColors[1].xyz * ambientLightIntensity * 0.5;
+				float3 ambientSky = ambientColors[0].xyz ;
+				float3 ambientFloor = ambientColors[1].xyz  * 0.5;
+				float3 ambientSun = ambientColors[2].xyz ;
+
 				float heightPercent = GetCloudLayerHeightSphere(currPos);
 				float t = saturate(Remap(heightPercent, 0.0, 1.0, 0.15, 1.0));
-
-				float3 l = lightColor * lightIntensity;
 
 				float shadow = 1.0;
 				if (softerShadows == true)
@@ -464,7 +462,7 @@ Shader "Aetherius/RaymarchShader"
 					shadow = LightShadowTransmittance(currPos, shadowSize, newExtinctionC);
 				}
 
-				return l * shadow * DoubleLobeScattering(cosAngle * pow(c,i), 0.3, 0.15, 0.5) * newScatterC + ambientSky * t * shadow * (1.0 / 4.0 * 3.1415) * newScatterC;
+				return lightColor * shadow * DoubleLobeScattering(cosAngle * pow(c,i), 0.3, 0.15, 0.5) * newScatterC + ambientSun * t * shadow * (1.0 / 4.0 * 3.1415) * newScatterC;
 			}
 
 			void RaymarchThroughAtmos(float3 pos,float3 rd, int maxSteps,
