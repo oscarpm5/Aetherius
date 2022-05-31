@@ -10,6 +10,7 @@ namespace Aetherius
 
         public CLOUD_CONTROL mode = CLOUD_CONTROL.SIMPLE;
         public CLOUD_PRESET preset = CLOUD_PRESET.SPARSE;
+        public CLOUD_RESOLUTION resolution = CLOUD_RESOLUTION.ORIGINAL;
 
         public CloudShape simple;
         public CloudShape advanced;
@@ -201,7 +202,7 @@ namespace Aetherius
             return retList;
         }
 
-        public void SetMaterialProperties(ref Material mat)
+        public void SetMaterialProperties(ref Material mat,Vector2 texDimensions)
         {
             if (transitioning)
             {
@@ -215,7 +216,7 @@ namespace Aetherius
             mat.SetTexture("detailTexture", textureGenerator.GetTexture(TEXTURE_TYPE.DETAIL));
             mat.SetTexture("weatherMapTexture", textureGenerator.GetWM(wmSeed, preset));
             mat.SetTexture("blueNoiseTexture", blueNoise);
-
+            mat.SetVector("texDimensions", texDimensions);
 
             mat.SetFloat("minCloudHeight", minCloudHeightMeters);
             mat.SetFloat("maxCloudHeight", maxCloudHeightMeters);
@@ -231,7 +232,8 @@ namespace Aetherius
             mat.SetFloat("globalCoverage", currentShape.globalCoverage);
             mat.SetFloat("globalDensity", currentShape.globalDensity);
 
-            mat.SetVector("sunDir", sunLight.transform.rotation * Vector3.forward);
+            Vector3 currentSunDir = sunLight.transform.rotation * Vector3.forward;
+            mat.SetVector("sunDir", currentSunDir);
             mat.SetFloat("absorptionC", absorptionC);
             mat.SetFloat("scatterC", scatterC);
             mat.SetFloat("extintionC", absorptionC + scatterC);
@@ -244,7 +246,7 @@ namespace Aetherius
             Vector3[] dirs = new Vector3[3];
             dirs[0] = Vector3.up;
             dirs[1] = Vector3.down;
-            dirs[2] = sunLight.transform.rotation * Vector3.back;
+            dirs[2] = -currentSunDir;
 
             RenderSettings.ambientMode = UnityEngine.Rendering.AmbientMode.Skybox;
             RenderSettings.ambientProbe.Evaluate(dirs, c);
@@ -255,11 +257,16 @@ namespace Aetherius
 
             float weightedGrayscaleAmbientSky = 0.299f * ambientColors[0].x + 0.587f * ambientColors[0].y + 0.114f * ambientColors[0].z;
             float weightedGrayscaleAmbientSun = 0.299f * ambientColors[2].x + 0.587f * ambientColors[2].y + 0.114f * ambientColors[2].z;
-            float weightedGrayscaleAmbient = Mathf.Max(weightedGrayscaleAmbientSun , weightedGrayscaleAmbientSky);
+            float weightedGrayscaleAmbient = Mathf.Min(Mathf.Max(weightedGrayscaleAmbientSun , weightedGrayscaleAmbientSky),0.18f);
+
+            float inclination = Vector3.Dot(-currentSunDir, Vector3.up);
+            inclination = Utility.RemapClamp(inclination, -0.10f, 0.0f, 0.0f, 1.0f);
+            //inclination = inclination*inclination;
+            float newAmbientLightIntensity = Mathf.Lerp(6.0f * ambientLightIntensity, ambientLightIntensity,inclination);
 
             for (int i = 0; i < ambientColors.Count; ++i)
             {
-                ambientColors[i] *= ambientLightIntensity;
+                ambientColors[i] *= newAmbientLightIntensity;
             }
 
             mat.SetVector("lightColor", sunLight.color * sunLight.intensity * lightIntensityMult * weightedGrayscaleAmbient);

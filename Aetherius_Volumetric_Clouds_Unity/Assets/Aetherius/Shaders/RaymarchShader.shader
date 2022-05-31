@@ -51,6 +51,8 @@ Shader "Aetherius/RaymarchShader"
 				return minTarget + (((v - minOrigin) / (maxOrigin - minOrigin)) * (maxTarget - minTarget));
 			}
 
+			float2 texDimensions;
+
 			float minCloudHeight;
 			float maxCloudHeight;
 
@@ -462,7 +464,7 @@ Shader "Aetherius/RaymarchShader"
 					shadow = LightShadowTransmittance(currPos, shadowSize, newExtinctionC);
 				}
 
-				return lightColor * shadow * DoubleLobeScattering(cosAngle * pow(c,i), 0.3, 0.15, 0.5) * newScatterC + ambientSun * t * shadow * (1.0 / 4.0 * 3.1415) * newScatterC;
+				return lightColor * shadow * DoubleLobeScattering(cosAngle * pow(c,i), 0.3, 0.15, 0.5) * newScatterC + (ambientSun*0.5 + ambientSky*0.5) * t * shadow * (1.0 / 4.0 * 3.1415) * newScatterC;
 			}
 
 			void RaymarchThroughAtmos(float3 pos,float3 rd, int maxSteps,
@@ -505,13 +507,13 @@ Shader "Aetherius/RaymarchShader"
 				}
 			}
 
-			float3 Raymarching(float3 col,float3 rd, AtmosIntersection atmosIntersection,float2 uv,float maxDepth,bool isMaxDepth)
+			float4 Raymarching(float3 col,float3 rd, AtmosIntersection atmosIntersection,float2 uv,float maxDepth,bool isMaxDepth)
 			{
 				uint blueNoiseW;
 				uint blueNoiseH;
 				blueNoiseTexture.GetDimensions(blueNoiseW, blueNoiseH);
-				uv.x *= (_ScreenParams.x / _ScreenParams.y);
-				uv *= min(_ScreenParams.x, _ScreenParams.y) / blueNoiseW;
+				uv.x *= (texDimensions.x / texDimensions.y);
+				uv *= min(texDimensions.x, texDimensions.y) / blueNoiseW;
 				float blueNoiseOffset = blueNoiseTexture.Sample(samplerblueNoiseTexture, uv);
 				float cosAngle = dot(-rd,sunDir);//We assume they are normalized
 
@@ -556,10 +558,12 @@ Shader "Aetherius/RaymarchShader"
 				float maxHazeDist = atmosphereVisibDist;//Horizon max view
 				float minHazeDist = hazeMinDist;//TODO consider making this public
 				float hazeAmmount = saturate(Remap(ammountTravelledThroughAtmos, minHazeDist, maxHazeDist, 0.0, 1.0));
-
-				col = lerp(scatteredtransmittance * col + scatteredLuminance, col, 1.0 - (1.0 - hazeAmmount) * (1.0 - hazeAmmount));
-
-				return float3(col);
+				
+				
+				//col = lerp(scatteredtransmittance * col + scatteredLuminance, col, 1.0 - (1.0 - hazeAmmount) * (1.0 - hazeAmmount));
+				
+				hazeAmmount = 1.0 - (1.0 - hazeAmmount) * (1.0 - hazeAmmount);
+				return float4(scatteredLuminance* saturate(1.0- hazeAmmount), max(scatteredtransmittance,hazeAmmount));
 			}
 
 			fixed4 frag(v2f i) : SV_Target
@@ -582,12 +586,12 @@ Shader "Aetherius/RaymarchShader"
 
 				if (!isAtmosRay || atmosIntersection.r1m <= 0.0)
 				{
-					return fixed4(col, 1.0);
+					return fixed4(0.0,0.0,0.0, 1.0);
 				}
 				else
 				{
-					float3 result = Raymarching(col,rayDirection, atmosIntersection,i.uv, depthMeters,linearDepth >= 1.0);
-					return fixed4(result,1.0);
+					float4 result = Raymarching(col,rayDirection, atmosIntersection,i.uv, depthMeters,linearDepth >= 1.0);
+					return result;
 				}
 			}
 	ENDCG

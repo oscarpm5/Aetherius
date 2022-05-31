@@ -263,6 +263,7 @@ MonoBehaviour:
   skewAmmount: 0
   windDirection: {x: 0.01, y: 0.025, z: 0.005}
   planetRadiusKm: 6371
+  hazeVisibilityAtmos: {x: 50000, y: 100000}
   sunLight: {fileID: 0}
   lightIntensityMult: 6.5
   ambientLightIntensity: 1
@@ -309,7 +310,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _shader: {fileID: 4800000, guid: 0062334ff4afa1a42b65d127e5405941, type: 3}
+  _displayToScreen: {fileID: 4800000, guid: a3d44e973b921144e824d1af6a39b634, type: 3}
   _material: {fileID: 0}
+  _displayMaterial: {fileID: 0}
   _cloudManager: {fileID: 3966771012703584866}
 --- !u!114 &3966771012703584867
 MonoBehaviour:

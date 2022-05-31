@@ -18,6 +18,12 @@ namespace Aetherius
         OVERCAST
     }
 
+    public enum CLOUD_RESOLUTION
+    {
+        ORIGINAL,
+        HALF,
+        QUARTER
+    }
     public enum TEXTURE_CHANNEL
     {
         R,
@@ -38,6 +44,9 @@ namespace Aetherius
         TEX_3D
     }
 
+
+
+
     [System.Serializable]
     public class CloudShape //TODO convert to serializable object?
     {
@@ -50,6 +59,16 @@ namespace Aetherius
 
     public class Utility
     {
+        public static float Remap(float v, float minOrigin, float maxOrigin, float minTarget, float maxTarget)
+        {
+            return minTarget + (((v - minOrigin) / (maxOrigin - minOrigin)) * (maxTarget - minTarget));
+        }
+        public static float RemapClamp(float v, float minOrigin, float maxOrigin, float minTarget, float maxTarget)
+        {
+            return Mathf.Clamp(minTarget + (((v - minOrigin) / (maxOrigin - minOrigin)) * (maxTarget - minTarget)),minTarget,maxTarget);
+        }
+
+
         public static ComputeBuffer CreateComputeBuffer(ref List<ComputeBuffer> toDeleteList, int dataStride, System.Array data)
         {
             ComputeBuffer newBuffer = new ComputeBuffer(data.Length, dataStride, ComputeBufferType.Structured);

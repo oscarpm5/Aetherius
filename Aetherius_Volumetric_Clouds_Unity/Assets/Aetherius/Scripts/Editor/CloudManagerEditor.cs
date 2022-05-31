@@ -12,7 +12,7 @@ namespace Aetherius
 
         SerializedProperty mode;
         SerializedProperty preset;
-
+        SerializedProperty resolution;
 
 
 
@@ -23,7 +23,7 @@ namespace Aetherius
             _myScript = (CloudManager)target;
             mode = serializedObject.FindProperty("mode");
             preset = serializedObject.FindProperty("preset");
-
+            resolution = serializedObject.FindProperty("resolution");
         }
 
         void StartSection(string sectionLabel)
@@ -90,6 +90,20 @@ namespace Aetherius
         void QualitySection()
         {
             StartSection("Quality");
+
+            using (EditorGUI.ChangeCheckScope check = new EditorGUI.ChangeCheckScope())
+            {
+                EditorGUILayout.PropertyField(resolution);
+                if (check.changed)
+                {
+                    if (_myScript.resolution != (CLOUD_RESOLUTION)resolution.intValue)
+                    {
+                        _myScript.resolution = (CLOUD_RESOLUTION)resolution.intValue;
+                    }
+                }
+            }
+
+
             _myScript.maxRayVisibilityDist = Mathf.Max(EditorGUILayout.IntField("Max Ray Distance", _myScript.maxRayVisibilityDist), 0);
             _myScript.blueNoise = (Texture2D)EditorGUILayout.ObjectField("Blue Noise", _myScript.blueNoise, typeof(Texture2D), false);
 
