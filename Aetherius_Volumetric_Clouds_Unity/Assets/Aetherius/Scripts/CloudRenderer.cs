@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -98,6 +99,10 @@ namespace Aetherius
 
             displayMaterial.SetTexture("_MainTex", source); //input the rendered camera texture 
             displayMaterial.SetTexture("cloudTex", halfResTexture); //input the rendered camera texture 
+            displayMaterial.SetVector("texelRes", new Vector2( 1.0f / halfRes.x, 1.0f / halfRes.y));
+            SetResolutionParameters(_cloudManager.resolution);
+          
+
 
             Graphics.Blit(source, destination, displayMaterial);
 
@@ -109,5 +114,35 @@ namespace Aetherius
             }
         }
 
+        void SetResolutionParameters(CLOUD_RESOLUTION resolution)
+        {
+            bool useBlur = false;
+            int kernelHalfDim = 0;
+            switch (resolution)
+            {
+                case CLOUD_RESOLUTION.ORIGINAL:
+                    {
+                        useBlur = false;
+                        kernelHalfDim = 0;
+                    }
+                    break;
+                case CLOUD_RESOLUTION.HALF:
+                    {
+                        useBlur = true;
+                        kernelHalfDim = 1;
+                    }
+                    break;
+                case CLOUD_RESOLUTION.QUARTER:
+                    {
+                        useBlur = true;
+                        kernelHalfDim = 2;
+                    }
+                    break;
+            }
+
+            displayMaterial.SetInt("useBlur", useBlur ? 1 : 0);
+            displayMaterial.SetInt("kernelHalfDim", kernelHalfDim);
+
+        }
     }
 }

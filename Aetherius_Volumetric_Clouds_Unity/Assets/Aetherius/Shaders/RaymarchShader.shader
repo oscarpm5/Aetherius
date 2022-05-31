@@ -507,7 +507,7 @@ Shader "Aetherius/RaymarchShader"
 				}
 			}
 
-			float4 Raymarching(float3 col,float3 rd, AtmosIntersection atmosIntersection,float2 uv,float maxDepth,bool isMaxDepth)
+			float4 Raymarching(float3 rd, AtmosIntersection atmosIntersection,float2 uv,float maxDepth,bool isMaxDepth)
 			{
 				uint blueNoiseW;
 				uint blueNoiseH;
@@ -572,7 +572,6 @@ Shader "Aetherius/RaymarchShader"
 				float viewLength = length(i.ray);
 				float3 rayDirection = i.ray / viewLength;
 
-				fixed3 col = tex2D(_MainTex, i.uv);
 				float depth = tex2D(_CameraDepthTexture,i.uv);
 				float linearDepth = Linear01Depth(depth);//depth 0,1
 				float depthMeters = _ProjectionParams.z * linearDepth;
@@ -590,7 +589,7 @@ Shader "Aetherius/RaymarchShader"
 				}
 				else
 				{
-					float4 result = Raymarching(col,rayDirection, atmosIntersection,i.uv, depthMeters,linearDepth >= 1.0);
+					float4 result = Raymarching(rayDirection, atmosIntersection,i.uv, depthMeters,linearDepth >= 1.0);
 					return result;
 				}
 			}
