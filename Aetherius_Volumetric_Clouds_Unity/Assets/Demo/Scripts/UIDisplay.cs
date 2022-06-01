@@ -7,13 +7,23 @@ using UnityEngine.UI;
 public class UIDisplay : MonoBehaviour
 {
     public Aetherius.CloudManager managerRef;
+    [HideInInspector]
+    public Benchmark benchmarkRef;
     public Text fpsCounter;
     public Text msCounter;
     public Text resolution;
+    public GameObject benchmarkToggleButton;
+
+    Text benchmarkToggleText;
+    Image benchmarkToggleImage;
+
+
     // Start is called before the first frame update
     void Start()
     {
         managerRef.resolution = Aetherius.CLOUD_RESOLUTION.ORIGINAL;
+        benchmarkToggleImage = benchmarkToggleButton.GetComponent<Image>();
+        benchmarkToggleText = benchmarkToggleButton.transform.Find("Text").GetComponent<Text>();
     }
 
     // Update is called once per frame
@@ -66,5 +76,25 @@ public class UIDisplay : MonoBehaviour
                 break;
         }
     }
+
+    public void ShowBenchmarkResults()
+    {
+
+    }
+
+    public void SetBenchmarkButtonDisplay(bool benchmarkActive)
+    {
+        if(benchmarkActive)
+        {
+            benchmarkToggleImage.color = Color.blue;
+            benchmarkToggleText.text = "Finish Benchmark";
+        }
+        else
+        {
+            benchmarkToggleImage.color = Color.green;
+            benchmarkToggleText.text = "Start Benchmark";
+        }
+    }
+    
 
 }

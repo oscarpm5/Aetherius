@@ -30,7 +30,9 @@ public class Benchmark : MonoBehaviour
 
 
 
-    Aetherius.CloudManager cloudManager;
+    public Aetherius.CloudManager cloudManager;
+    public UIDisplay display;
+    public CameraMove aetheriusCamMove;
     EVALUATION_STAGE evaluatingPreset;
     public float evaluationTime = 10.0f;
     float currentTime;
@@ -47,6 +49,7 @@ public class Benchmark : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
+        display.benchmarkRef = this;
         ResetData();
     }
 
@@ -54,7 +57,7 @@ public class Benchmark : MonoBehaviour
     {
         evaluatingFrames = new List<float>();
         evaluatingPreset = EVALUATION_STAGE.INACTIVE;
-
+        
         benchmarkData = new List<BenchmarkSectionData>();
         benchmarkData.Add(new BenchmarkSectionData("Sparse"));
         benchmarkData.Add(new BenchmarkSectionData("Cloudy"));
@@ -67,16 +70,34 @@ public class Benchmark : MonoBehaviour
         currentTime = 0.0f;
     }
 
-    void StartBenchmark()
+    public void ToggleBenchmark()
+    {
+        if (evaluatingPreset != EVALUATION_STAGE.INACTIVE)
+        {
+            StopBenchmark();
+        }
+        else
+        {
+            StartBenchmark();
+        }
+    }
+
+    public void StartBenchmark()
     {
         ResetData();
         evaluatingPreset = EVALUATION_STAGE.SPARSE;
-        Camera.main.transform.rotation = Quaternion.Euler(-30,200,0);
+        cloudManager.preset = Aetherius.CLOUD_PRESET.SPARSE;
+        cloudManager.StartWMTransition(0.0f);
+        aetheriusCamMove.SetPitchYaw(-30.0f, 200.0f);
+        aetheriusCamMove.enabledControl = false;
+        display.SetBenchmarkButtonDisplay(true);
     }
 
-    void StopBenchmark()
+    public void StopBenchmark()
     {
         evaluatingPreset = EVALUATION_STAGE.INACTIVE;
+        aetheriusCamMove.enabledControl = true;
+        display.SetBenchmarkButtonDisplay(false);
     }
 
     // Update is called once per frame
@@ -92,13 +113,16 @@ public class Benchmark : MonoBehaviour
                 currentTime = 0.0f;
 
                 CompileAverage(evaluatingPreset);
-                cloudManager.preset++;
                 evaluatingPreset++;
-                cloudManager.StartWMTransition(0);
-
+                
                 if (evaluatingPreset == EVALUATION_STAGE.SHOW_RESULTS)
                 {
                     CompileResults();
+                }
+                else
+                {
+                    cloudManager.preset++;               
+                    cloudManager.StartWMTransition(0.0f);
                 }
 
 
@@ -106,6 +130,7 @@ public class Benchmark : MonoBehaviour
             else
             {
                 currentTime += Time.unscaledDeltaTime;
+                evaluatingFrames.Add(Time.unscaledDeltaTime);
             }
         }
         else
@@ -123,6 +148,8 @@ public class Benchmark : MonoBehaviour
         benchmarkData[(int)evaluatingPreset].highestFPS = evaluatingFrames[evaluatingFrames.Count - 1];
         benchmarkData[(int)evaluatingPreset].lowestFPS = evaluatingFrames[0];
         evaluatingFrames.Clear();
+
+        Debug.Log("Compiled data for " + evaluatingPreset.ToString());
     }
 
     private void CompileResults()
@@ -137,12 +164,13 @@ public class Benchmark : MonoBehaviour
             lowestFPS = Mathf.Min(item.lowestFPS, lowestFPS);
         }
         averageFPS /= benchmarkData.Count;
+        Debug.Log("Results Compiled!");
     }
 
     private void ShowResults()
     {
         //TODO
-        throw new NotImplementedException();
+        display.ShowBenchmarkResults();
     }
 
     void DiscardExtremes()

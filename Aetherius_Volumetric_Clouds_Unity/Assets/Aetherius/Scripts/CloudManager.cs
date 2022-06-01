@@ -124,7 +124,7 @@ namespace Aetherius
 
             if (transitioning)
             {
-                if (currentTransitionTimeWM >= transitionTimeWM)
+                if (currentTransitionTimeWM > transitionTimeWM)
                 {
                     StopWMTransition();
                 }
@@ -148,7 +148,7 @@ namespace Aetherius
         }
 
         //TODO pass the preset as an argument in the future instead of picking the one in the class
-        public void StartWMTransition(int duration = -1)//If duration = -1 interpret this as no argument
+        public void StartWMTransition(float duration = -1.0f)//If duration = -1 interpret this as no argument
         {
             if (transitioning) //if a transition was ocurring already generate a texture with the status of the transition currently and lerp with that
             {
@@ -157,7 +157,7 @@ namespace Aetherius
 
             }
 
-            if (duration != -1)
+            if (duration >= 0.0f)
             {
                 transitionTimeWM = duration;
             }

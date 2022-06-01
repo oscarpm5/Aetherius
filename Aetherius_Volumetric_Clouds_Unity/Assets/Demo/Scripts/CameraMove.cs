@@ -15,7 +15,8 @@ public class CameraMove : MonoBehaviour
     float newPitch;
     float newYaw;
 
-
+    [HideInInspector]
+    public bool enabledControl = true;
     bool fpCamMode = true;//first person cam mode
 
     // Start is called before the first frame update
@@ -31,12 +32,15 @@ public class CameraMove : MonoBehaviour
         HandleInput();
         TransformObj();
 
-        Cursor.lockState = fpCamMode ? CursorLockMode.Locked : CursorLockMode.None;
+        Cursor.lockState = fpCamMode && enabledControl ? CursorLockMode.Locked : CursorLockMode.None;
     }
 
 
     void HandleInput()
     {
+        if (!enabledControl)
+            return;
+
         //UI Mode
             fpCamMode = Input.GetMouseButton(1);
 
@@ -67,6 +71,11 @@ public class CameraMove : MonoBehaviour
 
     }
 
+    public void SetPitchYaw(float pitch,float yaw)
+    {
+        this.pitch = pitch;
+        this.yaw = yaw;
+    }
 
     void TransformObj()
     {

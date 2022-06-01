@@ -61,6 +61,7 @@ namespace Aetherius
 
         }
 
+        [ImageEffectOpaque]
         private void OnRenderImage(RenderTexture source, RenderTexture destination)
         {
             cam.depthTextureMode = DepthTextureMode.Depth;
@@ -135,7 +136,7 @@ namespace Aetherius
                 case CLOUD_RESOLUTION.QUARTER:
                     {
                         useBlur = true;
-                        kernelHalfDim = 2;
+                        kernelHalfDim = 1;
                     }
                     break;
             }
