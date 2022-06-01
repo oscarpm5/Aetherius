@@ -36,13 +36,14 @@ public class UIDisplay : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
+        benchmarkCanvas.gameObject.SetActive(true);
         benchmarkToggleImage = benchmarkToggleButton.GetComponent<Image>();
         benchmarkToggleText = benchmarkToggleButton.transform.Find("Text").GetComponent<Text>();
 
-        benchmarkCanvas.gameObject.SetActive(false);
 
 
         AssignChildren();
+        benchmarkCanvas.gameObject.SetActive(false);
        
     }
 

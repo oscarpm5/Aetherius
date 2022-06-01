@@ -26,6 +26,11 @@ public class DemoManager : MonoBehaviour
             Quit();
         }
 
+        if (Input.GetKeyDown(KeyCode.B))
+        {
+            GetComponent<Benchmark>().ToggleBenchmark();
+        }
+
 
         if (Input.GetKeyDown(KeyCode.Alpha1))
         {
