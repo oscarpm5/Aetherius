@@ -5,15 +5,10 @@ using UnityEngine;
 
 public class BenchmarkSectionData
 {
-    public BenchmarkSectionData(String name)
-    {
-        this.name = name;
-    }
 
-    public String name;
-    public float averageFPS;
-    public float highestFPS;
-    public float lowestFPS;
+    public double averageSeconds;
+    public double highestSeconds;
+    public double lowestSeconds;
 }
 
 public class Benchmark : MonoBehaviour
@@ -38,12 +33,8 @@ public class Benchmark : MonoBehaviour
     float currentTime;
     List<float> evaluatingFrames;
 
-    float averageFPS = -1.0f;
-    float lowestFPS = -1.0f;
-    float highestFPS = -1.0f;
 
-
-    List<BenchmarkSectionData> benchmarkData;
+    public List<BenchmarkSectionData> benchmarkData;
 
 
     // Start is called before the first frame update
@@ -57,16 +48,14 @@ public class Benchmark : MonoBehaviour
     {
         evaluatingFrames = new List<float>();
         evaluatingPreset = EVALUATION_STAGE.INACTIVE;
-        
-        benchmarkData = new List<BenchmarkSectionData>();
-        benchmarkData.Add(new BenchmarkSectionData("Sparse"));
-        benchmarkData.Add(new BenchmarkSectionData("Cloudy"));
-        benchmarkData.Add(new BenchmarkSectionData("Stormy"));
-        benchmarkData.Add(new BenchmarkSectionData("Overcast"));
 
-        averageFPS = -1.0f;
-        lowestFPS = -1.0f;
-        highestFPS = -1.0f;
+        benchmarkData = new List<BenchmarkSectionData>();
+        benchmarkData.Add(new BenchmarkSectionData { });//sparse
+        benchmarkData.Add(new BenchmarkSectionData { });//cloudy
+        benchmarkData.Add(new BenchmarkSectionData { });//stormy
+        benchmarkData.Add(new BenchmarkSectionData { });//overcast
+        benchmarkData.Add(new BenchmarkSectionData { });//general
+
         currentTime = 0.0f;
     }
 
@@ -114,14 +103,14 @@ public class Benchmark : MonoBehaviour
 
                 CompileAverage(evaluatingPreset);
                 evaluatingPreset++;
-                
+
                 if (evaluatingPreset == EVALUATION_STAGE.SHOW_RESULTS)
                 {
                     CompileResults();
                 }
                 else
                 {
-                    cloudManager.preset++;               
+                    cloudManager.preset++;
                     cloudManager.StartWMTransition(0.0f);
                 }
 
@@ -144,9 +133,9 @@ public class Benchmark : MonoBehaviour
     private void CompileAverage(EVALUATION_STAGE evaluatingPreset)
     {
         DiscardExtremes();
-        benchmarkData[(int)evaluatingPreset].averageFPS = GetAverage();
-        benchmarkData[(int)evaluatingPreset].highestFPS = evaluatingFrames[evaluatingFrames.Count - 1];
-        benchmarkData[(int)evaluatingPreset].lowestFPS = evaluatingFrames[0];
+        benchmarkData[(int)evaluatingPreset].averageSeconds = GetAverage();
+        benchmarkData[(int)evaluatingPreset].highestSeconds = evaluatingFrames[evaluatingFrames.Count - 1];
+        benchmarkData[(int)evaluatingPreset].lowestSeconds = evaluatingFrames[0];
         evaluatingFrames.Clear();
 
         Debug.Log("Compiled data for " + evaluatingPreset.ToString());
@@ -154,16 +143,16 @@ public class Benchmark : MonoBehaviour
 
     private void CompileResults()
     {
-        averageFPS = -1.0f;
-        highestFPS = float.MinValue;
-        lowestFPS = float.MaxValue;
-        foreach (BenchmarkSectionData item in benchmarkData)
+        benchmarkData[benchmarkData.Count - 1].averageSeconds = 0.0f;
+        benchmarkData[benchmarkData.Count - 1].highestSeconds = double.MinValue;
+        benchmarkData[benchmarkData.Count - 1].lowestSeconds = double.MaxValue;
+        for (int i = 0; i < benchmarkData.Count - 1; i++)
         {
-            averageFPS += item.averageFPS;
-            highestFPS = Mathf.Max(item.highestFPS, highestFPS);
-            lowestFPS = Mathf.Min(item.lowestFPS, lowestFPS);
+            benchmarkData[benchmarkData.Count - 1].averageSeconds += benchmarkData[i].averageSeconds;
+            benchmarkData[benchmarkData.Count - 1].highestSeconds = Math.Max(benchmarkData[i].highestSeconds, benchmarkData[benchmarkData.Count - 1].highestSeconds);
+            benchmarkData[benchmarkData.Count - 1].lowestSeconds = Math.Min(benchmarkData[i].lowestSeconds, benchmarkData[benchmarkData.Count - 1].lowestSeconds);
         }
-        averageFPS /= benchmarkData.Count;
+        benchmarkData[benchmarkData.Count - 1].averageSeconds /= benchmarkData.Count-1;
         Debug.Log("Results Compiled!");
     }
 
