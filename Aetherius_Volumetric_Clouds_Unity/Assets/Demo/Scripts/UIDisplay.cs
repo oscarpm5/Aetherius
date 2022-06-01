@@ -36,7 +36,6 @@ public class UIDisplay : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
-        managerRef.resolution = Aetherius.CLOUD_RESOLUTION.ORIGINAL;
         benchmarkToggleImage = benchmarkToggleButton.GetComponent<Image>();
         benchmarkToggleText = benchmarkToggleButton.transform.Find("Text").GetComponent<Text>();
 
@@ -71,28 +70,13 @@ public class UIDisplay : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        HandleInput();
 
         fpsCounter.text = "FPS: " + 1.0/Time.unscaledDeltaTime;
         msCounter.text = "MS: " + Time.unscaledDeltaTime*1000.0f;
         SetResolutionText();
     }
 
-    void HandleInput()
-    {
-        if(Input.GetKeyDown(KeyCode.Alpha1))
-        {
-            managerRef.resolution = Aetherius.CLOUD_RESOLUTION.ORIGINAL;
-        }
-        else if (Input.GetKeyDown(KeyCode.Alpha2))
-        {
-            managerRef.resolution = Aetherius.CLOUD_RESOLUTION.HALF;
-        }
-        else if (Input.GetKeyDown(KeyCode.Alpha3))
-        {
-            managerRef.resolution = Aetherius.CLOUD_RESOLUTION.QUARTER;
-        }
-    }
+   
 
     void SetResolutionText()
     {
