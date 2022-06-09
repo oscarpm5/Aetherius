@@ -466,7 +466,8 @@ Shader "Aetherius/RaymarchShader"
 					shadow = LightShadowTransmittance(currPos, shadowSize, newExtinctionC);
 				}
 
-				return lightColor * shadow * DoubleLobeScattering(cosAngle * pow(c,i), 0.3, 0.15, 0.5) * newScatterC + (ambientSun*0.5 + ambientSky*0.5) * t * shadow * (1.0 / 4.0 * 3.1415) * newScatterC;
+				float cMult = pow(c, i);
+				return lightColor * shadow * DoubleLobeScattering(cosAngle , 0.3* cMult, 0.15* cMult, 0.5) * newScatterC + (ambientSun*0.5 + ambientSky*0.5) * t * shadow * (1.0 / 4.0 * 3.1415) * newScatterC;
 			}
 
 			void RaymarchThroughAtmos(float3 pos,float3 rd, int maxSteps,
