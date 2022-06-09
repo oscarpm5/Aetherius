@@ -449,9 +449,9 @@ Shader "Aetherius/RaymarchShader"
 				float newExtinctionC = extintionC * pow(a,i);
 				float newScatterC = scatterC * pow(b,i);
 
-				float3 ambientSky = ambientColors[0].xyz ;
-				float3 ambientFloor = ambientColors[1].xyz  * 0.5;
-				float3 ambientSun = ambientColors[2].xyz ;
+				float3 ambientSky = ambientColors[0].xyz;
+				float3 ambientFloor = ambientColors[1].xyz * 0.5;
+				float3 ambientSun = ambientColors[2].xyz;
 
 				float heightPercent = GetCloudLayerHeightSphere(currPos);
 				float t = saturate(Remap(heightPercent, 0.0, 1.0, 0.15, 1.0));
@@ -467,7 +467,7 @@ Shader "Aetherius/RaymarchShader"
 				}
 
 				float cMult = pow(c, i);
-				return lightColor * shadow * DoubleLobeScattering(cosAngle , 0.3* cMult, 0.15* cMult, 0.5) * newScatterC + (ambientSun*0.5 + ambientSky*0.5) * t * shadow * (1.0 / 4.0 * 3.1415) * newScatterC;
+				return lightColor * shadow * DoubleLobeScattering(cosAngle , 0.3 * cMult, 0.15 * cMult, 0.5) * newScatterC + (ambientSun * 0.5 + ambientSky * 0.5) * t * shadow * (1.0 / 4.0 * 3.1415) * newScatterC;
 			}
 
 			void RaymarchThroughAtmos(float3 pos,float3 rd, int maxSteps,
@@ -475,39 +475,130 @@ Shader "Aetherius/RaymarchShader"
 				inout bool atmosphereHazeAssigned,
 				inout float scatTransmittance, inout float3 scatLuminance, inout float3 atmosphereHazePos)
 			{
-				for (int t = 0; t < maxSteps; ++t)
+				bool isBaseStep = true;//Base step or full step
+				int samplesWithZeroDensity = 0;
+
+
+				float tMax = stepLengthBase * maxSteps;//TODO consider passing the total length of the ray as a parameter
+				float currentT = 0;
+				while (currentT <= tMax)
 				{
-					if (IsPosVisible(pos, maxDepth, isMaxDepth) && scatTransmittance > 0.0)//Checks if an object is occluding the raymarch
+					float3 currPos = pos + rd * currentT;
+
+					if (IsPosVisible(currPos, maxDepth, isMaxDepth) && scatTransmittance > 0.0)//Checks if an object is occluding the raymarch
 					{
-						float currDensity = GetDensity(pos, 0.0, false);
+						float currDensity = 0.0;
 
-						if (scatTransmittance <= 0.9 && atmosphereHazeAssigned == false)
+						if (isBaseStep == true)
 						{
-							atmosphereHazePos = pos;
-							atmosphereHazeAssigned = true;
-						}
+							currDensity = GetDensity(currPos, 0.0, true);
 
-						if (currDensity > 0.0)
-						{
-							float extinction = currDensity * extintionC;
-							float clampedExtinction = max(extinction, 0.0000001);
-							float transmittance = exp(-clampedExtinction * stepLengthBase);
-
-							float3 luminance = float3(0.0, 0.0, 0.0);
-							for (int i = 0; i < lightIterations; ++i)
+							if (currDensity > 0.0) //change to detailed steps if there is a cloud
 							{
-								luminance += LightScatter(pos, cosAngle, i);
+								currentT -= stepLengthBase; //go back to previous pos before changing
+								currentT = max(0, currentT);//also clamp to the start of the cloud
+								isBaseStep = false;
 							}
-							luminance *= currDensity;
-
-							float3 integScatt = (luminance - luminance * transmittance) / clampedExtinction;
-							scatLuminance += scatTransmittance * integScatt;
-
-							scatTransmittance *= transmittance;
+							else //continue at low resolution
+							{
+								currentT += stepLengthBase;
+							}
 						}
+						else
+						{
+							currDensity = GetDensity(currPos, 0.0, false);
+
+							if (scatTransmittance <= 0.9 && atmosphereHazeAssigned == false)
+							{
+								atmosphereHazePos = currPos;
+								atmosphereHazeAssigned = true;
+							}
+
+
+
+							if (currDensity > 0.0)
+							{
+								samplesWithZeroDensity = 0;
+
+								//Normal Raymarch
+								
+
+								float extinction = currDensity * extintionC;
+								float clampedExtinction = max(extinction, 0.0000001);
+								float transmittance = exp(-clampedExtinction * stepLengthBase);
+
+								float3 luminance = float3(0.0, 0.0, 0.0);
+								for (int i = 0; i < lightIterations; ++i)
+								{
+									luminance += LightScatter(currPos, cosAngle, i);
+								}
+								luminance *= currDensity;
+
+								float3 integScatt = (luminance - luminance * transmittance) / clampedExtinction;
+								scatLuminance += scatTransmittance * integScatt;
+
+								scatTransmittance *= transmittance;
+
+
+
+							}
+							else //If density is 0
+							{
+								samplesWithZeroDensity++;
+								if (samplesWithZeroDensity >= 8)//When several continuous samples with 0 density are encountered switch back to non detailed samples
+								{
+									samplesWithZeroDensity = 0;
+									isBaseStep = true;
+								}
+							}
+
+							currentT += stepLengthBase * 0.125;
+						}
+
+
 					}
-					pos += rd * stepLengthBase;
+
+
+
+					currentT += stepLengthBase;
 				}
+
+
+
+
+				//for (int t = 0; t < maxSteps; ++t)
+				//{
+				//	if (IsPosVisible(pos, maxDepth, isMaxDepth) && scatTransmittance > 0.0)//Checks if an object is occluding the raymarch
+				//	{
+				//		float currDensity = GetDensity(pos, 0.0, false);
+
+				//		if (scatTransmittance <= 0.9 && atmosphereHazeAssigned == false)
+				//		{
+				//			atmosphereHazePos = pos;
+				//			atmosphereHazeAssigned = true;
+				//		}
+
+				//		if (currDensity > 0.0)
+				//		{
+				//			float extinction = currDensity * extintionC;
+				//			float clampedExtinction = max(extinction, 0.0000001);
+				//			float transmittance = exp(-clampedExtinction * stepLengthBase);
+
+				//			float3 luminance = float3(0.0, 0.0, 0.0);
+				//			for (int i = 0; i < lightIterations; ++i)
+				//			{
+				//				luminance += LightScatter(pos, cosAngle, i);
+				//			}
+				//			luminance *= currDensity;
+
+				//			float3 integScatt = (luminance - luminance * transmittance) / clampedExtinction;
+				//			scatLuminance += scatTransmittance * integScatt;
+
+				//			scatTransmittance *= transmittance;
+				//		}
+				//	}
+				//	pos += rd * stepLengthBase;
+				//}
 			}
 
 			float4 Raymarching(float3 rd, AtmosIntersection atmosIntersection,float2 uv,float maxDepth,bool isMaxDepth)
@@ -561,12 +652,12 @@ Shader "Aetherius/RaymarchShader"
 				float maxHazeDist = atmosphereVisibDist;//Horizon max view
 				float minHazeDist = hazeMinDist;//TODO consider making this public
 				float hazeAmmount = saturate(Remap(ammountTravelledThroughAtmos, minHazeDist, maxHazeDist, 0.0, 1.0));
-				
-				
+
+
 				//col = lerp(scatteredtransmittance * col + scatteredLuminance, col, 1.0 - (1.0 - hazeAmmount) * (1.0 - hazeAmmount));
-				
+
 				hazeAmmount = 1.0 - (1.0 - hazeAmmount) * (1.0 - hazeAmmount);
-				return float4(scatteredLuminance* saturate(1.0- hazeAmmount), max(scatteredtransmittance,hazeAmmount));
+				return float4(scatteredLuminance * saturate(1.0 - hazeAmmount), max(scatteredtransmittance,hazeAmmount));
 			}
 
 			fixed4 frag(v2f i) : SV_Target
