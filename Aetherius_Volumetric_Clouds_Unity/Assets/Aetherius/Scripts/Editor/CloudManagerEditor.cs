@@ -83,6 +83,7 @@ namespace Aetherius
             _myScript.shadowSize = Mathf.Max(EditorGUILayout.FloatField("Shadow Step Distance", _myScript.shadowSize), 0.0f);
             _myScript.softerShadows = EditorGUILayout.Toggle("Softer Shadows", _myScript.softerShadows);
 
+            _myScript.lightIterations = EditorGUILayout.IntField("Light Iterations", _myScript.lightIterations);
 
             EndSection();
         }
@@ -106,6 +107,7 @@ namespace Aetherius
 
             _myScript.maxRayVisibilityDist = Mathf.Max(EditorGUILayout.IntField("Max Ray Distance", _myScript.maxRayVisibilityDist), 0);
             _myScript.blueNoise = (Texture2D)EditorGUILayout.ObjectField("Blue Noise", _myScript.blueNoise, typeof(Texture2D), false);
+
 
             EndSection();
         }

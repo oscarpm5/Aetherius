@@ -121,6 +121,8 @@ Shader "Aetherius/RaymarchShader"
 			Texture2D<float4> weatherMapTextureNew;
 			SamplerState samplerweatherMapTextureNew;
 
+			int lightIterations;
+
 			struct AtmosIntersection
 			{
 				bool startsInAtmos;
@@ -443,7 +445,7 @@ Shader "Aetherius/RaymarchShader"
 				//must be a<=b to be energy conserving
 				const float a = 0.25;
 				const float b = 0.75;
-				const float c = 0.5;
+				const float c = 0.6;
 				float newExtinctionC = extintionC * pow(a,i);
 				float newScatterC = scatterC * pow(b,i);
 
@@ -491,7 +493,7 @@ Shader "Aetherius/RaymarchShader"
 							float transmittance = exp(-clampedExtinction * stepLengthBase);
 
 							float3 luminance = float3(0.0, 0.0, 0.0);
-							for (int i = 0; i < 2; ++i)
+							for (int i = 0; i < lightIterations; ++i)
 							{
 								luminance += LightScatter(pos, cosAngle, i);
 							}

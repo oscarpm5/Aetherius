@@ -74,6 +74,7 @@ namespace Aetherius
         public float absorptionC = 0.0f;
         public float shadowSize = 100.0f;
         public bool softerShadows = false;
+        public int lightIterations=2;
 
         public TextureGenerator textureGenerator;
         public List<Vector4> conekernel;
@@ -239,7 +240,7 @@ namespace Aetherius
             mat.SetFloat("extintionC", absorptionC + scatterC);
             mat.SetInt("softerShadows", softerShadows ? 1 : 0);
             mat.SetFloat("shadowSize", shadowSize);
-
+            mat.SetInt("lightIterations", lightIterations);
 
 
             Color[] c = new Color[3];
