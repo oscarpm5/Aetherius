@@ -18,6 +18,7 @@ namespace Aetherius
         //Ray March
         public int maxRayVisibilityDist = 50000; //ray distance through the cloud layer
         public Texture2D blueNoise;
+        public int maxSampleDetailLvl=1;
 
         //Weather System
         public int wmSeed = 307;
@@ -115,7 +116,6 @@ namespace Aetherius
 
 
             sunLight = RenderSettings.sun;
-
         }
 
 
@@ -241,6 +241,7 @@ namespace Aetherius
             mat.SetInt("softerShadows", softerShadows ? 1 : 0);
             mat.SetFloat("shadowSize", shadowSize);
             mat.SetInt("lightIterations", lightIterations);
+            mat.SetInt("maxLvl", maxSampleDetailLvl);
 
 
             Color[] c = new Color[3];

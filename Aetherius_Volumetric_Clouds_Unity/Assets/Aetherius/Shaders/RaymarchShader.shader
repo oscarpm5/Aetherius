@@ -123,6 +123,10 @@ Shader "Aetherius/RaymarchShader"
 
 			int lightIterations;
 
+
+			int maxLvl;
+
+
 			struct AtmosIntersection
 			{
 				bool startsInAtmos;
@@ -470,18 +474,47 @@ Shader "Aetherius/RaymarchShader"
 				return lightColor * shadow * DoubleLobeScattering(cosAngle , 0.3 * cMult, 0.15 * cMult, 0.5) * newScatterC + (ambientSun * 0.5 + ambientSky * 0.5) * t * shadow * (1.0 / 4.0 * 3.1415) * newScatterC;
 			}
 
+			float DecreaseLvl(float currentT,float stepLengthBase,inout int currLvl,inout bool isBaseStep,inout float currStepLength) //Returns new currentT, call this when ( on cheap samples && hit density)
+			{
+				currentT -= currStepLength; //go back to previous pos before changing
+				currentT = max(0, currentT);//also clamp to the start of the cloud
+				currLvl++;
+				if (currLvl > maxLvl)
+				{
+					currLvl =  maxLvl;
+					isBaseStep = false;
+				}
+
+				currStepLength = stepLengthBase * pow(0.5, float(currLvl));
+				currentT += currStepLength;
+				return currentT;
+			}
+
+
+			float AdvanceSample(float currentT, float stepLengthBase, int currLvl)
+			{
+				return currentT + stepLengthBase * pow(0.5, float(currLvl));
+			}
+
+
+
 			void RaymarchThroughAtmos(float3 pos,float3 rd, int maxSteps,
 				float stepLengthBase,float maxDepth,float cosAngle,bool isMaxDepth,
 				inout bool atmosphereHazeAssigned,
 				inout float scatTransmittance, inout float3 scatLuminance, inout float3 atmosphereHazePos)
 			{
-				bool isBaseStep = true;//Base step or full step
 				int samplesWithZeroDensity = 0;
-
+				bool isBaseStep = true;//Base step or full step				
+				int currLvl = 0;
 
 				float tMax = stepLengthBase * maxSteps;//TODO consider passing the total length of the ray as a parameter
-				float currentT = 0;
-				while (currentT <= tMax)
+				float stepLengthBaseNew = stepLengthBase * 1.0 / pow(0.5, maxLvl);//TODO testing line
+				float currStepLength = stepLengthBaseNew;
+				float currentT = 0.0;
+
+				float minScatTransmittanceAllowed = 0.05;
+
+				while (currentT <= tMax && scatTransmittance> minScatTransmittanceAllowed)
 				{
 					float3 currPos = pos + rd * currentT;
 
@@ -495,13 +528,11 @@ Shader "Aetherius/RaymarchShader"
 
 							if (currDensity > 0.0) //change to detailed steps if there is a cloud
 							{
-								currentT -= stepLengthBase; //go back to previous pos before changing
-								currentT = max(0, currentT);//also clamp to the start of the cloud
-								isBaseStep = false;
+								currentT = DecreaseLvl(currentT, stepLengthBaseNew,currLvl,isBaseStep, currStepLength);
 							}
 							else //continue at low resolution
 							{
-								currentT += stepLengthBase;
+								currentT = AdvanceSample(currentT, stepLengthBaseNew,currLvl);
 							}
 						}
 						else
@@ -514,18 +545,15 @@ Shader "Aetherius/RaymarchShader"
 								atmosphereHazeAssigned = true;
 							}
 
-
-
 							if (currDensity > 0.0)
 							{
 								samplesWithZeroDensity = 0;
 
 								//Normal Raymarch
 								
-
 								float extinction = currDensity * extintionC;
 								float clampedExtinction = max(extinction, 0.0000001);
-								float transmittance = exp(-clampedExtinction * stepLengthBase);
+								float transmittance = exp(-clampedExtinction * currStepLength * pow(0.5, float(currLvl)));
 
 								float3 luminance = float3(0.0, 0.0, 0.0);
 								for (int i = 0; i < lightIterations; ++i)
@@ -539,32 +567,38 @@ Shader "Aetherius/RaymarchShader"
 
 								scatTransmittance *= transmittance;
 
-
+								currentT = AdvanceSample(currentT, stepLengthBaseNew,currLvl);
 
 							}
 							else //If density is 0
 							{
+								currentT = AdvanceSample(currentT, stepLengthBaseNew,currLvl);
 								samplesWithZeroDensity++;
-								if (samplesWithZeroDensity >= 8)//When several continuous samples with 0 density are encountered switch back to non detailed samples
+								if (samplesWithZeroDensity >= 6)//When several continuous samples with 0 density are encountered switch back to non detailed samples
 								{
 									samplesWithZeroDensity = 0;
 									isBaseStep = true;
+									currLvl = 0; 
+									currStepLength = stepLengthBaseNew;
 								}
 							}
 
-							currentT += stepLengthBase * 0.125;
 						}
 
 
 					}
+					else
+					{
+						currentT = AdvanceSample(currentT, stepLengthBaseNew,currLvl);
+					}
 
-
-
-					currentT += stepLengthBase;
 				}
 
 
-
+				if (scatTransmittance <= minScatTransmittanceAllowed)
+				{
+					scatTransmittance = 0.0;
+				}
 
 				//for (int t = 0; t < maxSteps; ++t)
 				//{

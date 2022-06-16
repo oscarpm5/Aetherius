@@ -105,9 +105,9 @@ namespace Aetherius
             }
 
 
+            _myScript.maxSampleDetailLvl = EditorGUILayout.IntSlider("Max Sample Detail Lvl", _myScript.maxSampleDetailLvl,0,3);
             _myScript.maxRayVisibilityDist = Mathf.Max(EditorGUILayout.IntField("Max Ray Distance", _myScript.maxRayVisibilityDist), 0);
             _myScript.blueNoise = (Texture2D)EditorGUILayout.ObjectField("Blue Noise", _myScript.blueNoise, typeof(Texture2D), false);
-
 
             EndSection();
         }
@@ -220,7 +220,6 @@ namespace Aetherius
             }
 
 
-
             using (EditorGUI.ChangeCheckScope check = new EditorGUI.ChangeCheckScope())
             {
                 EditorGUILayout.PropertyField(mode);
@@ -302,6 +301,7 @@ namespace Aetherius
             TextureGenerationSection();
 
             //serializedObject.ApplyModifiedProperties();
+
         }
 
 
