@@ -190,8 +190,7 @@ public class Benchmark : MonoBehaviour
     }
 
 
-
-    //This .csv file is intended to be opened by excel with Europe separator settings (semicolon) isntead of comma
+    //This .csv file is intended to be opened by excel with Europe separator settings (semicolon) instead of comma
     public void SaveResultsToDisk()
     {
         if (evaluatingPreset != EVALUATION_STAGE.SHOW_RESULTS || resultsSaved)
@@ -203,11 +202,24 @@ public class Benchmark : MonoBehaviour
         if (!System.IO.File.Exists(filename))
         {
             writter = new StreamWriter(filename, false);
+            writter.WriteLine("Abbreviations:");
+            writter.WriteLine();
+            writter.WriteLine("Sparse: ; Sp");
+            writter.WriteLine("Cloudy: ; Cl");
+            writter.WriteLine("Stormy: ; St");
+            writter.WriteLine("Overcast: ; Ov");
+            writter.WriteLine();
+            writter.WriteLine("Average: ; Avg");
+            writter.WriteLine("Highest: ; Hi");
+            writter.WriteLine("Lowest: ; Lo");
+            writter.WriteLine();
+            writter.WriteLine();
 
-            writter.WriteLine("Date; Time; Section Analysis Duration; Sparse Average MS; Cloudy Average MS; Stormy Average MS; Overcast Average MS; Total Average MS; " +
-                "Sparse Average FPS; Cloudy Average FPS; Stormy Average FPS; Overcast Average FPS; Total Average FPS; " +
-                "Sparse Highest FPS; Cloudy Highest FPS; Stormy Highest FPS; Overcast Highest FPS; Total Highest FPS; " +
-                "Sparse Lowest FPS; Cloudy Lowest FPS; Stormy Lowest FPS; Overcast Lowest FPS; Total Lowest FPS");
+            writter.WriteLine("Date; Time; Resolution; Section Analysis Duration; " +
+                "Sp Avg MS; Cl Avg MS; St Avg MS; Ov Avg MS; Total Avg MS; " +
+                "Sp Avg FPS; Cl Avg FPS; St Avg FPS; Ov Avg FPS; Total Avg FPS; " +
+                "Sp Hi FPS; Cl Hi FPS; St Hi FPS; Ov Hi FPS; Total Hi FPS; " +
+                "Sp Lo FPS; Cl Lo FPS; St Lo FPS; Ov Lo FPS; Total Lo FPS");
             writter.Close();
         }
 
@@ -229,9 +241,25 @@ public class Benchmark : MonoBehaviour
         }
 
 
+        string resolution = "";
+
+        switch (cloudManager.resolution)
+        {
+            case Aetherius.CLOUD_RESOLUTION.ORIGINAL:
+                resolution = "Original";
+                break;
+            case Aetherius.CLOUD_RESOLUTION.HALF:
+                resolution = "Half";
+                break;
+            case Aetherius.CLOUD_RESOLUTION.QUARTER:
+                resolution = "Quarter";
+                break;
+        }
+
+
         writter = new StreamWriter(filename, true);
         writter.WriteLine(System.DateTime.Now.ToString("dd/MM/yyyy") + ";" + System.DateTime.Now.ToString("HH: mm: ss") + ";" +
-            evaluationTime.ToString() + ";" + avgMS + avgFPS + highestFPS + lowestFPS);
+          resolution + ";"+ evaluationTime.ToString() + ";" + avgMS + avgFPS + highestFPS + lowestFPS);
         writter.Close();
 
     }
