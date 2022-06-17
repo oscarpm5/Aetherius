@@ -2,7 +2,10 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using System.IO;
 
+
+[System.Serializable]
 public class BenchmarkSectionData
 {
 
@@ -10,6 +13,8 @@ public class BenchmarkSectionData
     public double highestSeconds;
     public double lowestSeconds;
 }
+
+
 
 public class Benchmark : MonoBehaviour
 {
@@ -33,13 +38,17 @@ public class Benchmark : MonoBehaviour
     float currentTime;
     List<float> evaluatingFrames;
 
-
     public List<BenchmarkSectionData> benchmarkData;
 
+
+    string filename = "";
+    bool resultsSaved = false;
 
     // Start is called before the first frame update
     void Start()
     {
+        filename = Application.dataPath + "/BenchmarkResults.csv";
+
         display.benchmarkRef = this;
         ResetData();
     }
@@ -57,6 +66,7 @@ public class Benchmark : MonoBehaviour
         benchmarkData.Add(new BenchmarkSectionData { });//general
 
         currentTime = 0.0f;
+        resultsSaved = false;
     }
 
     public void ToggleBenchmark()
@@ -152,13 +162,12 @@ public class Benchmark : MonoBehaviour
             benchmarkData[benchmarkData.Count - 1].highestSeconds = Math.Max(benchmarkData[i].highestSeconds, benchmarkData[benchmarkData.Count - 1].highestSeconds);
             benchmarkData[benchmarkData.Count - 1].lowestSeconds = Math.Min(benchmarkData[i].lowestSeconds, benchmarkData[benchmarkData.Count - 1].lowestSeconds);
         }
-        benchmarkData[benchmarkData.Count - 1].averageSeconds /= benchmarkData.Count-1;
+        benchmarkData[benchmarkData.Count - 1].averageSeconds /= benchmarkData.Count - 1;
         Debug.Log("Results Compiled!");
     }
 
     private void ShowResults()
     {
-        //TODO
         display.ShowBenchmarkResults();
     }
 
@@ -179,4 +188,54 @@ public class Benchmark : MonoBehaviour
         res /= evaluatingFrames.Count;
         return res;
     }
+
+
+
+    //This .csv file is intended to be opened by excel with Europe separator settings (semicolon) isntead of comma
+    public void SaveResultsToDisk()
+    {
+        if (evaluatingPreset != EVALUATION_STAGE.SHOW_RESULTS || resultsSaved)
+            return;
+
+        resultsSaved = true;
+
+        TextWriter writter;
+        if (!System.IO.File.Exists(filename))
+        {
+            writter = new StreamWriter(filename, false);
+
+            writter.WriteLine("Date; Time; Section Analysis Duration; Sparse Average MS; Cloudy Average MS; Stormy Average MS; Overcast Average MS; Total Average MS; " +
+                "Sparse Average FPS; Cloudy Average FPS; Stormy Average FPS; Overcast Average FPS; Total Average FPS; " +
+                "Sparse Highest FPS; Cloudy Highest FPS; Stormy Highest FPS; Overcast Highest FPS; Total Highest FPS; " +
+                "Sparse Lowest FPS; Cloudy Lowest FPS; Stormy Lowest FPS; Overcast Lowest FPS; Total Lowest FPS");
+            writter.Close();
+        }
+
+
+        string avgMS = "";
+        string avgFPS = "";
+        string highestFPS = "";
+        string lowestFPS = "";
+
+
+        foreach (BenchmarkSectionData item in benchmarkData)
+        {
+            double averageMS = (item.averageSeconds * 1000.0);
+
+            avgMS += ((float)averageMS).ToString() + "; ";
+            avgFPS += ((float)(1.0 / item.averageSeconds)).ToString() + "; ";
+            highestFPS += ((float)(1.0 / item.lowestSeconds)).ToString() + "; ";
+            lowestFPS += ((float)(1.0 / item.highestSeconds)).ToString() + "; ";
+        }
+
+
+        writter = new StreamWriter(filename, true);
+        writter.WriteLine(System.DateTime.Now.ToString("dd/MM/yyyy") + ";" + System.DateTime.Now.ToString("HH: mm: ss") + ";" +
+            evaluationTime.ToString() + ";" + avgMS + avgFPS + highestFPS + lowestFPS);
+        writter.Close();
+
+    }
+
+
+
 }
