@@ -13,6 +13,8 @@ public class DemoManager : MonoBehaviour
         public Text lowest;
     }
 
+    public float presetTransitionTime=10.0f;
+
     public Aetherius.CloudManager managerRef;
 
     [HideInInspector]
@@ -20,6 +22,7 @@ public class DemoManager : MonoBehaviour
     public Text fpsCounter;
     public Text msCounter;
     public Dropdown resolution;
+    public Dropdown preset;
     public GameObject benchmarkToggleButton;
     public Canvas benchmarkCanvas;
 
@@ -54,11 +57,17 @@ public class DemoManager : MonoBehaviour
         fpsCounter.text = "FPS: " + 1.0 / Time.unscaledDeltaTime;
         msCounter.text = "MS: " + Time.unscaledDeltaTime * 1000.0f;
         SetResolutionText();
+        SetPresetText();
     }
 
     void SetResolutionText()
     {
         resolution.value = (int)managerRef.resolution;
+    }
+
+    void SetPresetText()
+    {
+        preset.value = (int)managerRef.preset;
     }
 
 
@@ -88,6 +97,13 @@ public class DemoManager : MonoBehaviour
     {
         managerRef.resolution = (Aetherius.CLOUD_RESOLUTION)val;
     }
+
+    public void SetPreset(int val)
+    {
+        managerRef.preset = (Aetherius.CLOUD_PRESET)val;
+        managerRef.StartWMTransition(presetTransitionTime);
+    }
+
 
     public void ShowBenchmarkResults()
     {

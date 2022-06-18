@@ -38,6 +38,7 @@ public class Benchmark : MonoBehaviour
     float currentTime;
     List<float> evaluatingFrames;
 
+    [HideInInspector]
     public List<BenchmarkSectionData> benchmarkData;
 
 
