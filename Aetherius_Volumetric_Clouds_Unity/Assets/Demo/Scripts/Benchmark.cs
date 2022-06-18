@@ -31,7 +31,7 @@ public class Benchmark : MonoBehaviour
 
 
     public Aetherius.CloudManager cloudManager;
-    public UIDisplay display;
+    public DemoManager demo;
     public CameraMove aetheriusCamMove;
     EVALUATION_STAGE evaluatingPreset;
     public float evaluationTime = 10.0f;
@@ -49,7 +49,7 @@ public class Benchmark : MonoBehaviour
     {
         filename = Application.dataPath + "/BenchmarkResults.csv";
 
-        display.benchmarkRef = this;
+        demo.benchmarkRef = this;
         ResetData();
     }
 
@@ -89,14 +89,14 @@ public class Benchmark : MonoBehaviour
         cloudManager.StartWMTransition(0.0f);
         aetheriusCamMove.SetPitchYaw(-30.0f, 200.0f);
         aetheriusCamMove.enabledControl = false;
-        display.SetBenchmarkButtonDisplay(true);
+        demo.SetBenchmarkButtonDisplay(true);
     }
 
     public void StopBenchmark()
     {
         evaluatingPreset = EVALUATION_STAGE.INACTIVE;
         aetheriusCamMove.enabledControl = true;
-        display.SetBenchmarkButtonDisplay(false);
+        demo.SetBenchmarkButtonDisplay(false);
     }
 
     // Update is called once per frame
@@ -168,7 +168,7 @@ public class Benchmark : MonoBehaviour
 
     private void ShowResults()
     {
-        display.ShowBenchmarkResults();
+        demo.ShowBenchmarkResults();
     }
 
     void DiscardExtremes()
