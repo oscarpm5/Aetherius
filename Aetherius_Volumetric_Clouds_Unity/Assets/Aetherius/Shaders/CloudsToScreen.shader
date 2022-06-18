@@ -14,6 +14,7 @@ Shader "Aetherius/CloudsToScreen"
 			CGPROGRAM
 			#pragma vertex vert
 			#pragma fragment frag
+			//#pragma enable_d3d11_debug_symbols //TODO delete when finished debugging
 
 			#include "UnityCG.cginc"
 

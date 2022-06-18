@@ -21,7 +21,7 @@ public class UIDisplay : MonoBehaviour
     public Benchmark benchmarkRef;
     public Text fpsCounter;
     public Text msCounter;
-    public Text resolution;
+    public Dropdown resolution;
     public GameObject benchmarkToggleButton;
     public Canvas benchmarkCanvas;
 
@@ -30,7 +30,7 @@ public class UIDisplay : MonoBehaviour
 
     List<BenchmarkSectionDisplay> displaySections = new List<BenchmarkSectionDisplay>();
 
-
+    Color originalBenchmarkColor;
 
 
     // Start is called before the first frame update
@@ -43,8 +43,9 @@ public class UIDisplay : MonoBehaviour
 
 
         AssignChildren();
-        benchmarkCanvas.gameObject.SetActive(false);
-       
+        originalBenchmarkColor = benchmarkToggleImage.color;
+        SetBenchmarkButtonDisplay(false);
+
     }
 
     private void AssignChildren()
@@ -75,33 +76,11 @@ public class UIDisplay : MonoBehaviour
         fpsCounter.text = "FPS: " + 1.0/Time.unscaledDeltaTime;
         msCounter.text = "MS: " + Time.unscaledDeltaTime*1000.0f;
         SetResolutionText();
-    }
-
-   
+    }   
 
     void SetResolutionText()
     {
-        switch (managerRef.resolution)
-        {
-            case Aetherius.CLOUD_RESOLUTION.ORIGINAL:
-                {
-                    resolution.text = "ORIGINAL RES";
-                    resolution.color = Color.red;
-                }
-                break;
-            case Aetherius.CLOUD_RESOLUTION.HALF:
-                {
-                    resolution.text = "HALF RES";
-                    resolution.color = Color.yellow;
-                }
-                break;
-            case Aetherius.CLOUD_RESOLUTION.QUARTER:
-                {
-                    resolution.text = "QUARTER RES";
-                    resolution.color = Color.green;
-                }
-                break;
-        }
+        resolution.value = (int)managerRef.resolution;
     }
 
     public void ShowBenchmarkResults()
@@ -128,12 +107,12 @@ public class UIDisplay : MonoBehaviour
         if(benchmarkActive)
         {
             benchmarkToggleImage.color = Color.blue;
-            benchmarkToggleText.text = "Finish Benchmark";
+            benchmarkToggleText.text = "Finish Benchmark (B)";
         }
         else
         {
-            benchmarkToggleImage.color = Color.green;
-            benchmarkToggleText.text = "Start Benchmark";
+            benchmarkToggleImage.color = originalBenchmarkColor;
+            benchmarkToggleText.text = "Start Benchmark (B)";
             benchmarkCanvas.gameObject.SetActive(false);
         }
     }

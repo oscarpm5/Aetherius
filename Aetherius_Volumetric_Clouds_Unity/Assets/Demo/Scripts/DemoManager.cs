@@ -19,6 +19,11 @@ public class DemoManager : MonoBehaviour
         HandleInput();
     }
 
+    public void SetResuloution(int val)
+    {
+        managerRef.resolution = (Aetherius.CLOUD_RESOLUTION)val;
+    }
+
     void HandleInput()
     {
         if(Input.GetKeyDown(KeyCode.Escape))
