@@ -87,6 +87,7 @@ public class Benchmark : MonoBehaviour
         ResetData();
         evaluatingPreset = EVALUATION_STAGE.SPARSE;
         cloudManager.preset = Aetherius.CLOUD_PRESET.SPARSE;
+        cloudManager.StopWMTransition();
         cloudManager.StartWMTransition(0.0f);
         aetheriusCamMove.SetPitchYaw(-30.0f, 200.0f);
         aetheriusCamMove.enabledControl = false;
@@ -122,6 +123,7 @@ public class Benchmark : MonoBehaviour
                 else
                 {
                     cloudManager.preset++;
+                    cloudManager.StopWMTransition();
                     cloudManager.StartWMTransition(0.0f);
                 }
 

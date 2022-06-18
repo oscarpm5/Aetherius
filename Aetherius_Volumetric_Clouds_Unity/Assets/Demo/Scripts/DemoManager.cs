@@ -13,7 +13,7 @@ public class DemoManager : MonoBehaviour
         public Text lowest;
     }
 
-    public float presetTransitionTime=10.0f;
+    public float presetTransitionTime = 10.0f;
 
     public Aetherius.CloudManager managerRef;
 
@@ -25,6 +25,7 @@ public class DemoManager : MonoBehaviour
     public Dropdown preset;
     public GameObject benchmarkToggleButton;
     public Canvas benchmarkCanvas;
+    public Canvas benchmarkExcludeCanvas;
 
     Text benchmarkToggleText;
     Image benchmarkToggleImage;
@@ -62,12 +63,14 @@ public class DemoManager : MonoBehaviour
 
     void SetResolutionText()
     {
-        resolution.value = (int)managerRef.resolution;
+        if (resolution.value != (int)managerRef.resolution)
+            resolution.value = (int)managerRef.resolution;
     }
 
     void SetPresetText()
     {
-        preset.value = (int)managerRef.preset;
+        if (preset.value != (int)managerRef.preset)
+            preset.value = (int)managerRef.preset;
     }
 
 
@@ -130,19 +133,21 @@ public class DemoManager : MonoBehaviour
         {
             benchmarkToggleImage.color = Color.blue;
             benchmarkToggleText.text = "Finish Benchmark (B)";
+            benchmarkExcludeCanvas.gameObject.SetActive(false);
         }
         else
         {
             benchmarkToggleImage.color = originalBenchmarkColor;
             benchmarkToggleText.text = "Start Benchmark (B)";
             benchmarkCanvas.gameObject.SetActive(false);
+            benchmarkExcludeCanvas.gameObject.SetActive(true);
         }
     }
 
 
     void HandleInput()
     {
-        if(Input.GetKeyDown(KeyCode.Escape))
+        if (Input.GetKeyDown(KeyCode.Escape))
         {
             Quit();
         }

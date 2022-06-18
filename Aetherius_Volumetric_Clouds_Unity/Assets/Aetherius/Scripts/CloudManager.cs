@@ -162,9 +162,11 @@ namespace Aetherius
             {
                 transitionTimeWM = duration;
             }
-            textureGenerator.GenerateWeatherMap(256, ref textureGenerator.newWM, wmSeed, preset);
             currentTransitionTimeWM = 0.0f;
+            
+            textureGenerator.GenerateWeatherMap(256, ref textureGenerator.newWM, wmSeed, preset);
             transitioning = true;
+
             Debug.Log("TransitionStarted!");
 
         }
