@@ -160,7 +160,7 @@ Shader "Aetherius/RaymarchShader"
 
 					if (t0 > t1)
 					{
-						float aux = t0;
+						const float aux = t0;
 						t0 = t1;
 						t1 = aux;
 					}
@@ -196,40 +196,44 @@ Shader "Aetherius/RaymarchShader"
 				{
 					intersection.startsInAtmos = true;
 
-					if (max(groundT.x, groundT.y) != -1.0) //if collision is with ground return false
+					if (groundT.y < 0.0) //when no ground collision, secondary ray
+					{
+						intersection.r1o = ro + rd * innerAtmT.y;//second hit as 1st will always be behind camera in this case
+						intersection.r1m = outerAtmT.y - innerAtmT.y;//second hit as 1st will always be behind camera in this case
+
+						return true;
+
+					}
+					else //if collision is with ground return false
 					{
 						return false;
 					}
 
-					intersection.r1o = ro + rd * innerAtmT.y;//second hit as 1st will always be behind camera in this case
-					intersection.r1m = outerAtmT.y - innerAtmT.y;//second hit as 1st will always be behind camera in this case
-
-					return true;
+					
 				}
 				else if (d < planetAtmos.z) //if camera is inside the atmosphere
 				{
 					intersection.startsInAtmos = true;
 					intersection.r1o = ro;
 
-					if (innerAtmT.x > 0.0)
+					if (innerAtmT.x <= 0.0)
+					{
+						intersection.r1m = outerAtmT.y;
+					}
+					else
 					{
 						intersection.r1m = innerAtmT.x;
 
-						if (groundT.x < 0.0) //If no ground collision, secondary ray
+						if (groundT.y < 0.0) //If no ground collision, secondary ray
 						{
 							intersection.hasRay2 = true;
 							intersection.r2o = ro + rd * innerAtmT.y;
 							intersection.r2m = outerAtmT.y - innerAtmT.y;
 						}
 
-						return true;
 					}
-					else
-					{
-						intersection.r1m = outerAtmT.y;
 
-						return true;
-					}
+					return true;
 
 				}
 				else if (outerAtmT.x < 0.0)//If camera is above atmosphere
@@ -330,7 +334,9 @@ Shader "Aetherius/RaymarchShader"
 				float3 skewPos = currPos - normalize(windDir) * cloudHeightPercent * cloudHeightPercent * 100 * skewAmmount;
 				float3 weatherMapCloud = weatherMapTexture.SampleLevel(samplerweatherMapTexture, (skewPos.xz / weatherMapSize) + windOffset.xz * windDisplacesWeatherMap,sampleLvl); //We sample the weather map (r coverage,g type)
 				if (transitioningWM == true)
+				{
 					weatherMapCloud = lerp(weatherMapCloud, weatherMapTextureNew.SampleLevel(samplerweatherMapTextureNew, (skewPos.xz / weatherMapSize) + windOffset.xz * windDisplacesWeatherMap, sampleLvl), transitionLerpT);
+				}
 
 				//Cloud Base shape
 				float4 lowFreqNoise = baseShapeTexture.SampleLevel(samplerbaseShapeTexture, (currPos / baseShapeSize) + windOffset * baseShapeWindMult, sampleLvl);
@@ -493,22 +499,7 @@ Shader "Aetherius/RaymarchShader"
 					{
 						float currDensity = 0.0;
 
-						if (isBaseStep == true)
-						{
-							currDensity = GetDensity(currPos, 0.0, true);
-
-							if (currDensity > 0.0) //change to detailed steps if there is a cloud
-							{
-								currentT -= stepLengthBase; //go back to previous pos before changing
-								currentT = max(0, currentT);//also clamp to the start of the cloud
-								isBaseStep = false;
-							}
-							else //continue at low resolution
-							{
-								currentT += stepLengthBase;
-							}
-						}
-						else
+						if (isBaseStep == false) //detailed step
 						{
 							currDensity = GetDensity(currPos, 0.0, false);
 
@@ -517,8 +508,6 @@ Shader "Aetherius/RaymarchShader"
 								atmosphereHazePos = currPos;
 								atmosphereHazeAssigned = true;
 							}
-
-
 
 							if (currDensity > 0.0)
 							{
@@ -557,6 +546,22 @@ Shader "Aetherius/RaymarchShader"
 							}
 
 							currentT += stepLengthBase * 0.125;
+						}
+						else
+						{
+
+							currDensity = GetDensity(currPos, 0.0, true);
+
+							if (currDensity > 0.0) //change to detailed steps if there is a cloud
+							{
+								currentT -= stepLengthBase; //go back to previous pos before changing
+								currentT = max(0, currentT);//also clamp to the start of the cloud
+								isBaseStep = false;
+							}
+							else //continue at low resolution
+							{
+								currentT += stepLengthBase;
+							}
 						}
 
 
@@ -602,13 +607,13 @@ Shader "Aetherius/RaymarchShader"
 				}
 
 				float ammountTravelledThroughAtmos = 0.0;
-				if (atmosIntersection.startsInAtmos)
+				if (!atmosIntersection.startsInAtmos)
 				{
-					ammountTravelledThroughAtmos = length(atmosphereHazePos - _WorldSpaceCameraPos);
+					ammountTravelledThroughAtmos = length(atmosphereHazePos - atmosIntersection.r1o);
 				}
 				else
 				{
-					ammountTravelledThroughAtmos = length(atmosphereHazePos - atmosIntersection.r1o);
+					ammountTravelledThroughAtmos = length(atmosphereHazePos - _WorldSpaceCameraPos);
 				}
 
 				float atmosphereVisibDist = maxRayPossibleGroundDist * 0.5;
@@ -645,14 +650,14 @@ Shader "Aetherius/RaymarchShader"
 				AtmosIntersection atmosIntersection;
 				bool isAtmosRay = GetRayAtmosphere(rayOrigin, rayDirection, atmosIntersection);
 
-				if (!isAtmosRay || atmosIntersection.r1m <= 0.0)
+				if (isAtmosRay && atmosIntersection.r1m > 0.0)
 				{
-					return fixed4(0.0,0.0,0.0, 1.0);
+					float4 result = Raymarching(rayDirection, atmosIntersection, i.uv, depthMeters, linearDepth >= 1.0);
+					return result;
 				}
 				else
 				{
-					float4 result = Raymarching(rayDirection, atmosIntersection,i.uv, depthMeters,linearDepth >= 1.0);
-					return result;
+					return fixed4(0.0, 0.0, 0.0, 1.0);
 				}
 			}
 	ENDCG
