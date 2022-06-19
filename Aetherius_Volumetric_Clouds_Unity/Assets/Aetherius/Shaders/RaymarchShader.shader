@@ -56,14 +56,15 @@ Shader "Aetherius/RaymarchShader"
 			float minCloudHeight;
 			float maxCloudHeight;
 
+
 			Texture3D<float4> baseShapeTexture;
-			Texture3D<float4> detailTexture; //TODO see if I can get around using a float3
-			Texture2D<float4> weatherMapTexture;
+			Texture3D<float3> detailTexture; //TODO see if I can get around using a float3
+			Texture2D<float3> weatherMapTexture;
 			Texture2D<float> blueNoiseTexture;
-			SamplerState samplerblueNoiseTexture;
 			SamplerState samplerbaseShapeTexture;
 			SamplerState samplerdetailTexture;
 			SamplerState samplerweatherMapTexture;
+			SamplerState samplerblueNoiseTexture;
 
 			float baseShapeSize;
 			float detailSize;
@@ -122,6 +123,9 @@ Shader "Aetherius/RaymarchShader"
 			SamplerState samplerweatherMapTextureNew;
 
 			int lightIterations;
+
+			static const float3 fbmMultipliers = { 0.625,0.25,0.125 };
+			static const float3 lightOctaveParameters = { 0.25,0.75,0.6 };
 
 			struct AtmosIntersection
 			{
@@ -322,13 +326,13 @@ Shader "Aetherius/RaymarchShader"
 				float fTime = _Time;
 				float3 windOffset = -windDir * float3(fTime, fTime, fTime);//TODO make this & skewk consistent around the globe
 				float3 skewPos = currPos - normalize(windDir) * cloudHeightPercent * cloudHeightPercent * 100 * skewAmmount;
-				float4 weatherMapCloud = weatherMapTexture.SampleLevel(samplerweatherMapTexture, (skewPos.xz / weatherMapSize) + windOffset.xz * windDisplacesWeatherMap,sampleLvl); //We sample the weather map (r coverage,g type)
+				float3 weatherMapCloud = weatherMapTexture.SampleLevel(samplerweatherMapTexture, (skewPos.xz / weatherMapSize) + windOffset.xz * windDisplacesWeatherMap,sampleLvl); //We sample the weather map (r coverage,g type)
 				if (transitioningWM == true)
 					weatherMapCloud = lerp(weatherMapCloud, weatherMapTextureNew.SampleLevel(samplerweatherMapTextureNew, (skewPos.xz / weatherMapSize) + windOffset.xz * windDisplacesWeatherMap, sampleLvl), transitionLerpT);
 
 				//Cloud Base shape
 				float4 lowFreqNoise = baseShapeTexture.SampleLevel(samplerbaseShapeTexture, (currPos / baseShapeSize) + windOffset * baseShapeWindMult, sampleLvl);
-				float lowFreqFBM = (lowFreqNoise.g * 0.625) + (lowFreqNoise.b * 0.25) + (lowFreqNoise.a * 0.125);
+				float lowFreqFBM = dot(lowFreqNoise.gba, fbmMultipliers);
 				float cloudNoiseBase = (Remap(lowFreqNoise.r, lowFreqFBM - 1.0, 1.0,0.0 , 1.0));
 
 				float3 shapeAltering = ShapeAltering(cloudHeightPercent);
@@ -353,8 +357,8 @@ Shader "Aetherius/RaymarchShader"
 				if (!onlyBase)
 				{
 					////Detail Shape
-					float4 highFreqNoise = detailTexture.SampleLevel(samplerdetailTexture, (currPos / detailSize) + windOffset * detailShapeWindMult, sampleLvl);
-					float highFreqFBM = (highFreqNoise.r * 0.625) + (highFreqNoise.g * 0.25) + (highFreqNoise.b * 0.125);
+					float3 highFreqNoise = detailTexture.SampleLevel(samplerdetailTexture, (currPos / detailSize) + windOffset * detailShapeWindMult, sampleLvl);
+					float highFreqFBM = dot(highFreqNoise,fbmMultipliers); //ax*bx+ay*by+az*bz
 					float detailNoise = (lerp(highFreqFBM,1.0 - highFreqFBM,saturate(cloudHeightPercent * 10.0)));
 					detailNoise *= Remap(saturate(globalCoverage), 0.0, 1.0, 0.1, 0.3);
 
@@ -443,11 +447,9 @@ Shader "Aetherius/RaymarchShader"
 			float3 LightScatter(float3 currPos, float cosAngle,int i)
 			{
 				//must be a<=b to be energy conserving
-				const float a = 0.25;
-				const float b = 0.75;
-				const float c = 0.6;
-				float newExtinctionC = extintionC * pow(a,i);
-				float newScatterC = scatterC * pow(b,i);
+
+				float newExtinctionC = extintionC * pow(lightOctaveParameters.x,i);
+				float newScatterC = scatterC * pow(lightOctaveParameters.y,i);
 
 				float3 ambientSky = ambientColors[0].xyz;
 				float3 ambientFloor = ambientColors[1].xyz * 0.5;
@@ -466,7 +468,7 @@ Shader "Aetherius/RaymarchShader"
 					shadow = LightShadowTransmittance(currPos, shadowSize, newExtinctionC);
 				}
 
-				float cMult = pow(c, i);
+				const float cMult = pow(lightOctaveParameters.z, i);
 				return lightColor * shadow * DoubleLobeScattering(cosAngle , 0.3 * cMult, 0.15 * cMult, 0.5) * newScatterC + (ambientSun * 0.5 + ambientSky * 0.5) * t * shadow * (1.0 / 4.0 * 3.1415) * newScatterC;
 			}
 
