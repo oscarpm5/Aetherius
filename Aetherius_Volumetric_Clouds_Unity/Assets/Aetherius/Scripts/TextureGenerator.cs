@@ -10,7 +10,7 @@ namespace Aetherius
 
 
         [Range(8, 512)]
-        public int baseShapeResolution = 256;
+        public int baseShapeResolution = 128;
         [Range(8, 512)]
         public int detailResolution = 32;
         public ComputeShader computeShader = null;

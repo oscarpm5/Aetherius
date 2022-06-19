@@ -14,7 +14,7 @@ namespace Aetherius
 
         private bool _showCurrSettingsWorley = false;
         private bool _showCurrSettingsPerlin = false;
-        private int _baseShapeResPower = 8;
+        private int _baseShapeResPower = 7;
         private int _detailResPower = 5;
 
         void OnEnable()
