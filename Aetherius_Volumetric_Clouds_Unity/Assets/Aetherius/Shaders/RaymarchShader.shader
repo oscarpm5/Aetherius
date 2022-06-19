@@ -74,9 +74,7 @@ Shader "Aetherius/RaymarchShader"
 			float globalDensity;
 
 			float3 sunDir;
-			float extintionC;
-			float absorptionC;
-			float scatterC;
+			float2 coefficients;//x extintion, y scatter //We do not use absorption in the shader (onloy used to calculate extinction/scatter relation)
 
 			float3 lightColor;
 			float3 ambientColors[3];
@@ -126,18 +124,22 @@ Shader "Aetherius/RaymarchShader"
 
 			static const float3 fbmMultipliers = { 0.625,0.25,0.125 };
 			static const float3 lightOctaveParameters = { 0.25,0.75,0.6 };
+			static const int iter = 4;
+
+
+
 
 			struct AtmosIntersection
 			{
-				bool startsInAtmos;
 
 				float3 r1o;//origin
 				float r1m;//magnitude
-
-				bool hasRay2;
-
 				float3 r2o;//origin
 				float r2m;//magnitude
+
+				bool startsInAtmos;
+				bool hasRay2;
+
 			};
 
 			float2 GetAtmosphereIntersection(float3 ro,float3 rd,float3 sphO, float r)//returns -1 when no intersection has been found
@@ -183,7 +185,7 @@ Shader "Aetherius/RaymarchShader"
 				intersection.r1m = 0.0;
 				intersection.r2m = 0.0;
 
-				float3 planetO = float3(0.0, -planetAtmos.x,0.0);
+				float3 planetO = { 0.0, -planetAtmos.x,0.0 };
 				float d = length(ro - planetO);//distance btween camera and the planet center
 
 				float2 innerAtmT = GetAtmosphereIntersection(ro, rd, planetO, planetAtmos.y);
@@ -204,8 +206,7 @@ Shader "Aetherius/RaymarchShader"
 
 					return true;
 				}
-
-				if (d < planetAtmos.z) //if camera is inside the atmosphere
+				else if (d < planetAtmos.z) //if camera is inside the atmosphere
 				{
 					intersection.startsInAtmos = true;
 					intersection.r1o = ro;
@@ -223,45 +224,43 @@ Shader "Aetherius/RaymarchShader"
 
 						return true;
 					}
-
-					intersection.r1m = outerAtmT.y;
-
-					return true;
-				}
-
-				//If camera is above atmosphere
-
-				if (outerAtmT.x < 0.0)
-					return false;//No hit or behind camera!
-
-				intersection.startsInAtmos = false;
-
-				intersection.r1o = ro + rd * outerAtmT.x;
-
-				if (innerAtmT.x > 0.0)
-				{
-					intersection.r1m = innerAtmT.x - outerAtmT.x;
-
-					if (groundT.x < 0.0) //If no ground collision, secondary ray
+					else
 					{
-						intersection.hasRay2 = true;
-						intersection.r2o = ro + rd * innerAtmT.y;
-						intersection.r2m = outerAtmT.y - innerAtmT.y;
+						intersection.r1m = outerAtmT.y;
+
+						return true;
+					}
+
+				}
+				else if (outerAtmT.x < 0.0)//If camera is above atmosphere
+				{
+					return false;//No hit or behind camera!
+				}
+				else
+				{
+					intersection.startsInAtmos = false;
+
+					intersection.r1o = ro + rd * outerAtmT.x;
+
+					if (innerAtmT.x > 0.0)
+					{
+						intersection.r1m = innerAtmT.x - outerAtmT.x;
+
+						if (groundT.x < 0.0) //If no ground collision, secondary ray
+						{
+							intersection.hasRay2 = true;
+							intersection.r2o = ro + rd * innerAtmT.y;
+							intersection.r2m = outerAtmT.y - innerAtmT.y;
+						}
+					}
+					else
+					{
+						intersection.r1m = outerAtmT.y - outerAtmT.x;
 					}
 
 					return true;
 				}
 
-				intersection.r1m = outerAtmT.y - outerAtmT.x;
-
-				//if (max(groundT.x,groundT.y) != -1.0) //if there is an intersection with the innerAtm shell
-				//{
-				//	rayLength = innerAtmT.x - outerAtmT.x;
-				//	return true;
-				//}
-
-				//rayLength = outerAtmT.y - outerAtmT.x;
-				return true;
 			}
 
 			float DensityGradient(float heightPercent, float4 parameters)
@@ -289,9 +288,12 @@ Shader "Aetherius/RaymarchShader"
 				{
 					return ShapeAlteringSimple(heightPercent);
 				}
+				else
+				{
+					//Advanced mode
+					return ShapeAlteringAdvanced(heightPercent);
+				}
 
-				//Advanced mode
-				return ShapeAlteringAdvanced(heightPercent);
 			}
 
 			//value between 0 & 1 showing where we are in the cloud layer
@@ -333,18 +335,17 @@ Shader "Aetherius/RaymarchShader"
 				//Cloud Base shape
 				float4 lowFreqNoise = baseShapeTexture.SampleLevel(samplerbaseShapeTexture, (currPos / baseShapeSize) + windOffset * baseShapeWindMult, sampleLvl);
 				float lowFreqFBM = dot(lowFreqNoise.gba, fbmMultipliers);
-				float cloudNoiseBase = (Remap(lowFreqNoise.r, lowFreqFBM - 1.0, 1.0,0.0 , 1.0));
 
-				float3 shapeAltering = ShapeAltering(cloudHeightPercent);
+				float3 shapeAltering = ShapeAltering(cloudHeightPercent) * (Remap(lowFreqNoise.r, lowFreqFBM - 1.0, 1.0, 0.0, 1.0)); //shape altering * cloud noise base
 				//Coverage
 				if (cumulusHorizon == true) //cumulonimbus towards horizon
 				{
 					weatherMapCloud.b = max(weatherMapCloud.b, saturate(Remap(length(initialPos.xz - _WorldSpaceCameraPos.xz), cumulusHorizonGradient.x, cumulusHorizonGradient.y, 0.0, 1.0)));
 				}
 
-				float baseCloudWithCoverageA = (Remap(cloudNoiseBase * shapeAltering.x, 1.0 - weatherMapCloud.r, 1.0, 0.0, 1.0));
-				float baseCloudWithCoverageB = (Remap(cloudNoiseBase * shapeAltering.y, 1.0 - weatherMapCloud.g, 1.0, 0.0, 1.0));
-				float baseCloudWithCoverageC = (Remap(cloudNoiseBase * shapeAltering.z, 1.0 - weatherMapCloud.b, 1.0, 0.0, 1.0));
+				float baseCloudWithCoverageA = (Remap(shapeAltering.x, 1.0 - weatherMapCloud.r, 1.0, 0.0, 1.0));
+				float baseCloudWithCoverageB = (Remap(shapeAltering.y, 1.0 - weatherMapCloud.g, 1.0, 0.0, 1.0));
+				float baseCloudWithCoverageC = (Remap(shapeAltering.z, 1.0 - weatherMapCloud.b, 1.0, 0.0, 1.0));
 
 				baseCloudWithCoverageA *= DensityAltering(cloudHeightPercent, weatherMapCloud.r);
 				baseCloudWithCoverageB *= DensityAltering(cloudHeightPercent, weatherMapCloud.g);
@@ -359,8 +360,8 @@ Shader "Aetherius/RaymarchShader"
 					////Detail Shape
 					float3 highFreqNoise = detailTexture.SampleLevel(samplerdetailTexture, (currPos / detailSize) + windOffset * detailShapeWindMult, sampleLvl);
 					float highFreqFBM = dot(highFreqNoise,fbmMultipliers); //ax*bx+ay*by+az*bz
-					float detailNoise = (lerp(highFreqFBM,1.0 - highFreqFBM,saturate(cloudHeightPercent * 10.0)));
-					detailNoise *= Remap(saturate(globalCoverage), 0.0, 1.0, 0.1, 0.3);
+					float detailNoise = (lerp(highFreqFBM,1.0 - highFreqFBM,saturate(cloudHeightPercent * 10.0))) *
+						Remap(saturate(globalCoverage), 0.0, 1.0, 0.1, 0.3);
 
 					//Detail - Base Shape
 					finalCloud = saturate(Remap(baseCloudWithCoverage, detailNoise, 1.0,0.0, 1.0));
@@ -398,12 +399,16 @@ Shader "Aetherius/RaymarchShader"
 
 			bool IsPosVisible(float3 pos,float maxDepth,bool isMaxDepth)
 			{
-				if (isMaxDepth)
+				if (!isMaxDepth)
+				{
+					float3 distFromCamVec = (pos - _WorldSpaceCameraPos);
+					float distFromCamSq = dot(distFromCamVec, distFromCamVec);
+					return distFromCamSq <= maxDepth * maxDepth;
+				}
+				else
+				{
 					return true;
-
-				float3 distFromCamVec = (pos - _WorldSpaceCameraPos);
-				float distFromCamSq = dot(distFromCamVec, distFromCamVec);
-				return distFromCamSq <= maxDepth * maxDepth;
+				}				
 			}
 
 			float DoubleLobeScattering(float cosAngle, float l1, float l2, float mix)
@@ -413,8 +418,6 @@ Shader "Aetherius/RaymarchShader"
 
 			float LightShadowTransmittance(float3 pos, float initialStepSize,float eCoeff)
 			{
-				int iter = 4;
-
 				float shadow = 1.0;
 				for (int currStep = 0; currStep < iter; ++currStep)
 				{
@@ -429,7 +432,6 @@ Shader "Aetherius/RaymarchShader"
 
 			float LightShadowTransmittanceCone(float3 pos, float initialStepSize, float eCoeff)
 			{
-				int iter = 4;
 
 				float shadow = 1.0;
 				for (int currStep = 0; currStep < iter; ++currStep)
@@ -448,8 +450,8 @@ Shader "Aetherius/RaymarchShader"
 			{
 				//must be a<=b to be energy conserving
 
-				float newExtinctionC = extintionC * pow(lightOctaveParameters.x,i);
-				float newScatterC = scatterC * pow(lightOctaveParameters.y,i);
+				float newExtinctionC = coefficients.x * pow(lightOctaveParameters.x,i);
+				float newScatterC = coefficients.y * pow(lightOctaveParameters.y,i);
 
 				float3 ambientSky = ambientColors[0].xyz;
 				float3 ambientFloor = ambientColors[1].xyz * 0.5;
@@ -481,7 +483,7 @@ Shader "Aetherius/RaymarchShader"
 				int samplesWithZeroDensity = 0;
 
 
-				float tMax = stepLengthBase * maxSteps;//TODO consider passing the total length of the ray as a parameter
+				const float tMax = stepLengthBase * maxSteps;//TODO consider passing the total length of the ray as a parameter
 				float currentT = 0;
 				while (currentT <= tMax)
 				{
@@ -523,9 +525,9 @@ Shader "Aetherius/RaymarchShader"
 								samplesWithZeroDensity = 0;
 
 								//Normal Raymarch
-								
 
-								float extinction = currDensity * extintionC;
+
+								float extinction = currDensity * coefficients.x;
 								float clampedExtinction = max(extinction, 0.0000001);
 								float transmittance = exp(-clampedExtinction * stepLengthBase);
 
@@ -565,42 +567,6 @@ Shader "Aetherius/RaymarchShader"
 					currentT += stepLengthBase;
 				}
 
-
-
-
-				//for (int t = 0; t < maxSteps; ++t)
-				//{
-				//	if (IsPosVisible(pos, maxDepth, isMaxDepth) && scatTransmittance > 0.0)//Checks if an object is occluding the raymarch
-				//	{
-				//		float currDensity = GetDensity(pos, 0.0, false);
-
-				//		if (scatTransmittance <= 0.9 && atmosphereHazeAssigned == false)
-				//		{
-				//			atmosphereHazePos = pos;
-				//			atmosphereHazeAssigned = true;
-				//		}
-
-				//		if (currDensity > 0.0)
-				//		{
-				//			float extinction = currDensity * extintionC;
-				//			float clampedExtinction = max(extinction, 0.0000001);
-				//			float transmittance = exp(-clampedExtinction * stepLengthBase);
-
-				//			float3 luminance = float3(0.0, 0.0, 0.0);
-				//			for (int i = 0; i < lightIterations; ++i)
-				//			{
-				//				luminance += LightScatter(pos, cosAngle, i);
-				//			}
-				//			luminance *= currDensity;
-
-				//			float3 integScatt = (luminance - luminance * transmittance) / clampedExtinction;
-				//			scatLuminance += scatTransmittance * integScatt;
-
-				//			scatTransmittance *= transmittance;
-				//		}
-				//	}
-				//	pos += rd * stepLengthBase;
-				//}
 			}
 
 			float4 Raymarching(float3 rd, AtmosIntersection atmosIntersection,float2 uv,float maxDepth,bool isMaxDepth)

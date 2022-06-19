@@ -237,9 +237,7 @@ namespace Aetherius
 
             Vector3 currentSunDir = sunLight.transform.rotation * Vector3.forward;
             mat.SetVector("sunDir", currentSunDir);
-            mat.SetFloat("absorptionC", absorptionC);
-            mat.SetFloat("scatterC", scatterC);
-            mat.SetFloat("extintionC", absorptionC + scatterC);
+            mat.SetVector("coefficients", new Vector2(absorptionC + scatterC, scatterC));//extinction, scatter
             mat.SetInt("softerShadows", softerShadows ? 1 : 0);
             mat.SetFloat("shadowSize", shadowSize);
             mat.SetInt("lightIterations", lightIterations);
