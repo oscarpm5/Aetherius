@@ -272,7 +272,7 @@ Shader "Aetherius/RaymarchShader"
 					DensityGradient(heightPercent, cloudLayerGradient3));
 			}
 
-			float3 ShapeAlteringAdvanced(float heightPercent)//TODO adapt with more than 1 layer
+			float3 ShapeAlteringAdvanced(float heightPercent)
 			{
 				return float3(densityCurveBuffer1[heightPercent * densityCurveBufferSize1] * densityCurveMultiplier1,
 					densityCurveBuffer2[heightPercent * densityCurveBufferSize2] * densityCurveMultiplier2,

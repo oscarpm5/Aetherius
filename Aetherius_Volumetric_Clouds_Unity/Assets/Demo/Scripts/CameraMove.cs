@@ -5,9 +5,14 @@ using UnityEngine;
 
 public class CameraMove : MonoBehaviour
 {
-    public float speed = 1.0f;
-    public float rotSpeed = 1.0f;
-    public float sprintMultiplier = 1.0f;
+    float minAccel = 0.01f;
+    float maxAccel = 2.0f;
+    float accel = 0.2f;
+
+    float defaultSpeed = 10.0f;
+    public float speed = 0.0f;
+    float rotSpeed = 2.5f;
+    float sprintMultiplier = 3.0f;
     Vector3 movement = Vector3.zero;
     float pitch;
     float yaw;
@@ -22,7 +27,7 @@ public class CameraMove : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
-
+        speed = defaultSpeed;
     }
 
     // Update is called once per frame
@@ -30,7 +35,6 @@ public class CameraMove : MonoBehaviour
     {
 
         HandleInput();
-        TransformObj();
 
         Cursor.lockState = fpCamMode && enabledControl ? CursorLockMode.Locked : CursorLockMode.None;
     }
@@ -42,11 +46,21 @@ public class CameraMove : MonoBehaviour
             return;
 
         //UI Mode
-            fpCamMode = Input.GetMouseButton(1);
+        fpCamMode = Input.GetMouseButton(1);
 
         newYaw = 0.0f;
         newPitch = 0.0f;
-        movement = Vector3.zero;
+        Vector3 newMovement = Vector3.zero;
+
+        bool isInputingMovement = false;
+
+
+        if (Input.GetKey(KeyCode.F))
+        {
+            speed = defaultSpeed;
+            gameObject.transform.position = new Vector3(0.0f, 1.0f, 0.0f);
+        }
+
 
         if (fpCamMode)
         {
@@ -54,7 +68,27 @@ public class CameraMove : MonoBehaviour
             newYaw = Input.GetAxis("Mouse X");//Pitch
             newPitch = Input.GetAxis("Mouse Y");//Yaw
 
-    
+
+            float wheelAxis = Input.GetAxis("Mouse ScrollWheel");
+            if (wheelAxis < 0.0f)
+            {
+                accel -= accel * Mathf.Abs(wheelAxis) * 1.5f;
+            }
+            else if (wheelAxis > 0.0f)
+            {
+                accel += accel * Mathf.Abs(wheelAxis) * 1.5f;
+            }
+
+            accel = Mathf.Clamp(accel, minAccel, maxAccel);
+
+
+            pitch -= newPitch * rotSpeed;
+            yaw += newYaw * rotSpeed;
+
+            gameObject.transform.eulerAngles = new Vector3(pitch, yaw, 0.0f);
+
+
+
 
             //Movement
             float up = 0.0f;
@@ -63,28 +97,37 @@ public class CameraMove : MonoBehaviour
             if (Input.GetKey(KeyCode.E))
                 up += 1.0f;
 
-            movement = new Vector3(Input.GetAxis("Horizontal"), up, Input.GetAxis("Vertical"));
+            newMovement = new Vector3(Input.GetAxis("Horizontal"), up, Input.GetAxis("Vertical"));
 
-            if (Input.GetKey(KeyCode.LeftShift))
-                movement *= sprintMultiplier;
+            if (newMovement.sqrMagnitude > 0.0f)
+            {
+                isInputingMovement = true;
+
+                newMovement.Normalize();
+
+                movement = Vector3.Lerp(movement, newMovement, 5.0f*Time.deltaTime);
+                movement.Normalize();
+
+                speed += speed * accel * Time.deltaTime * (Input.GetKey(KeyCode.LeftShift) ? sprintMultiplier : 1.0f) + Time.deltaTime;
+            }
+
         }
 
-    }
 
-    public void SetPitchYaw(float pitch,float yaw)
-    {
-        this.pitch = pitch;
-        this.yaw = yaw;
-    }
+        if(!isInputingMovement)
+        {
+            speed *= Mathf.Min(0.5f * Time.deltaTime*60.0f,0.5f);
+            speed = Mathf.Max(speed, defaultSpeed);
+        }
 
-    void TransformObj()
-    {
-        pitch -= newPitch * rotSpeed * Time.deltaTime;
-        yaw += newYaw * rotSpeed * Time.deltaTime;
-
-        gameObject.transform.eulerAngles = new Vector3(pitch, yaw, 0.0f) ;
 
         gameObject.transform.position += gameObject.transform.rotation * movement * speed * Time.deltaTime;
 
+    }
+
+    public void SetPitchYaw(float pitch, float yaw)
+    {
+        this.pitch = pitch;
+        this.yaw = yaw;
     }
 }
