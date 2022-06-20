@@ -109,7 +109,8 @@ Shader "Aetherius/RaymarchShader"
 
 			sampler2D _CameraDepthTexture;
 
-			float maxRayUserDist;
+			float maxRaySamples;
+			float baseSampleDistance;
 			float maxRayPossibleDist;
 			float maxRayPossibleGroundDist;
 			float hazeMinDist;
@@ -386,22 +387,10 @@ Shader "Aetherius/RaymarchShader"
 
 			float CalculateStepsForRay(float rayLength)
 			{
-				float atmosphereHeight = planetAtmos.z - planetAtmos.y;
-				rayLength = max(rayLength, atmosphereHeight);
-				return Remap(rayLength, atmosphereHeight,maxRayPossibleDist, 64.0,128.0);
+				return rayLength / baseSampleDistance;
 			}
 
-			float CalculateMaxRayDist(float rayLength)
-			{
-				if (maxRayUserDist == 0.0)
-				{
-					return rayLength;
-				}
-				else
-				{
-					return min(maxRayUserDist, rayLength);
-				}
-			}
+			
 
 			bool IsPosVisible(float3 pos,float maxDepth,bool isMaxDepth)
 			{
@@ -585,7 +574,7 @@ Shader "Aetherius/RaymarchShader"
 				float cosAngle = dot(-rd,sunDir);//We assume they are normalized
 
 				float maxStepsRay = CalculateStepsForRay(atmosIntersection.r1m);
-				float stepLength = CalculateMaxRayDist(atmosIntersection.r1m) / maxStepsRay;
+				float stepLength = baseSampleDistance;
 
 				float3 startingPos = atmosIntersection.r1o + rd * stepLength * blueNoiseOffset;
 				float scatteredtransmittance = 1.0;
@@ -599,7 +588,7 @@ Shader "Aetherius/RaymarchShader"
 				if (atmosIntersection.hasRay2)
 				{
 					maxStepsRay = CalculateStepsForRay(atmosIntersection.r2m);
-					stepLength = CalculateMaxRayDist(atmosIntersection.r2m) / maxStepsRay;
+					stepLength = baseSampleDistance;
 
 					startingPos = atmosIntersection.r2o + rd * stepLength * blueNoiseOffset;
 

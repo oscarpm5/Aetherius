@@ -105,7 +105,7 @@ namespace Aetherius
             }
 
 
-            _myScript.maxRayVisibilityDist = Mathf.Max(EditorGUILayout.IntField("Max Ray Distance", _myScript.maxRayVisibilityDist), 0);
+            _myScript.maxSamplesPerRay = Mathf.Clamp(EditorGUILayout.IntField("Max Samples Per Ray", _myScript.maxSamplesPerRay), 0,2048);
             _myScript.blueNoise = (Texture2D)EditorGUILayout.ObjectField("Blue Noise", _myScript.blueNoise, typeof(Texture2D), false);
 
 

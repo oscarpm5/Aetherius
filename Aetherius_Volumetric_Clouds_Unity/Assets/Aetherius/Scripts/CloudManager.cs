@@ -16,7 +16,7 @@ namespace Aetherius
         public CloudShape advanced;
 
         //Ray March
-        public int maxRayVisibilityDist = 50000; //ray distance through the cloud layer
+        public int maxSamplesPerRay = 50000; //ray distance through the cloud layer
         public Texture2D blueNoise;
 
         //Weather System
@@ -223,7 +223,7 @@ namespace Aetherius
 
             mat.SetFloat("minCloudHeight", minCloudHeightMeters);
             mat.SetFloat("maxCloudHeight", maxCloudHeightMeters);
-            mat.SetFloat("maxRayUserDist", maxRayVisibilityDist);
+            mat.SetFloat("maxRaySamples", maxSamplesPerRay);
             mat.SetFloat("hazeMinDist", hazeVisibilityAtmos.x);
             mat.SetFloat("hazeMaxDist", hazeVisibilityAtmos.y);
 
@@ -286,8 +286,13 @@ namespace Aetherius
             int planetRadiusMeters = planetRadiusKm * 1000;
             Vector3 planetAtmos = new Vector3(planetRadiusMeters, planetRadiusMeters + minCloudHeightMeters, planetRadiusMeters + maxCloudHeightMeters);//Center of the planet, radius of min cloud sphere, radius of max cloud sphere
             mat.SetVector("planetAtmos", planetAtmos);
-            mat.SetFloat("maxRayPossibleDist", Mathf.Sqrt(Mathf.Pow(planetAtmos.z, 2) - Mathf.Pow(planetAtmos.y, 2)) * 2.0f); //maximum ray length on the cloud layer
+            float maxRayPossibleDist = Mathf.Sqrt(Mathf.Pow(planetAtmos.z, 2) - Mathf.Pow(planetAtmos.y, 2)) * 2.0f;
+            mat.SetFloat("maxRayPossibleDist", maxRayPossibleDist); //maximum ray length on the cloud layer
             mat.SetFloat("maxRayPossibleGroundDist", Mathf.Sqrt(Mathf.Pow(planetAtmos.z, 2) - Mathf.Pow(planetAtmos.x, 2)) * 2.0f);//maximum ray length of a ray travelling trough the atmosphere without touching the ground 
+            mat.SetFloat("baseSampleDistance", maxRayPossibleDist / maxSamplesPerRay);
+
+
+
             mat.SetInt("cumulusHorizon", cumulusHorizon ? 1 : 0);
             mat.SetVector("cumulusHorizonGradient", cumulusHorizonGradient);
             mat.SetVector("cloudLayerGradient1", cloudLayerGradient1);
