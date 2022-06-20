@@ -24,10 +24,14 @@ public class CameraMove : MonoBehaviour
     public bool enabledControl = true;
     bool fpCamMode = true;//first person cam mode
 
+
+    Vector3 camOrigin = new Vector3( 0.0f, 2.0f, 0.0f );
+
     // Start is called before the first frame update
     void Start()
     {
         speed = defaultSpeed;
+        SetPitchYawPos(pitch, yaw, camOrigin);
     }
 
     // Update is called once per frame
@@ -57,8 +61,8 @@ public class CameraMove : MonoBehaviour
 
         if (Input.GetKey(KeyCode.F))
         {
-            speed = defaultSpeed;
-            gameObject.transform.position = new Vector3(0.0f, 1.0f, 0.0f);
+            speed = 0;
+            gameObject.transform.position = camOrigin;
         }
 
 
@@ -105,8 +109,9 @@ public class CameraMove : MonoBehaviour
 
                 newMovement.Normalize();
 
-                movement = Vector3.Lerp(movement, newMovement, 5.0f*Time.deltaTime);
+                movement = Vector3.Lerp(movement, newMovement, 5.0f * Time.deltaTime);
                 movement.Normalize();
+                speed = Mathf.Max(speed, defaultSpeed);
 
                 speed += speed * accel * Time.deltaTime * (Input.GetKey(KeyCode.LeftShift) ? sprintMultiplier : 1.0f) + Time.deltaTime;
             }
@@ -114,10 +119,11 @@ public class CameraMove : MonoBehaviour
         }
 
 
-        if(!isInputingMovement)
+        if (!isInputingMovement)
         {
-            speed *= Mathf.Min(0.5f * Time.deltaTime*60.0f,0.5f);
-            speed = Mathf.Max(speed, defaultSpeed);
+            speed = speed - speed*Mathf.Clamp01(10.0f * Time.deltaTime );
+            if (speed < defaultSpeed)
+                speed = 0;
         }
 
 
@@ -133,7 +139,7 @@ public class CameraMove : MonoBehaviour
         gameObject.transform.eulerAngles = new Vector3(pitch, yaw, 0.0f);
     }
 
-    public void SetPitchYawPos(float pitch, float yaw,Vector3 pos)
+    public void SetPitchYawPos(float pitch, float yaw, Vector3 pos)
     {
         SetPitchYaw(pitch, yaw);
 

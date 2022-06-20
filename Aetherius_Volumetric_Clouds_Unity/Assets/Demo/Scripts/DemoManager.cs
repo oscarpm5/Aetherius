@@ -47,11 +47,12 @@ public class DemoManager : MonoBehaviour
         benchmarkToggleText = benchmarkToggleButton.transform.Find("Text").GetComponent<Text>();
 
 
-
         AssignChildren();
         originalBenchmarkColor = benchmarkToggleImage.color;
         SetBenchmarkButtonDisplay(false);
         initialSunRot = sun.transform.rotation;
+
+
     }
 
     // Update is called once per frame
