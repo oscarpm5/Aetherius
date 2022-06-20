@@ -129,5 +129,17 @@ public class CameraMove : MonoBehaviour
     {
         this.pitch = pitch;
         this.yaw = yaw;
+
+        gameObject.transform.eulerAngles = new Vector3(pitch, yaw, 0.0f);
     }
+
+    public void SetPitchYawPos(float pitch, float yaw,Vector3 pos)
+    {
+        SetPitchYaw(pitch, yaw);
+
+        movement = Vector3.zero;
+        speed = defaultSpeed;
+        gameObject.transform.position = pos;
+    }
+
 }

@@ -120,6 +120,10 @@ public class DemoManager : MonoBehaviour
 
     public void SetPreset(int val)
     {
+        if ((Aetherius.CLOUD_PRESET)val == managerRef.preset)
+            return;
+
+
         managerRef.preset = (Aetherius.CLOUD_PRESET)val;
         managerRef.StartWMTransition(presetTransitionTime);
     }
