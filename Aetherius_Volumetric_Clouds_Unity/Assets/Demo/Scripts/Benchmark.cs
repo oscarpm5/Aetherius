@@ -45,6 +45,8 @@ public class Benchmark : MonoBehaviour
     string filename = "";
     bool resultsSaved = false;
 
+    bool wasSunAniamted = false;
+
     // Start is called before the first frame update
     void Start()
     {
@@ -91,6 +93,8 @@ public class Benchmark : MonoBehaviour
         cloudManager.StartWMTransition(0.0f);
         aetheriusCamMove.SetPitchYaw(-30.0f, 200.0f);
         aetheriusCamMove.enabledControl = false;
+        wasSunAniamted = demo.animateSun.isOn;
+        demo.animateSun.isOn = false;
         demo.SetBenchmarkButtonDisplay(true);
     }
 
@@ -99,6 +103,7 @@ public class Benchmark : MonoBehaviour
         evaluatingPreset = EVALUATION_STAGE.INACTIVE;
         aetheriusCamMove.enabledControl = true;
         demo.SetBenchmarkButtonDisplay(false);
+       demo.animateSun.isOn= wasSunAniamted;
     }
 
     // Update is called once per frame

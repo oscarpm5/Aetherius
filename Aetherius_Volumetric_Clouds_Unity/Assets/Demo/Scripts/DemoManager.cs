@@ -28,6 +28,7 @@ public class DemoManager : MonoBehaviour
     public Canvas benchmarkExcludeCanvas;
     public Light sun;
     public Slider dayNightCycleSlider;
+    public Toggle animateSun;
 
     Text benchmarkToggleText;
     Image benchmarkToggleImage;
@@ -68,7 +69,13 @@ public class DemoManager : MonoBehaviour
 
     void SetSunPos()
     {
-        sun.transform.rotation= initialSunRot *Quaternion.AngleAxis(dayNightCycleSlider.value,Vector3.right);
+        if (animateSun.isOn)
+        {
+            dayNightCycleSlider.value = (dayNightCycleSlider.value + Time.deltaTime * 2.0f) % dayNightCycleSlider.maxValue;
+        }
+
+        sun.transform.rotation = initialSunRot * Quaternion.AngleAxis(dayNightCycleSlider.value, Vector3.right);
+
     }
 
     void SetResolutionText()
