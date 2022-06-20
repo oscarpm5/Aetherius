@@ -78,6 +78,8 @@ namespace Aetherius
 
         public TextureGenerator textureGenerator;
         public List<Vector4> conekernel;
+
+        public Quaternion lastSunRotation;
         private List<Vector4> GenerateConeKernels()
         {
             List<Vector4> newList = new List<Vector4>();
@@ -249,7 +251,15 @@ namespace Aetherius
             dirs[1] = Vector3.down;
             dirs[2] = -currentSunDir;
 
+
+            RenderSettings.skybox.globalIlluminationFlags = MaterialGlobalIlluminationFlags.RealtimeEmissive;
             RenderSettings.ambientMode = UnityEngine.Rendering.AmbientMode.Skybox;
+
+            if(sunLight.transform.rotation != lastSunRotation)
+            {
+                DynamicGI.UpdateEnvironment();
+                lastSunRotation = sunLight.transform.rotation;
+            }
             RenderSettings.ambientProbe.Evaluate(dirs, c);
             List<Vector4> ambientColors = new List<Vector4>();
             ambientColors.Add(c[0]);//Up
@@ -269,7 +279,7 @@ namespace Aetherius
             {
                 ambientColors[i] *= newAmbientLightIntensity;
             }
-
+            
             mat.SetVector("lightColor", sunLight.color * sunLight.intensity * lightIntensityMult * weightedGrayscaleAmbient);
             mat.SetVectorArray("ambientColors", ambientColors);
             mat.SetVectorArray("coneKernel", conekernel);

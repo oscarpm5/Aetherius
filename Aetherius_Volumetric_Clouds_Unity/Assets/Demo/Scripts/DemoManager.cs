@@ -26,6 +26,8 @@ public class DemoManager : MonoBehaviour
     public GameObject benchmarkToggleButton;
     public Canvas benchmarkCanvas;
     public Canvas benchmarkExcludeCanvas;
+    public Light sun;
+    public Slider dayNightCycleSlider;
 
     Text benchmarkToggleText;
     Image benchmarkToggleImage;
@@ -34,7 +36,7 @@ public class DemoManager : MonoBehaviour
 
     Color originalBenchmarkColor;
 
-
+    Quaternion initialSunRot;
 
     // Start is called before the first frame update
     void Start()
@@ -48,17 +50,25 @@ public class DemoManager : MonoBehaviour
         AssignChildren();
         originalBenchmarkColor = benchmarkToggleImage.color;
         SetBenchmarkButtonDisplay(false);
+        initialSunRot = sun.transform.rotation;
     }
 
     // Update is called once per frame
     void Update()
     {
         HandleInput();
+        SetSunPos();
 
         fpsCounter.text = "FPS: " + 1.0 / Time.unscaledDeltaTime;
         msCounter.text = "MS: " + Time.unscaledDeltaTime * 1000.0f;
         SetResolutionText();
         SetPresetText();
+
+    }
+
+    void SetSunPos()
+    {
+        sun.transform.rotation= initialSunRot *Quaternion.AngleAxis(dayNightCycleSlider.value,Vector3.right);
     }
 
     void SetResolutionText()
