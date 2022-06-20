@@ -34,22 +34,26 @@ namespace Aetherius
         public float densityCurveMultiplier3 = 1.0f;
         public AnimationCurve densityCurve1 = new AnimationCurve( //Only in advanced mode
           new Keyframe[3] {
-                new Keyframe(0.0f,0.0f,14.5f,14.5f),
-                new Keyframe(0.2f,1.0f,0.15f,0.15f),
-                new Keyframe(1.0f,0.0f,-3.0f,-3.0f)}
+                new Keyframe(0.103f,0.020f,3.556f,3.556f),
+                new Keyframe(0.205f,0.961f,-0.311f,-0.311f),
+                new Keyframe(0.300f,0,-3.059f,-3.059f)}
           );
         public AnimationCurve densityCurve2 = new AnimationCurve( //Only in advanced mode //TODO change parameters
-         new Keyframe[3] {
-                new Keyframe(0.0f,0.0f,14.5f,14.5f),
-                new Keyframe(0.2f,1.0f,0.15f,0.15f),
-                new Keyframe(1.0f,0.0f,-3.0f,-3.0f)}
+         new Keyframe[4] {
+                new Keyframe(0.318f,0.024f,59.606f,59.606f),
+                new Keyframe(0.351f,0.993f,0.319f,0.319f),
+                new Keyframe(0.418f,0.855f,-6.531f,-6.531f),
+                new Keyframe(0.699f,0.010f,0.182f,-0.182f)}
          );
+
         public AnimationCurve densityCurve3 = new AnimationCurve( //Only in advanced mode //TODO change parameters
          new Keyframe[3] {
-                new Keyframe(0.0f,0.0f,14.5f,14.5f),
-                new Keyframe(0.2f,1.0f,0.15f,0.15f),
-                new Keyframe(1.0f,0.0f,-3.0f,-3.0f)}
+                new Keyframe(0.003f,0.749f,0.000f,0.000f),
+                new Keyframe(0.499f,0.498f,1.500f,1.500f),
+                new Keyframe(1.000f,1.000f,0.000f,0.000f)}
          );
+
+
         //WS Transition
         public bool transitioning = false;
         public float transitionTimeWM = 10.0f;

@@ -60,6 +60,7 @@ Shader "Aetherius/RaymarchShader"
 			Texture3D<float4> baseShapeTexture;
 			Texture3D<float3> detailTexture; //TODO see if I can get around using a float3
 			Texture2D<float3> weatherMapTexture;
+			Texture2D<float3> weatherMapTextureNew;
 			Texture2D<float> blueNoiseTexture;
 			SamplerState samplerbaseShapeTexture;
 			SamplerState samplerdetailTexture;
@@ -117,8 +118,7 @@ Shader "Aetherius/RaymarchShader"
 
 			bool transitioningWM;
 			float transitionLerpT;
-			Texture2D<float4> weatherMapTextureNew;
-			SamplerState samplerweatherMapTextureNew;
+
 
 			int lightIterations;
 
@@ -335,7 +335,7 @@ Shader "Aetherius/RaymarchShader"
 				float3 weatherMapCloud = weatherMapTexture.SampleLevel(samplerweatherMapTexture, (skewPos.xz / weatherMapSize) + windOffset.xz * windDisplacesWeatherMap,sampleLvl); //We sample the weather map (r coverage,g type)
 				if (transitioningWM == true)
 				{
-					weatherMapCloud = lerp(weatherMapCloud, weatherMapTextureNew.SampleLevel(samplerweatherMapTextureNew, (skewPos.xz / weatherMapSize) + windOffset.xz * windDisplacesWeatherMap, sampleLvl), transitionLerpT);
+					weatherMapCloud = lerp(weatherMapCloud, weatherMapTextureNew.SampleLevel(samplerweatherMapTexture, (skewPos.xz / weatherMapSize) + windOffset.xz * windDisplacesWeatherMap, sampleLvl), transitionLerpT);
 				}
 
 				//Cloud Base shape
