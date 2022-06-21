@@ -16,6 +16,8 @@ namespace Aetherius
         public CloudShape advanced;
 
         //Ray March
+        public float baseRaymarchStep = 110.0f;
+        public float dynamicStepsCoefficient = 1.0f;
         public int maxRayVisibilityDist = 50000; //ray distance through the cloud layer
         public Texture2D blueNoise;
 
@@ -300,6 +302,8 @@ namespace Aetherius
             mat.SetVector("planetAtmos", planetAtmos);
             mat.SetFloat("maxRayPossibleDist", Mathf.Sqrt(Mathf.Pow(planetAtmos.z, 2) - Mathf.Pow(planetAtmos.y, 2)) * 2.0f); //maximum ray length on the cloud layer
             mat.SetFloat("maxRayPossibleGroundDist", Mathf.Sqrt(Mathf.Pow(planetAtmos.z, 2) - Mathf.Pow(planetAtmos.x, 2)) * 2.0f);//maximum ray length of a ray travelling trough the atmosphere without touching the ground 
+            mat.SetVector("dynamicRaymarchParameters", new Vector2(baseRaymarchStep, dynamicStepsCoefficient));
+            
             mat.SetInt("cumulusHorizon", cumulusHorizon ? 1 : 0);
             mat.SetVector("cumulusHorizonGradient", cumulusHorizonGradient);
             mat.SetVector("cloudLayerGradient1", cloudLayerGradient1);

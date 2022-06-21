@@ -1155,6 +1155,42 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 210477145}
   m_CullTransparentMesh: 1
+--- !u!84 &210541440
+RenderTexture:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: 
+  m_ImageContentsHash:
+    serializedVersion: 2
+    Hash: 00000000000000000000000000000000
+  m_ForcedFallbackFormat: 4
+  m_DownscaleFallback: 0
+  m_IsAlphaChannelOptional: 0
+  serializedVersion: 3
+  m_Width: 256
+  m_Height: 256
+  m_AntiAliasing: 1
+  m_MipCount: -1
+  m_DepthFormat: 0
+  m_ColorFormat: 8
+  m_MipMap: 1
+  m_GenerateMips: 0
+  m_SRGB: 0
+  m_UseDynamicScale: 0
+  m_BindMS: 0
+  m_EnableCompatibleFormat: 1
+  m_TextureSettings:
+    serializedVersion: 2
+    m_FilterMode: 2
+    m_Aniso: 1
+    m_MipBias: 0
+    m_WrapU: 0
+    m_WrapV: 0
+    m_WrapW: 0
+  m_Dimension: 2
+  m_VolumeDepth: 1
 --- !u!1 &225398817
 GameObject:
   m_ObjectHideFlags: 0
@@ -1490,42 +1526,6 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 399914437}
   m_CullTransparentMesh: 1
---- !u!84 &410882167
-RenderTexture:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_Name: 
-  m_ImageContentsHash:
-    serializedVersion: 2
-    Hash: 00000000000000000000000000000000
-  m_ForcedFallbackFormat: 4
-  m_DownscaleFallback: 0
-  m_IsAlphaChannelOptional: 0
-  serializedVersion: 3
-  m_Width: 32
-  m_Height: 32
-  m_AntiAliasing: 1
-  m_MipCount: -1
-  m_DepthFormat: 0
-  m_ColorFormat: 8
-  m_MipMap: 1
-  m_GenerateMips: 0
-  m_SRGB: 0
-  m_UseDynamicScale: 0
-  m_BindMS: 0
-  m_EnableCompatibleFormat: 1
-  m_TextureSettings:
-    serializedVersion: 2
-    m_FilterMode: 2
-    m_Aniso: 1
-    m_MipBias: 0
-    m_WrapU: 0
-    m_WrapV: 0
-    m_WrapW: 0
-  m_Dimension: 3
-  m_VolumeDepth: 32
 --- !u!1 &442163409
 GameObject:
   m_ObjectHideFlags: 0
@@ -1641,42 +1641,6 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 517816530}
   m_CullTransparentMesh: 1
---- !u!84 &522814300
-RenderTexture:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_Name: 
-  m_ImageContentsHash:
-    serializedVersion: 2
-    Hash: 00000000000000000000000000000000
-  m_ForcedFallbackFormat: 4
-  m_DownscaleFallback: 0
-  m_IsAlphaChannelOptional: 0
-  serializedVersion: 3
-  m_Width: 256
-  m_Height: 256
-  m_AntiAliasing: 1
-  m_MipCount: -1
-  m_DepthFormat: 0
-  m_ColorFormat: 8
-  m_MipMap: 1
-  m_GenerateMips: 0
-  m_SRGB: 0
-  m_UseDynamicScale: 0
-  m_BindMS: 0
-  m_EnableCompatibleFormat: 1
-  m_TextureSettings:
-    serializedVersion: 2
-    m_FilterMode: 2
-    m_Aniso: 1
-    m_MipBias: 0
-    m_WrapU: 0
-    m_WrapV: 0
-    m_WrapW: 0
-  m_Dimension: 2
-  m_VolumeDepth: 1
 --- !u!1 &553551274
 GameObject:
   m_ObjectHideFlags: 0
@@ -2563,42 +2527,6 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 724991932}
   m_CullTransparentMesh: 1
---- !u!84 &725260933
-RenderTexture:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_Name: 
-  m_ImageContentsHash:
-    serializedVersion: 2
-    Hash: 00000000000000000000000000000000
-  m_ForcedFallbackFormat: 4
-  m_DownscaleFallback: 0
-  m_IsAlphaChannelOptional: 0
-  serializedVersion: 3
-  m_Width: 128
-  m_Height: 128
-  m_AntiAliasing: 1
-  m_MipCount: -1
-  m_DepthFormat: 0
-  m_ColorFormat: 8
-  m_MipMap: 1
-  m_GenerateMips: 0
-  m_SRGB: 0
-  m_UseDynamicScale: 0
-  m_BindMS: 0
-  m_EnableCompatibleFormat: 1
-  m_TextureSettings:
-    serializedVersion: 2
-    m_FilterMode: 2
-    m_Aniso: 1
-    m_MipBias: 0
-    m_WrapU: 0
-    m_WrapV: 0
-    m_WrapW: 0
-  m_Dimension: 3
-  m_VolumeDepth: 128
 --- !u!1 &841002793
 GameObject:
   m_ObjectHideFlags: 0
@@ -4871,6 +4799,42 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1429625005}
   m_CullTransparentMesh: 1
+--- !u!84 &1465184423
+RenderTexture:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: 
+  m_ImageContentsHash:
+    serializedVersion: 2
+    Hash: 00000000000000000000000000000000
+  m_ForcedFallbackFormat: 4
+  m_DownscaleFallback: 0
+  m_IsAlphaChannelOptional: 0
+  serializedVersion: 3
+  m_Width: 128
+  m_Height: 128
+  m_AntiAliasing: 1
+  m_MipCount: -1
+  m_DepthFormat: 0
+  m_ColorFormat: 8
+  m_MipMap: 1
+  m_GenerateMips: 0
+  m_SRGB: 0
+  m_UseDynamicScale: 0
+  m_BindMS: 0
+  m_EnableCompatibleFormat: 1
+  m_TextureSettings:
+    serializedVersion: 2
+    m_FilterMode: 2
+    m_Aniso: 1
+    m_MipBias: 0
+    m_WrapU: 0
+    m_WrapV: 0
+    m_WrapW: 0
+  m_Dimension: 3
+  m_VolumeDepth: 128
 --- !u!1 &1468098647
 GameObject:
   m_ObjectHideFlags: 0
@@ -4946,6 +4910,42 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1468098647}
   m_CullTransparentMesh: 1
+--- !u!84 &1468420361
+RenderTexture:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: 
+  m_ImageContentsHash:
+    serializedVersion: 2
+    Hash: 00000000000000000000000000000000
+  m_ForcedFallbackFormat: 4
+  m_DownscaleFallback: 0
+  m_IsAlphaChannelOptional: 0
+  serializedVersion: 3
+  m_Width: 32
+  m_Height: 32
+  m_AntiAliasing: 1
+  m_MipCount: -1
+  m_DepthFormat: 0
+  m_ColorFormat: 8
+  m_MipMap: 1
+  m_GenerateMips: 0
+  m_SRGB: 0
+  m_UseDynamicScale: 0
+  m_BindMS: 0
+  m_EnableCompatibleFormat: 1
+  m_TextureSettings:
+    serializedVersion: 2
+    m_FilterMode: 2
+    m_Aniso: 1
+    m_MipBias: 0
+    m_WrapU: 0
+    m_WrapV: 0
+    m_WrapW: 0
+  m_Dimension: 3
+  m_VolumeDepth: 32
 --- !u!1 &1496884111
 GameObject:
   m_ObjectHideFlags: 0
@@ -7145,7 +7145,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   mode: 0
-  preset: 0
+  preset: 2
   resolution: 0
   simple:
     baseShapeSize: 10000
@@ -7159,6 +7159,8 @@ MonoBehaviour:
     globalCoverage: 0.5
     globalDensity: 0.2
     weatherMapSize: 36000
+  baseRaymarchStep: 110
+  dynamicStepsCoefficient: 1
   maxRayVisibilityDist: 100000
   blueNoise: {fileID: 2800000, guid: 0cd98530926ee344a93cf6cc4437d4f6, type: 3}
   wmSeed: 307
@@ -7288,7 +7290,7 @@ MonoBehaviour:
   detailShapeWindMult: 3
   skewAmmount: 0
   windDirection: {x: 0.01, y: 0.025, z: 0.005}
-  planetRadiusKm: 6370
+  planetRadiusKm: 6371
   hazeVisibilityAtmos: {x: 30000, y: 100000}
   sunLight: {fileID: 705507994}
   lightIntensityMult: 25
@@ -7313,17 +7315,17 @@ MonoBehaviour:
     - {fileID: 11400000, guid: 1e13bd58664b3ec448d391dd9a041f51, type: 2}
     - {fileID: 11400000, guid: 3d04b3037c1a4a640b7ac77a0decf1c4, type: 2}
     - {fileID: 11400000, guid: cdb03daae29d1a74f9d322db4dace868, type: 2}
-    _baseShapeRenderTexture: {fileID: 725260933}
-    _detailRenderTexture: {fileID: 410882167}
-    originalWM: {fileID: 522814300}
+    _baseShapeRenderTexture: {fileID: 1465184423}
+    _detailRenderTexture: {fileID: 1468420361}
+    originalWM: {fileID: 210541440}
     newWM: {fileID: 0}
   conekernel:
-  - {x: -0.117866434, y: 0.7633385, z: -0.63515496, w: 0}
-  - {x: -0.27469194, y: 0.9184386, z: 0.28463122, w: 0}
-  - {x: -0.35791212, y: -0.807375, z: 0.469089, w: 0}
-  - {x: -0.24306343, y: 0.6247157, z: -0.7420583, w: 0}
-  - {x: 0.38303298, y: -0.71375287, z: 0.58638096, w: 0}
-  - {x: -0.8727075, y: -0.139993, z: 0.46774313, w: 0}
+  - {x: -0.84770274, y: -0.43138635, z: -0.30871642, w: 0}
+  - {x: -0.020077618, y: 0.71306944, z: -0.7008059, w: 0}
+  - {x: -0.03187062, y: -0.9933193, z: 0.11091006, w: 0}
+  - {x: -0.0456209, y: 0.9976549, z: -0.051023602, w: 0}
+  - {x: 0.5644348, y: 0.60880315, z: -0.55746937, w: 0}
+  - {x: -0.37388045, y: -0.7190519, z: -0.58581376, w: 0}
   lastSunRotation: {x: 0.26339018, y: -0.5557615, z: 0.19136398, w: 0.7649409}
 --- !u!114 &1107285944527061099
 MonoBehaviour:

@@ -111,6 +111,8 @@ Shader "Aetherius/RaymarchShader"
 			float maxRayUserDist;
 			float maxRayPossibleDist;
 			float maxRayPossibleGroundDist;
+			float2 dynamicRaymarchParameters;
+
 			float hazeMinDist;
 			float hazeMaxDist;
 
@@ -129,12 +131,7 @@ Shader "Aetherius/RaymarchShader"
 
 			struct AtmosIntersection
 			{
-
-				float3 r1o;//origin
-				float r1m;//magnitude
-				float3 r2o;//origin
-				float r2m;//magnitude
-
+				float4 intersectionsT; //Origin ray1, end ray 1, origin ray 2, end ray 2
 				bool startsInAtmos;
 				bool hasRay2;
 
@@ -173,15 +170,12 @@ Shader "Aetherius/RaymarchShader"
 				return float2(t0, t1);
 			}
 
-			//outputs a ro + the length of the ray, returns false if no intersection has been found
+			//outputs the length of the ray, returns false if no intersection has been found
 			bool GetRayAtmosphere(float3 ro,float3 rd, out AtmosIntersection intersection)
 			{
-				intersection.startsInAtmos = false;
-				intersection.r1o = ro;
-				intersection.r2o = ro;
+				intersection.startsInAtmos = true;
+				intersection.intersectionsT = float4( 0.0,0.0,0.0,0.0 );
 				intersection.hasRay2 = false;
-				intersection.r1m = 0.0;
-				intersection.r2m = 0.0;
 
 				float3 planetO = { 0.0, -planetAtmos.x,0.0 };
 				float d = length(ro - planetO);//distance btween camera and the planet center
@@ -192,12 +186,12 @@ Shader "Aetherius/RaymarchShader"
 
 				if (d < planetAtmos.y)//if camera is under the atmosphere
 				{
-					intersection.startsInAtmos = true;
+					
 
 					if (groundT.y < 0.0) //when no ground collision, secondary ray
 					{
-						intersection.r1o = ro + rd * innerAtmT.y;//second hit as 1st will always be behind camera in this case
-						intersection.r1m = outerAtmT.y - innerAtmT.y;//second hit as 1st will always be behind camera in this case
+						intersection.intersectionsT.x = innerAtmT.y;//second hit as 1st will always be behind camera in this case
+						intersection.intersectionsT.y = outerAtmT.y;//second hit as 1st will always be behind camera in this case
 
 						return true;
 
@@ -211,22 +205,20 @@ Shader "Aetherius/RaymarchShader"
 				}
 				else if (d < planetAtmos.z) //if camera is inside the atmosphere
 				{
-					intersection.startsInAtmos = true;
-					intersection.r1o = ro;
 
 					if (innerAtmT.x <= 0.0)
 					{
-						intersection.r1m = outerAtmT.y;
+						intersection.intersectionsT.y = outerAtmT.y;
 					}
 					else
 					{
-						intersection.r1m = innerAtmT.x;
+						intersection.intersectionsT.y = innerAtmT.x;
 
 						if (groundT.y < 0.0) //If no ground collision, secondary ray
 						{
 							intersection.hasRay2 = true;
-							intersection.r2o = ro + rd * innerAtmT.y;
-							intersection.r2m = outerAtmT.y - innerAtmT.y;
+							intersection.intersectionsT.z = innerAtmT.y;
+							intersection.intersectionsT.w = outerAtmT.y;
 						}
 
 					}
@@ -236,28 +228,29 @@ Shader "Aetherius/RaymarchShader"
 				}
 				else if (outerAtmT.x < 0.0)//If camera is above atmosphere
 				{
+					intersection.startsInAtmos = false;
 					return false;//No hit or behind camera!
 				}
 				else
 				{
 					intersection.startsInAtmos = false;
 
-					intersection.r1o = ro + rd * outerAtmT.x;
+					intersection.intersectionsT.x = outerAtmT.x;
 
 					if (innerAtmT.x > 0.0)
 					{
-						intersection.r1m = innerAtmT.x - outerAtmT.x;
+						intersection.intersectionsT.y = innerAtmT.x;
 
 						if (groundT.x < 0.0) //If no ground collision, secondary ray
 						{
 							intersection.hasRay2 = true;
-							intersection.r2o = ro + rd * innerAtmT.y;
-							intersection.r2m = outerAtmT.y - innerAtmT.y;
+							intersection.intersectionsT.z = innerAtmT.y;
+							intersection.intersectionsT.w = outerAtmT.y;
 						}
 					}
 					else
 					{
-						intersection.r1m = outerAtmT.y - outerAtmT.x;
+						intersection.intersectionsT.y = outerAtmT.y;
 					}
 
 					return true;
@@ -572,7 +565,7 @@ Shader "Aetherius/RaymarchShader"
 
 			}
 
-			float4 Raymarching(float3 rd, AtmosIntersection atmosIntersection,float2 uv,float maxDepth,bool isMaxDepth)
+			float4 Raymarching(float3 ro,float3 rd, AtmosIntersection atmosIntersection,float2 uv,float maxDepth,bool isMaxDepth)
 			{
 				uint blueNoiseW;
 				uint blueNoiseH;
@@ -582,10 +575,10 @@ Shader "Aetherius/RaymarchShader"
 				float blueNoiseOffset = blueNoiseTexture.Sample(samplerblueNoiseTexture, uv);
 				float cosAngle = dot(-rd,sunDir);//We assume they are normalized
 
-				float maxStepsRay = CalculateStepsForRay(atmosIntersection.r1m);
-				float stepLength = CalculateMaxRayDist(atmosIntersection.r1m) / maxStepsRay;
+				float maxStepsRay = CalculateStepsForRay(atmosIntersection.intersectionsT.y- atmosIntersection.intersectionsT.x);
+				float stepLength = CalculateMaxRayDist(atmosIntersection.intersectionsT.y- atmosIntersection.intersectionsT.x) / maxStepsRay;
 
-				float3 startingPos = atmosIntersection.r1o + rd * stepLength * blueNoiseOffset;
+				float3 startingPos = ro +  rd* atmosIntersection.intersectionsT.x + rd* stepLength * blueNoiseOffset;
 				float scatteredtransmittance = 1.0;
 				float3 scatteredLuminance = float3(0.0, 0.0, 0.0);
 
@@ -596,10 +589,10 @@ Shader "Aetherius/RaymarchShader"
 
 				if (atmosIntersection.hasRay2)
 				{
-					maxStepsRay = CalculateStepsForRay(atmosIntersection.r2m);
-					stepLength = CalculateMaxRayDist(atmosIntersection.r2m) / maxStepsRay;
+					maxStepsRay = CalculateStepsForRay(atmosIntersection.intersectionsT.w-atmosIntersection.intersectionsT.z);
+					stepLength = CalculateMaxRayDist(atmosIntersection.intersectionsT.w - atmosIntersection.intersectionsT.z) / maxStepsRay;
 
-					startingPos = atmosIntersection.r2o + rd * stepLength * blueNoiseOffset;
+					startingPos = ro+ rd * atmosIntersection.intersectionsT.z + rd * stepLength * blueNoiseOffset;
 
 					RaymarchThroughAtmos(startingPos, rd, maxStepsRay, stepLength, maxDepth, cosAngle, isMaxDepth, atmosphereHazeAssigned, scatteredtransmittance, scatteredLuminance, atmosphereHazePos);
 				}
@@ -607,7 +600,7 @@ Shader "Aetherius/RaymarchShader"
 				float ammountTravelledThroughAtmos = 0.0;
 				if (!atmosIntersection.startsInAtmos)
 				{
-					ammountTravelledThroughAtmos = length(atmosphereHazePos - atmosIntersection.r1o);
+					ammountTravelledThroughAtmos = length(atmosphereHazePos - (ro + rd *atmosIntersection.intersectionsT.x));
 				}
 				else
 				{
@@ -648,9 +641,9 @@ Shader "Aetherius/RaymarchShader"
 				AtmosIntersection atmosIntersection;
 				bool isAtmosRay = GetRayAtmosphere(rayOrigin, rayDirection, atmosIntersection);
 
-				if (isAtmosRay && atmosIntersection.r1m > 0.0)
+				if (isAtmosRay && atmosIntersection.intersectionsT.y- atmosIntersection.intersectionsT.x > 0.0)
 				{
-					float4 result = Raymarching(rayDirection, atmosIntersection, i.uv, depthMeters, linearDepth >= 1.0);
+					float4 result = Raymarching(rayOrigin,rayDirection, atmosIntersection, i.uv, depthMeters, linearDepth >= 1.0);
 					return result;
 				}
 				else

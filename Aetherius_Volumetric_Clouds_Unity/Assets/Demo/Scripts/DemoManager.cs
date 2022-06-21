@@ -53,6 +53,19 @@ public class DemoManager : MonoBehaviour
         initialSunRot = sun.transform.rotation;
 
 
+
+        ////Test Code TODO delete
+        //float currDist = 0.0f;
+        //int stepsToPerform = 256;
+        //for (int i = 0; i < stepsToPerform; i++)
+        //{
+        //    float stepLength = 110+(currDist/638749)*currDist*0.4f;
+        //    currDist += stepLength;
+        //    Debug.LogWarning("Distance Travelled in " + i.ToString() + "steps: " + currDist.ToString());
+        //    Debug.LogWarning("Step length at " + i.ToString() + "steps: " + stepLength.ToString());
+        //}
+       
+
     }
 
     // Update is called once per frame
