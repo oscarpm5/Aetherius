@@ -171,18 +171,18 @@ Shader "Aetherius/RaymarchShader"
 			}
 
 			//outputs the length of the ray, returns false if no intersection has been found
-			bool GetRayAtmosphere(float3 ro,float3 rd, out AtmosIntersection intersection)
+			bool GetRayAtmosphere(float3 rd, out AtmosIntersection intersection)
 			{
 				intersection.startsInAtmos = true;
 				intersection.intersectionsT = float4( 0.0,0.0,0.0,0.0 );
 				intersection.hasRay2 = false;
 
 				float3 planetO = { 0.0, -planetAtmos.x,0.0 };
-				float d = length(ro - planetO);//distance btween camera and the planet center
+				float d = length(_WorldSpaceCameraPos - planetO);//distance btween camera and the planet center
 
-				float2 innerAtmT = GetAtmosphereIntersection(ro, rd, planetO, planetAtmos.y);
-				float2 outerAtmT = GetAtmosphereIntersection(ro, rd, planetO, planetAtmos.z);
-				float2 groundT = GetAtmosphereIntersection(ro, rd, planetO, planetAtmos.x);
+				float2 innerAtmT = GetAtmosphereIntersection(_WorldSpaceCameraPos, rd, planetO, planetAtmos.y);
+				float2 outerAtmT = GetAtmosphereIntersection(_WorldSpaceCameraPos, rd, planetO, planetAtmos.z);
+				float2 groundT = GetAtmosphereIntersection(_WorldSpaceCameraPos, rd, planetO, planetAtmos.x);
 
 				if (d < planetAtmos.y)//if camera is under the atmosphere
 				{
@@ -471,20 +471,22 @@ Shader "Aetherius/RaymarchShader"
 				return lightColor * shadow * DoubleLobeScattering(cosAngle , 0.3 * cMult, 0.15 * cMult, 0.5) * newScatterC + (ambientSun * 0.5 + ambientSky * 0.5) * t * shadow * (1.0 / 4.0 * 3.1415) * newScatterC;
 			}
 
-			void RaymarchThroughAtmos(float3 pos,float3 rd, int maxSteps,
-				float stepLengthBase,float maxDepth,float cosAngle,bool isMaxDepth,
+			void RaymarchThroughAtmos(float3 rd, float tInit,float tMax,
+				float maxDepth,float cosAngle,bool isMaxDepth,
 				inout bool atmosphereHazeAssigned,
 				inout float scatTransmittance, inout float3 scatLuminance, inout float3 atmosphereHazePos)
 			{
 				bool isBaseStep = true;//Base step or full step
 				int samplesWithZeroDensity = 0;
 
-
-				const float tMax = stepLengthBase * maxSteps;//TODO consider passing the total length of the ray as a parameter
-				float currentT = 0;
+				float stepLengthBase = dynamicRaymarchParameters.x;
+				float currentT = tInit;
 				while (currentT <= tMax)
 				{
-					float3 currPos = pos + rd * currentT;
+
+
+
+					float3 currPos = _WorldSpaceCameraPos + rd * currentT;
 
 					if (IsPosVisible(currPos, maxDepth, isMaxDepth) && scatTransmittance > 0.0)//Checks if an object is occluding the raymarch
 					{
@@ -565,7 +567,7 @@ Shader "Aetherius/RaymarchShader"
 
 			}
 
-			float4 Raymarching(float3 ro,float3 rd, AtmosIntersection atmosIntersection,float2 uv,float maxDepth,bool isMaxDepth)
+			float4 Raymarching(float3 rd, AtmosIntersection atmosIntersection,float2 uv,float maxDepth,bool isMaxDepth)
 			{
 				uint blueNoiseW;
 				uint blueNoiseH;
@@ -575,32 +577,23 @@ Shader "Aetherius/RaymarchShader"
 				float blueNoiseOffset = blueNoiseTexture.Sample(samplerblueNoiseTexture, uv);
 				float cosAngle = dot(-rd,sunDir);//We assume they are normalized
 
-				float maxStepsRay = CalculateStepsForRay(atmosIntersection.intersectionsT.y- atmosIntersection.intersectionsT.x);
-				float stepLength = CalculateMaxRayDist(atmosIntersection.intersectionsT.y- atmosIntersection.intersectionsT.x) / maxStepsRay;
-
-				float3 startingPos = ro +  rd* atmosIntersection.intersectionsT.x + rd* stepLength * blueNoiseOffset;
 				float scatteredtransmittance = 1.0;
 				float3 scatteredLuminance = float3(0.0, 0.0, 0.0);
 
 				float3 atmosphereHazePos = float3(0.0, 0.0, 0.0);
 				bool atmosphereHazeAssigned = false;
 
-				RaymarchThroughAtmos(startingPos, rd, maxStepsRay, stepLength,maxDepth,cosAngle,isMaxDepth, atmosphereHazeAssigned, scatteredtransmittance, scatteredLuminance, atmosphereHazePos);
+				RaymarchThroughAtmos( rd, atmosIntersection.intersectionsT.x, atmosIntersection.intersectionsT.y,maxDepth,cosAngle,isMaxDepth, atmosphereHazeAssigned, scatteredtransmittance, scatteredLuminance, atmosphereHazePos);
 
 				if (atmosIntersection.hasRay2)
 				{
-					maxStepsRay = CalculateStepsForRay(atmosIntersection.intersectionsT.w-atmosIntersection.intersectionsT.z);
-					stepLength = CalculateMaxRayDist(atmosIntersection.intersectionsT.w - atmosIntersection.intersectionsT.z) / maxStepsRay;
-
-					startingPos = ro+ rd * atmosIntersection.intersectionsT.z + rd * stepLength * blueNoiseOffset;
-
-					RaymarchThroughAtmos(startingPos, rd, maxStepsRay, stepLength, maxDepth, cosAngle, isMaxDepth, atmosphereHazeAssigned, scatteredtransmittance, scatteredLuminance, atmosphereHazePos);
+					RaymarchThroughAtmos( rd, atmosIntersection.intersectionsT.z, atmosIntersection.intersectionsT.w, maxDepth, cosAngle, isMaxDepth, atmosphereHazeAssigned, scatteredtransmittance, scatteredLuminance, atmosphereHazePos);
 				}
 
 				float ammountTravelledThroughAtmos = 0.0;
 				if (!atmosIntersection.startsInAtmos)
 				{
-					ammountTravelledThroughAtmos = length(atmosphereHazePos - (ro + rd *atmosIntersection.intersectionsT.x));
+					ammountTravelledThroughAtmos = length(atmosphereHazePos - (_WorldSpaceCameraPos + rd *atmosIntersection.intersectionsT.x));
 				}
 				else
 				{
@@ -626,7 +619,6 @@ Shader "Aetherius/RaymarchShader"
 
 			fixed4 frag(v2f i) : SV_Target
 			{
-				float3 rayOrigin = _WorldSpaceCameraPos;
 				float viewLength = length(i.ray);
 				float3 rayDirection = i.ray / viewLength;
 
@@ -639,11 +631,11 @@ Shader "Aetherius/RaymarchShader"
 
 				float t = 0.0;
 				AtmosIntersection atmosIntersection;
-				bool isAtmosRay = GetRayAtmosphere(rayOrigin, rayDirection, atmosIntersection);
+				bool isAtmosRay = GetRayAtmosphere( rayDirection, atmosIntersection);
 
 				if (isAtmosRay && atmosIntersection.intersectionsT.y- atmosIntersection.intersectionsT.x > 0.0)
 				{
-					float4 result = Raymarching(rayOrigin,rayDirection, atmosIntersection, i.uv, depthMeters, linearDepth >= 1.0);
+					float4 result = Raymarching(rayDirection, atmosIntersection, i.uv, depthMeters, linearDepth >= 1.0);
 					return result;
 				}
 				else
