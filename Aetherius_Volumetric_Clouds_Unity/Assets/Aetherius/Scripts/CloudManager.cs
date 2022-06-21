@@ -227,8 +227,6 @@ namespace Aetherius
             mat.SetTexture("blueNoiseTexture", blueNoise);
             mat.SetVector("texDimensions", texDimensions);
 
-            mat.SetFloat("minCloudHeight", minCloudHeightMeters);
-            mat.SetFloat("maxCloudHeight", maxCloudHeightMeters);
             mat.SetFloat("maxRayUserDist", maxRayVisibilityDist);
             mat.SetFloat("hazeMinDist", hazeVisibilityAtmos.x);
             mat.SetFloat("hazeMaxDist", hazeVisibilityAtmos.y);

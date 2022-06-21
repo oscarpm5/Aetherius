@@ -53,8 +53,6 @@ Shader "Aetherius/RaymarchShader"
 
 			float2 texDimensions;
 
-			float minCloudHeight;
-			float maxCloudHeight;
 
 
 			Texture3D<float4> baseShapeTexture;
