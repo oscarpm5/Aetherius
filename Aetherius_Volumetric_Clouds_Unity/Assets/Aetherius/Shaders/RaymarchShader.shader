@@ -471,7 +471,7 @@ Shader "Aetherius/RaymarchShader"
 				return lightColor * shadow * DoubleLobeScattering(cosAngle , 0.3 * cMult, 0.15 * cMult, 0.5) * newScatterC + (ambientSun * 0.5 + ambientSky * 0.5) * t * shadow * (1.0 / 4.0 * 3.1415) * newScatterC;
 			}
 
-			void RaymarchThroughAtmos(float3 rd, float tInit,float tMax,
+			void RaymarchThroughAtmos(float blueNoiseOffset,float3 rd, float tInit,float tMax,
 				float maxDepth,float cosAngle,bool isMaxDepth,
 				inout bool atmosphereHazeAssigned,
 				inout float scatTransmittance, inout float3 scatLuminance, inout float3 atmosphereHazePos)
@@ -479,11 +479,17 @@ Shader "Aetherius/RaymarchShader"
 				bool isBaseStep = true;//Base step or full step
 				int samplesWithZeroDensity = 0;
 
-				float stepLengthBase = dynamicRaymarchParameters.x;
-				float currentT = tInit;
-				while (currentT <= tMax)
-				{
+				float offsetedTInit = tInit + blueNoiseOffset * dynamicRaymarchParameters.x;
+				float currentT = offsetedTInit;
+				float previousT = currentT;
 
+				bool finished = false;
+
+				while (currentT <= tMax && finished==false)
+				{
+					float distFromRayOrigin = (currentT - offsetedTInit);
+					float stepLength = dynamicRaymarchParameters.x + ((distFromRayOrigin / maxRayPossibleGroundDist)* distFromRayOrigin* dynamicRaymarchParameters.y);
+					float detailedStepLength = stepLength * 0.125;
 
 
 					float3 currPos = _WorldSpaceCameraPos + rd * currentT;
@@ -511,7 +517,7 @@ Shader "Aetherius/RaymarchShader"
 
 								float extinction = currDensity * coefficients.x;
 								float clampedExtinction = max(extinction, 0.0000001);
-								float transmittance = exp(-clampedExtinction * stepLengthBase);
+								float transmittance = exp(-clampedExtinction * detailedStepLength);
 
 								float3 luminance = float3(0.0, 0.0, 0.0);
 								for (int i = 0; i < lightIterations; ++i)
@@ -537,8 +543,8 @@ Shader "Aetherius/RaymarchShader"
 									isBaseStep = true;
 								}
 							}
-
-							currentT += stepLengthBase * 0.125;
+							previousT = currentT;
+							currentT += detailedStepLength;
 						}
 						else
 						{
@@ -547,22 +553,22 @@ Shader "Aetherius/RaymarchShader"
 
 							if (currDensity > 0.0) //change to detailed steps if there is a cloud
 							{
-								currentT -= stepLengthBase; //go back to previous pos before changing
-								currentT = max(0, currentT);//also clamp to the start of the cloud
+								currentT = previousT; //go back to previous pos before changing
 								isBaseStep = false;
 							}
 							else //continue at low resolution
 							{
-								currentT += stepLengthBase;
+								previousT = currentT;
+								currentT += stepLength;
 							}
 						}
 
 
 					}
-
-
-
-					currentT += stepLengthBase;
+					else
+					{
+						finished = true;
+					}
 				}
 
 			}
@@ -583,11 +589,11 @@ Shader "Aetherius/RaymarchShader"
 				float3 atmosphereHazePos = float3(0.0, 0.0, 0.0);
 				bool atmosphereHazeAssigned = false;
 
-				RaymarchThroughAtmos( rd, atmosIntersection.intersectionsT.x, atmosIntersection.intersectionsT.y,maxDepth,cosAngle,isMaxDepth, atmosphereHazeAssigned, scatteredtransmittance, scatteredLuminance, atmosphereHazePos);
+				RaymarchThroughAtmos(blueNoiseOffset, rd, atmosIntersection.intersectionsT.x, atmosIntersection.intersectionsT.y,maxDepth,cosAngle,isMaxDepth, atmosphereHazeAssigned, scatteredtransmittance, scatteredLuminance, atmosphereHazePos);
 
 				if (atmosIntersection.hasRay2)
 				{
-					RaymarchThroughAtmos( rd, atmosIntersection.intersectionsT.z, atmosIntersection.intersectionsT.w, maxDepth, cosAngle, isMaxDepth, atmosphereHazeAssigned, scatteredtransmittance, scatteredLuminance, atmosphereHazePos);
+					RaymarchThroughAtmos(blueNoiseOffset, rd, atmosIntersection.intersectionsT.z, atmosIntersection.intersectionsT.w, maxDepth, cosAngle, isMaxDepth, atmosphereHazeAssigned, scatteredtransmittance, scatteredLuminance, atmosphereHazePos);
 				}
 
 				float ammountTravelledThroughAtmos = 0.0;
