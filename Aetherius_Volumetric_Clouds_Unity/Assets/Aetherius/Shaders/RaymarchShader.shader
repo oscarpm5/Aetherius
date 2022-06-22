@@ -482,26 +482,17 @@ Shader "Aetherius/RaymarchShader"
 				
 				
 				const float startExpDist = (planetAtmos.z-planetAtmos.y);
-
-				float initialStepLength = dynamicRaymarchParameters.x;
-
-				if (isInsideAtmos == true)
-				{
-					initialStepLength += tInit * 0.15;
-				}
-
+				float stepLength = dynamicRaymarchParameters.x;
 				
 				while (currentT <= tMax && finished == false)
 				{
 					
-					float stepLength = dynamicRaymarchParameters.x;
-					
-
-					if (currentT >= tInit + startExpDist)
+					if (currentT >= startExpDist)
 					{
-						float distFromExpStart = (currentT -  (tInit +startExpDist));
-						float distancePercentageFromStart = (distFromExpStart / (maxRayPossibleGroundDist- startExpDist))*1.5;
-						stepLength = (lerp(initialStepLength, dynamicRaymarchParameters.y, saturate(pow(distancePercentageFromStart,2))));
+						float distFromExpStart = (currentT -  startExpDist);
+						float distancePercentageFromStart = (distFromExpStart / (maxRayPossibleGroundDist- startExpDist));
+						float t =saturate(distancePercentageFromStart * distancePercentageFromStart *15);
+						stepLength = lerp(dynamicRaymarchParameters.x, dynamicRaymarchParameters.y,t);
 					}
 
 
@@ -515,6 +506,11 @@ Shader "Aetherius/RaymarchShader"
 						float currDensity = 0.0;
 
 						float densityStepLOD = min(currentT / weatherMapSize, 4);
+						if (scatTransmittance < 0.1)
+						{
+							densityStepLOD += 1;
+							detailedStepLength = stepLength * 0.4;
+						}
 
 						if (isBaseStep == false) //detailed step
 						{
