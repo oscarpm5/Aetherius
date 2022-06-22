@@ -473,7 +473,7 @@ Shader "Aetherius/RaymarchShader"
 			void RaymarchThroughAtmos(float blueNoiseOffset,float3 rd, float tInit,float tMax,
 				float maxDepth,float cosAngle,bool isMaxDepth,
 				inout bool atmosphereHazeAssigned,
-				inout float scatTransmittance, inout float3 scatLuminance, inout float3 atmosphereHazePos)
+				inout float scatTransmittance, inout float3 scatLuminance, inout float atmosphereHazeT)
 			{
 				bool isBaseStep = true;//Base step or full step
 				int samplesWithZeroDensity = 0;
@@ -490,13 +490,13 @@ Shader "Aetherius/RaymarchShader"
 				{
 					
 					float stepLength;
-					if (currentT <= startExpDist)
+					if (currentT <= tInit +startExpDist)
 					{
 						stepLength = dynamicRaymarchParameters.x;
 					}
 					else
 					{
-						float distFromExpStart = (currentT -  startExpDist);
+						float distFromExpStart = (currentT -  (tInit +startExpDist));
 						float distancePercentageFromStart = (distFromExpStart / (maxRayPossibleGroundDist- startExpDist));
 						stepLength = clamp(lerp(dynamicRaymarchParameters.x*2, dynamicRaymarchParameters.y, distancePercentageFromStart), dynamicRaymarchParameters.x, dynamicRaymarchParameters.y);
 					}
@@ -511,17 +511,13 @@ Shader "Aetherius/RaymarchShader"
 					{
 						float currDensity = 0.0;
 
-						float densityStepSize = min(currentT / 100000.0, 6);
+						float densityStepLOD = min(currentT / 100000.0, 4);
 
 						if (isBaseStep == false) //detailed step
 						{
-							currDensity = GetDensity(currPos, densityStepSize, false);
+							currDensity = GetDensity(currPos, densityStepLOD, false);
 
-							if (scatTransmittance <= 0.9 && atmosphereHazeAssigned == false)
-							{
-								atmosphereHazePos = currPos;
-								atmosphereHazeAssigned = true;
-							}
+							
 
 							if (currDensity > 0.0)
 							{
@@ -537,7 +533,7 @@ Shader "Aetherius/RaymarchShader"
 								float3 luminance = float3(0.0, 0.0, 0.0);
 								for (int i = 0; i < lightIterations; ++i)
 								{
-									luminance += LightScatter(currPos, cosAngle, i, densityStepSize);
+									luminance += LightScatter(currPos, cosAngle, i, densityStepLOD);
 								}
 								luminance *= currDensity;
 
@@ -545,6 +541,13 @@ Shader "Aetherius/RaymarchShader"
 								scatLuminance += scatTransmittance * integScatt;
 
 								scatTransmittance *= transmittance;
+
+
+								if (scatTransmittance <= 0.8 && atmosphereHazeAssigned == false)
+								{
+									atmosphereHazeT = currentT;
+									atmosphereHazeAssigned = true;
+								}
 
 
 								if (scatTransmittance < 0.01)
@@ -568,7 +571,7 @@ Shader "Aetherius/RaymarchShader"
 						else
 						{
 
-							currDensity = GetDensity(currPos, densityStepSize, true);
+							currDensity = GetDensity(currPos, densityStepLOD, true);
 
 							if (currDensity > 0.0) //change to detailed steps if there is a cloud
 							{
@@ -605,24 +608,24 @@ Shader "Aetherius/RaymarchShader"
 				float scatteredtransmittance = 1.0;
 				float3 scatteredLuminance = float3(0.0, 0.0, 0.0);
 
-				float3 atmosphereHazePos = float3(0.0, 0.0, 0.0);
+				float atmosphereHazeT = 0.0;
 				bool atmosphereHazeAssigned = false;
 
-				RaymarchThroughAtmos(blueNoiseOffset, rd, atmosIntersection.intersectionsT.x, atmosIntersection.intersectionsT.y,maxDepth,cosAngle,isMaxDepth, atmosphereHazeAssigned, scatteredtransmittance, scatteredLuminance, atmosphereHazePos);
+				RaymarchThroughAtmos(blueNoiseOffset, rd, atmosIntersection.intersectionsT.x, atmosIntersection.intersectionsT.y,maxDepth,cosAngle,isMaxDepth, atmosphereHazeAssigned, scatteredtransmittance, scatteredLuminance, atmosphereHazeT);
 
 				if (atmosIntersection.hasRay2)
 				{
-					RaymarchThroughAtmos(blueNoiseOffset, rd, atmosIntersection.intersectionsT.z, atmosIntersection.intersectionsT.w, maxDepth, cosAngle, isMaxDepth, atmosphereHazeAssigned, scatteredtransmittance, scatteredLuminance, atmosphereHazePos);
+					RaymarchThroughAtmos(blueNoiseOffset, rd, atmosIntersection.intersectionsT.z, atmosIntersection.intersectionsT.w, maxDepth, cosAngle, isMaxDepth, atmosphereHazeAssigned, scatteredtransmittance, scatteredLuminance, atmosphereHazeT);
 				}
 
 				float ammountTravelledThroughAtmos = 0.0;
 				if (!atmosIntersection.startsInAtmos)
 				{
-					ammountTravelledThroughAtmos = length(atmosphereHazePos - (_WorldSpaceCameraPos + rd * atmosIntersection.intersectionsT.x));
+					ammountTravelledThroughAtmos = atmosphereHazeT - atmosIntersection.intersectionsT.x;
 				}
 				else
 				{
-					ammountTravelledThroughAtmos = length(atmosphereHazePos - _WorldSpaceCameraPos);
+					ammountTravelledThroughAtmos = atmosphereHazeT;
 				}
 
 				float atmosphereVisibDist = maxRayPossibleGroundDist * 0.5;
