@@ -86,6 +86,9 @@ namespace Aetherius
         public List<Vector4> conekernel;
 
         public Quaternion lastSunRotation;
+
+        public float currentTimeUpdateGI = 0.0f;
+        public float timeToUpdateGI = 0.05f;
         private List<Vector4> GenerateConeKernels()
         {
             List<Vector4> newList = new List<Vector4>();
@@ -130,6 +133,15 @@ namespace Aetherius
         // Update is called once per frame
         public void Update()
         {
+            currentTimeUpdateGI += Time.deltaTime;
+
+            if (sunLight.transform.rotation != lastSunRotation && currentTimeUpdateGI >= timeToUpdateGI)
+            {
+                DynamicGI.UpdateEnvironment();
+                lastSunRotation = sunLight.transform.rotation;
+                currentTimeUpdateGI = 0.0f;
+            }
+
 
             if (transitioning)
             {
@@ -259,11 +271,7 @@ namespace Aetherius
             RenderSettings.skybox.globalIlluminationFlags = MaterialGlobalIlluminationFlags.RealtimeEmissive;
             RenderSettings.ambientMode = UnityEngine.Rendering.AmbientMode.Skybox;
 
-            if(sunLight.transform.rotation != lastSunRotation)
-            {
-                DynamicGI.UpdateEnvironment();
-                lastSunRotation = sunLight.transform.rotation;
-            }
+
             RenderSettings.ambientProbe.Evaluate(dirs, c);
             List<Vector4> ambientColors = new List<Vector4>();
             ambientColors.Add(c[0]);//Up

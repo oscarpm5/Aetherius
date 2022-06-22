@@ -174,7 +174,7 @@ Shader "Aetherius/RaymarchShader"
 			bool GetRayAtmosphere(float3 rd, out AtmosIntersection intersection)
 			{
 				intersection.startsInAtmos = true;
-				intersection.intersectionsT = float4( 0.0,0.0,0.0,0.0 );
+				intersection.intersectionsT = float4(0.0,0.0,0.0,0.0);
 				intersection.hasRay2 = false;
 
 				float3 planetO = { 0.0, -planetAtmos.x,0.0 };
@@ -186,7 +186,7 @@ Shader "Aetherius/RaymarchShader"
 
 				if (d < planetAtmos.y)//if camera is under the atmosphere
 				{
-					
+
 
 					if (groundT.y < 0.0) //when no ground collision, secondary ray
 					{
@@ -201,7 +201,7 @@ Shader "Aetherius/RaymarchShader"
 						return false;
 					}
 
-					
+
 				}
 				else if (d < planetAtmos.z) //if camera is inside the atmosphere
 				{
@@ -405,7 +405,7 @@ Shader "Aetherius/RaymarchShader"
 				else
 				{
 					return true;
-				}				
+				}
 			}
 
 			float DoubleLobeScattering(float cosAngle, float l1, float l2, float mix)
@@ -483,15 +483,30 @@ Shader "Aetherius/RaymarchShader"
 				float previousT = currentT;
 
 				bool finished = false;
-
-				while (currentT <= tMax && finished==false)
+				
+				
+				const float startExpDist = planetAtmos.z-planetAtmos.y;
+				
+				while (currentT <= tMax && finished == false)
 				{
-					float distFromRayOrigin = (currentT - tInit);
-					float stepLength = dynamicRaymarchParameters.x + ((distFromRayOrigin / maxRayPossibleGroundDist)* distFromRayOrigin* dynamicRaymarchParameters.y);
+					
+					float stepLength;
+					if (currentT <= tInit +startExpDist)
+					{
+						stepLength = dynamicRaymarchParameters.x;
+					}
+					else
+					{
+						float distFromExpStart = (currentT - (tInit + startExpDist));
+						float distancePercentageFromStart = (distFromExpStart / (maxRayPossibleGroundDist- startExpDist));
+						stepLength = lerp(dynamicRaymarchParameters.x*4, dynamicRaymarchParameters.y, distancePercentageFromStart);
+					}
+
+
 					float detailedStepLength = stepLength * 0.25;
 
 
-					float3 currPos = _WorldSpaceCameraPos + rd * (currentT+ stepLength*blueNoiseOffset);
+					float3 currPos = _WorldSpaceCameraPos + rd * (currentT + stepLength * blueNoiseOffset);
 
 					if (IsPosVisible(currPos, maxDepth, isMaxDepth) && scatTransmittance > 0.0)//Checks if an object is occluding the raymarch
 					{
@@ -598,7 +613,7 @@ Shader "Aetherius/RaymarchShader"
 				float ammountTravelledThroughAtmos = 0.0;
 				if (!atmosIntersection.startsInAtmos)
 				{
-					ammountTravelledThroughAtmos = length(atmosphereHazePos - (_WorldSpaceCameraPos + rd *atmosIntersection.intersectionsT.x));
+					ammountTravelledThroughAtmos = length(atmosphereHazePos - (_WorldSpaceCameraPos + rd * atmosIntersection.intersectionsT.x));
 				}
 				else
 				{
@@ -636,9 +651,9 @@ Shader "Aetherius/RaymarchShader"
 
 				float t = 0.0;
 				AtmosIntersection atmosIntersection;
-				bool isAtmosRay = GetRayAtmosphere( rayDirection, atmosIntersection);
+				bool isAtmosRay = GetRayAtmosphere(rayDirection, atmosIntersection);
 
-				if (isAtmosRay && atmosIntersection.intersectionsT.y- atmosIntersection.intersectionsT.x > 0.0)
+				if (isAtmosRay && atmosIntersection.intersectionsT.y - atmosIntersection.intersectionsT.x > 0.0)
 				{
 					float4 result = Raymarching(rayDirection, atmosIntersection, i.uv, depthMeters, linearDepth >= 1.0);
 					return result;

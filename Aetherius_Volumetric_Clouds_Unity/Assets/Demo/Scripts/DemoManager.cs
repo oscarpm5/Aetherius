@@ -55,8 +55,8 @@ public class DemoManager : MonoBehaviour
 
 
         ////Test Code TODO delete
-        //float currDist = 0.0f;
-        //int stepsToPerform = 256;
+        float currDist = 0.0f;
+        int stepsToPerform = 256;
         //for (int i = 0; i < stepsToPerform; i++)
         //{
         //    float stepLength = 110+(currDist/638749)*currDist*0.4f;
@@ -64,7 +64,19 @@ public class DemoManager : MonoBehaviour
         //    Debug.LogWarning("Distance Travelled in " + i.ToString() + "steps: " + currDist.ToString());
         //    Debug.LogWarning("Step length at " + i.ToString() + "steps: " + stepLength.ToString());
         //}
-       
+
+        float startExpDist = 15000;
+        for (int i = 0; i < stepsToPerform; i++)
+        {
+            float distFromExpStart = (currDist - startExpDist);
+            float distancePercentageFromStart = (distFromExpStart / (638748 - startExpDist));
+            float stepLength = Mathf.Lerp(300, 200000, distancePercentageFromStart*distancePercentageFromStart*5);
+            currDist += stepLength;
+            Debug.LogWarning("Distance Travelled in " + i.ToString() + "steps: " + currDist.ToString());
+            Debug.LogWarning("Step length at " + i.ToString() + "steps: " + stepLength.ToString());
+        }
+
+
 
     }
 

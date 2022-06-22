@@ -91,7 +91,7 @@ public class Benchmark : MonoBehaviour
         cloudManager.preset = Aetherius.CLOUD_PRESET.SPARSE;
         cloudManager.StopWMTransition();
         cloudManager.StartWMTransition(0.0f);
-        aetheriusCamMove.SetPitchYawPos(-30.0f, 200.0f, new Vector3(0.0f, 1.0f, 0.0f));
+        aetheriusCamMove.SetPitchYawPos(-30.0f, 200.0f, new Vector3(0.0f, 10.0f, 0.0f));
         aetheriusCamMove.enabledControl = false;
         wasSunAniamted = demo.animateSun.isOn;
         demo.animateSun.isOn = false;
