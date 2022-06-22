@@ -479,20 +479,19 @@ Shader "Aetherius/RaymarchShader"
 				bool isBaseStep = true;//Base step or full step
 				int samplesWithZeroDensity = 0;
 
-				float offsetedTInit = tInit + blueNoiseOffset * dynamicRaymarchParameters.x;
-				float currentT = offsetedTInit;
+				float currentT = tInit;
 				float previousT = currentT;
 
 				bool finished = false;
 
 				while (currentT <= tMax && finished==false)
 				{
-					float distFromRayOrigin = (currentT - offsetedTInit);
+					float distFromRayOrigin = (currentT - tInit);
 					float stepLength = dynamicRaymarchParameters.x + ((distFromRayOrigin / maxRayPossibleGroundDist)* distFromRayOrigin* dynamicRaymarchParameters.y);
 					float detailedStepLength = stepLength * 0.25;
 
 
-					float3 currPos = _WorldSpaceCameraPos + rd * currentT;
+					float3 currPos = _WorldSpaceCameraPos + rd * (currentT+ stepLength*blueNoiseOffset);
 
 					if (IsPosVisible(currPos, maxDepth, isMaxDepth) && scatTransmittance > 0.0)//Checks if an object is occluding the raymarch
 					{
