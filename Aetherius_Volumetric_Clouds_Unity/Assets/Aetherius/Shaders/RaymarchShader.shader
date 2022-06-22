@@ -471,7 +471,7 @@ Shader "Aetherius/RaymarchShader"
 			}
 
 			void RaymarchThroughAtmos(float blueNoiseOffset,float3 rd, float tInit,float tMax,
-				float maxDepth,float cosAngle,bool isMaxDepth,
+				float maxDepth, bool isInsideAtmos, float cosAngle,bool isMaxDepth,
 				inout bool atmosphereHazeAssigned,
 				inout float scatTransmittance, inout float3 scatLuminance, inout float atmosphereHazeT)
 			{
@@ -484,25 +484,31 @@ Shader "Aetherius/RaymarchShader"
 				bool finished = false;
 				
 				
-				const float startExpDist = (planetAtmos.z-planetAtmos.y)*2;
+				const float startExpDist = (planetAtmos.z-planetAtmos.y);
+
+				float initialStepLength = dynamicRaymarchParameters.x;
+
+				if (isInsideAtmos == true)
+				{
+					initialStepLength += tInit * 0.15;
+				}
+
 				
 				while (currentT <= tMax && finished == false)
 				{
 					
-					float stepLength;
-					if (currentT <= tInit +startExpDist)
-					{
-						stepLength = dynamicRaymarchParameters.x;
-					}
-					else
+					float stepLength = dynamicRaymarchParameters.x;
+					
+
+					if (currentT >= tInit + startExpDist)
 					{
 						float distFromExpStart = (currentT -  (tInit +startExpDist));
-						float distancePercentageFromStart = (distFromExpStart / (maxRayPossibleGroundDist- startExpDist));
-						stepLength = clamp(lerp(dynamicRaymarchParameters.x*2, dynamicRaymarchParameters.y, distancePercentageFromStart), dynamicRaymarchParameters.x, dynamicRaymarchParameters.y);
+						float distancePercentageFromStart = (distFromExpStart / (maxRayPossibleGroundDist- startExpDist))*1.5;
+						stepLength = (lerp(initialStepLength, dynamicRaymarchParameters.y, saturate(pow(distancePercentageFromStart,2))));
 					}
 
 
-					float detailedStepLength = stepLength * 0.25;
+					float detailedStepLength = stepLength * 0.20;
 
 
 					float3 currPos = _WorldSpaceCameraPos + rd * (currentT + stepLength * blueNoiseOffset);
@@ -511,7 +517,7 @@ Shader "Aetherius/RaymarchShader"
 					{
 						float currDensity = 0.0;
 
-						float densityStepLOD = min(currentT / 100000.0, 4);
+						float densityStepLOD = min(currentT / weatherMapSize, 4);
 
 						if (isBaseStep == false) //detailed step
 						{
@@ -611,11 +617,11 @@ Shader "Aetherius/RaymarchShader"
 				float atmosphereHazeT = 0.0;
 				bool atmosphereHazeAssigned = false;
 
-				RaymarchThroughAtmos(blueNoiseOffset, rd, atmosIntersection.intersectionsT.x, atmosIntersection.intersectionsT.y,maxDepth,cosAngle,isMaxDepth, atmosphereHazeAssigned, scatteredtransmittance, scatteredLuminance, atmosphereHazeT);
+				RaymarchThroughAtmos(blueNoiseOffset, rd, atmosIntersection.intersectionsT.x, atmosIntersection.intersectionsT.y,maxDepth, atmosIntersection.startsInAtmos,cosAngle,isMaxDepth, atmosphereHazeAssigned, scatteredtransmittance, scatteredLuminance, atmosphereHazeT);
 
 				if (atmosIntersection.hasRay2)
 				{
-					RaymarchThroughAtmos(blueNoiseOffset, rd, atmosIntersection.intersectionsT.z, atmosIntersection.intersectionsT.w, maxDepth, cosAngle, isMaxDepth, atmosphereHazeAssigned, scatteredtransmittance, scatteredLuminance, atmosphereHazeT);
+					RaymarchThroughAtmos(blueNoiseOffset, rd, atmosIntersection.intersectionsT.z, atmosIntersection.intersectionsT.w, maxDepth, atmosIntersection.startsInAtmos, cosAngle, isMaxDepth, atmosphereHazeAssigned, scatteredtransmittance, scatteredLuminance, atmosphereHazeT);
 				}
 
 				float ammountTravelledThroughAtmos = 0.0;
