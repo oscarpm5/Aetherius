@@ -16,8 +16,8 @@ namespace Aetherius
         public CloudShape advanced;
 
         //Ray March
-        public float baseRaymarchStep = 110.0f;
-        public float dynamicStepsCoefficient = 1.0f;
+        public float baseRaymarchStep = 200.0f;
+        public float dynamicStepsCoefficient = 4.0f;
         public int maxRayVisibilityDist = 50000; //ray distance through the cloud layer
         public Texture2D blueNoise;
 

@@ -489,7 +489,7 @@ Shader "Aetherius/RaymarchShader"
 				{
 					float distFromRayOrigin = (currentT - offsetedTInit);
 					float stepLength = dynamicRaymarchParameters.x + ((distFromRayOrigin / maxRayPossibleGroundDist)* distFromRayOrigin* dynamicRaymarchParameters.y);
-					float detailedStepLength = stepLength * 0.125;
+					float detailedStepLength = stepLength * 0.25;
 
 
 					float3 currPos = _WorldSpaceCameraPos + rd * currentT;
