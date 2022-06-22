@@ -89,6 +89,7 @@ namespace Aetherius
 
         public float currentTimeUpdateGI = 0.0f;
         public float timeToUpdateGI = 0.05f;
+        public Vector3 lightOctaveParameters = new Vector3(0.3f, 0.75f, 0.5f);
         private List<Vector4> GenerateConeKernels()
         {
             List<Vector4> newList = new List<Vector4>();
@@ -261,11 +262,10 @@ namespace Aetherius
             mat.SetInt("lightIterations", lightIterations);
 
 
-            Color[] c = new Color[3];
-            Vector3[] dirs = new Vector3[3];
+            Color[] c = new Color[2];
+            Vector3[] dirs = new Vector3[2];
             dirs[0] = Vector3.up;
-            dirs[1] = Vector3.down;
-            dirs[2] = -currentSunDir;
+            dirs[1] = -currentSunDir;
 
 
             RenderSettings.skybox.globalIlluminationFlags = MaterialGlobalIlluminationFlags.RealtimeEmissive;
@@ -275,11 +275,10 @@ namespace Aetherius
             RenderSettings.ambientProbe.Evaluate(dirs, c);
             List<Vector4> ambientColors = new List<Vector4>();
             ambientColors.Add(c[0]);//Up
-            ambientColors.Add(c[1]);//Down
-            ambientColors.Add(c[2]);//SunDir
+            ambientColors.Add(c[1]);//SunDir
 
             float weightedGrayscaleAmbientSky = 0.299f * ambientColors[0].x + 0.587f * ambientColors[0].y + 0.114f * ambientColors[0].z;
-            float weightedGrayscaleAmbientSun = 0.299f * ambientColors[2].x + 0.587f * ambientColors[2].y + 0.114f * ambientColors[2].z;
+            float weightedGrayscaleAmbientSun = 0.299f * ambientColors[1].x + 0.587f * ambientColors[1].y + 0.114f * ambientColors[1].z;
             float weightedGrayscaleAmbient = Mathf.Min(Mathf.Max(weightedGrayscaleAmbientSun , weightedGrayscaleAmbientSky),0.18f);
 
             float inclination = Vector3.Dot(-currentSunDir, Vector3.up);
@@ -331,6 +330,21 @@ namespace Aetherius
             mat.SetFloat("densityCurveMultiplier3", densityCurveMultiplier3);
 
 
+            CreateLightParamPows(lightIterations, ref mat);
+          
+        }
+
+        void CreateLightParamPows(int bufferSize,ref Material mat)
+        {
+            List<Vector3> lightParamPows = new List<Vector3>();
+
+
+            for (int i = 0; i < bufferSize; ++i)
+            {
+                lightParamPows.Add(new Vector3(Mathf.Pow(lightOctaveParameters.x,i), Mathf.Pow(lightOctaveParameters.y, i), Mathf.Pow(lightOctaveParameters.z, i)));
+            }
+            ComputeBuffer newBuff = textureGenerator.CreateComputeBuffer(sizeof(float) * 3, lightParamPows.ToArray());
+            mat.SetBuffer("lightOctaveParameters", newBuff);
         }
 
     }

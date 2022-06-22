@@ -83,7 +83,7 @@ namespace Aetherius
             _myScript.shadowSize = Mathf.Max(EditorGUILayout.FloatField("Shadow Step Distance", _myScript.shadowSize), 0.0f);
             _myScript.softerShadows = EditorGUILayout.Toggle("Softer Shadows", _myScript.softerShadows);
 
-            _myScript.lightIterations = EditorGUILayout.IntField("Light Iterations", _myScript.lightIterations);
+            _myScript.lightIterations = Mathf.Max( 1, Mathf.Min(EditorGUILayout.IntField("Light Iterations", _myScript.lightIterations),10));
 
             EndSection();
         }

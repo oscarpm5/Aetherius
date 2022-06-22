@@ -76,7 +76,7 @@ Shader "Aetherius/RaymarchShader"
 			float2 coefficients;//x extintion, y scatter //We do not use absorption in the shader (onloy used to calculate extinction/scatter relation)
 
 			float3 lightColor;
-			float3 ambientColors[3];
+			float3 ambientColors[2];
 			float4 coneKernel[6];
 			bool softerShadows;
 			float shadowSize;
@@ -123,10 +123,9 @@ Shader "Aetherius/RaymarchShader"
 			int lightIterations;
 
 			static const float3 fbmMultipliers = { 0.625,0.25,0.125 };
-			static const float3 lightOctaveParameters = { 0.25,0.75,0.6 };
 			static const int iter = 4;
 
-
+			StructuredBuffer<float3> lightOctaveParameters;
 
 
 			struct AtmosIntersection
@@ -446,12 +445,11 @@ Shader "Aetherius/RaymarchShader"
 			{
 				//must be a<=b to be energy conserving
 
-				float newExtinctionC = coefficients.x * pow(lightOctaveParameters.x,i);
-				float newScatterC = coefficients.y * pow(lightOctaveParameters.y,i);
+				float3 newCoefficients = float3(coefficients.xy, 1.0) * lightOctaveParameters[i];//extinction, scatter, scattering Multiplier
+
 
 				float3 ambientSky = ambientColors[0].xyz;
-				float3 ambientFloor = ambientColors[1].xyz * 0.5;
-				float3 ambientSun = ambientColors[2].xyz;
+				float3 ambientSun = ambientColors[1].xyz;
 
 				float heightPercent = GetCloudLayerHeightSphere(currPos);
 				float t = saturate(Remap(heightPercent, 0.0, 1.0, 0.15, 1.0));
@@ -459,15 +457,14 @@ Shader "Aetherius/RaymarchShader"
 				float shadow = 1.0;
 				if (softerShadows == true)
 				{
-					shadow = LightShadowTransmittanceCone(currPos, shadowSize, newExtinctionC, initialSampleLvl);
+					shadow = LightShadowTransmittanceCone(currPos, shadowSize, newCoefficients.x, initialSampleLvl);
 				}
 				else
 				{
-					shadow = LightShadowTransmittance(currPos, shadowSize, newExtinctionC, initialSampleLvl);
+					shadow = LightShadowTransmittance(currPos, shadowSize, newCoefficients.x, initialSampleLvl);
 				}
 
-				const float cMult = pow(lightOctaveParameters.z, i);
-				return lightColor * shadow * DoubleLobeScattering(cosAngle , 0.3 * cMult, 0.15 * cMult, 0.5) * newScatterC + (ambientSun * 0.5 + ambientSky * 0.5) * t * shadow * (1.0 / 4.0 * 3.1415) * newScatterC;
+				return newCoefficients.y * (lightColor * shadow * DoubleLobeScattering(cosAngle , 0.3 * newCoefficients.z, 0.15 * newCoefficients.z, 0.5) + (ambientSun * 0.5 + ambientSky * 0.5) * t * shadow * (1.0 / 4.0 * 3.1415));
 			}
 
 			void RaymarchThroughAtmos(float blueNoiseOffset,float3 rd, float tInit,float tMax,
