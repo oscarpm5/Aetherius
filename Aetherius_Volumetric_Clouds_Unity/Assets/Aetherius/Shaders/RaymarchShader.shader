@@ -316,7 +316,6 @@ Shader "Aetherius/RaymarchShader"
 			float GetDensity(float3 currPos,float sampleLvl,bool onlyBase)
 			{
 				//sample lvl incremented with dist
-				sampleLvl += min(length(currPos - _WorldSpaceCameraPos) / 200000.0,4);//TODO expose these variables?
 				float3 initialPos = currPos;
 				float density = 0.0;
 				float cloudHeightPercent = GetCloudLayerHeightSphere(currPos);//value between 0 & 1 showing where we are in the cloud
@@ -413,13 +412,13 @@ Shader "Aetherius/RaymarchShader"
 				return lerp(HenyeyGreenstein(cosAngle, l1), HenyeyGreenstein(cosAngle, -l2), mix);
 			}
 
-			float LightShadowTransmittance(float3 pos, float initialStepSize,float eCoeff)
+			float LightShadowTransmittance(float3 pos, float initialStepSize,float eCoeff,float initialSampleLvl)
 			{
 				float shadow = 1.0;
 				for (int currStep = 0; currStep < iter; ++currStep)
 				{
 					pos += currStep * initialStepSize * -sunDir;
-					float density = GetDensity(pos, (float(currStep) / float(iter)) * 2.0,false);
+					float density = GetDensity(pos, initialSampleLvl + (float(currStep) / float(iter)) * 2.0,false);
 
 					shadow *= exp(-density * currStep * initialStepSize * eCoeff);
 				}
@@ -427,7 +426,7 @@ Shader "Aetherius/RaymarchShader"
 				return shadow;//TODO can lerp powder effect here (multiplying shadow) but might not be energy conserving!
 			}
 
-			float LightShadowTransmittanceCone(float3 pos, float initialStepSize, float eCoeff)
+			float LightShadowTransmittanceCone(float3 pos, float initialStepSize, float eCoeff, float initialSampleLvl)
 			{
 
 				float shadow = 1.0;
@@ -435,7 +434,7 @@ Shader "Aetherius/RaymarchShader"
 				{
 					float3 newPos = initialStepSize * -sunDir + (coneKernel[currStep].xyz * currStep);
 					pos += newPos;
-					float density = GetDensity(pos, (float(currStep) / float(iter)) * 2.0,false);
+					float density = GetDensity(pos, initialSampleLvl +(float(currStep) / float(iter)) * 2.0,false);
 
 					shadow *= exp(-density * length(newPos) * eCoeff);
 				}
@@ -443,7 +442,7 @@ Shader "Aetherius/RaymarchShader"
 				return shadow;//TODO can lerp powder effect here (multiplying shadow) but might not be energy conserving!
 			}
 
-			float3 LightScatter(float3 currPos, float cosAngle,int i)
+			float3 LightScatter(float3 currPos, float cosAngle,int i, float initialSampleLvl)
 			{
 				//must be a<=b to be energy conserving
 
@@ -460,11 +459,11 @@ Shader "Aetherius/RaymarchShader"
 				float shadow = 1.0;
 				if (softerShadows == true)
 				{
-					shadow = LightShadowTransmittanceCone(currPos, shadowSize, newExtinctionC);
+					shadow = LightShadowTransmittanceCone(currPos, shadowSize, newExtinctionC, initialSampleLvl);
 				}
 				else
 				{
-					shadow = LightShadowTransmittance(currPos, shadowSize, newExtinctionC);
+					shadow = LightShadowTransmittance(currPos, shadowSize, newExtinctionC, initialSampleLvl);
 				}
 
 				const float cMult = pow(lightOctaveParameters.z, i);
@@ -485,21 +484,21 @@ Shader "Aetherius/RaymarchShader"
 				bool finished = false;
 				
 				
-				const float startExpDist = planetAtmos.z-planetAtmos.y;
+				const float startExpDist = (planetAtmos.z-planetAtmos.y)*2;
 				
 				while (currentT <= tMax && finished == false)
 				{
 					
 					float stepLength;
-					if (currentT <= tInit +startExpDist)
+					if (currentT <= startExpDist)
 					{
 						stepLength = dynamicRaymarchParameters.x;
 					}
 					else
 					{
-						float distFromExpStart = (currentT - (tInit + startExpDist));
+						float distFromExpStart = (currentT -  startExpDist);
 						float distancePercentageFromStart = (distFromExpStart / (maxRayPossibleGroundDist- startExpDist));
-						stepLength = lerp(dynamicRaymarchParameters.x*4, dynamicRaymarchParameters.y, distancePercentageFromStart);
+						stepLength = clamp(lerp(dynamicRaymarchParameters.x*2, dynamicRaymarchParameters.y, distancePercentageFromStart), dynamicRaymarchParameters.x, dynamicRaymarchParameters.y);
 					}
 
 
@@ -508,13 +507,15 @@ Shader "Aetherius/RaymarchShader"
 
 					float3 currPos = _WorldSpaceCameraPos + rd * (currentT + stepLength * blueNoiseOffset);
 
-					if (IsPosVisible(currPos, maxDepth, isMaxDepth) && scatTransmittance > 0.0)//Checks if an object is occluding the raymarch
+					if (IsPosVisible(currPos, maxDepth, isMaxDepth))//Checks if an object is occluding the raymarch
 					{
 						float currDensity = 0.0;
 
+						float densityStepSize = min(currentT / 100000.0, 6);
+
 						if (isBaseStep == false) //detailed step
 						{
-							currDensity = GetDensity(currPos, 0.0, false);
+							currDensity = GetDensity(currPos, densityStepSize, false);
 
 							if (scatTransmittance <= 0.9 && atmosphereHazeAssigned == false)
 							{
@@ -536,7 +537,7 @@ Shader "Aetherius/RaymarchShader"
 								float3 luminance = float3(0.0, 0.0, 0.0);
 								for (int i = 0; i < lightIterations; ++i)
 								{
-									luminance += LightScatter(currPos, cosAngle, i);
+									luminance += LightScatter(currPos, cosAngle, i, densityStepSize);
 								}
 								luminance *= currDensity;
 
@@ -546,7 +547,11 @@ Shader "Aetherius/RaymarchShader"
 								scatTransmittance *= transmittance;
 
 
-
+								if (scatTransmittance < 0.01)
+								{
+									scatTransmittance = 0.0;
+									finished = true;
+								}
 							}
 							else //If density is 0
 							{
@@ -563,7 +568,7 @@ Shader "Aetherius/RaymarchShader"
 						else
 						{
 
-							currDensity = GetDensity(currPos, 0.0, true);
+							currDensity = GetDensity(currPos, densityStepSize, true);
 
 							if (currDensity > 0.0) //change to detailed steps if there is a cloud
 							{
