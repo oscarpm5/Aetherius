@@ -108,7 +108,6 @@ Shader "Aetherius/RaymarchShader"
 
 			sampler2D _CameraDepthTexture;
 
-			float maxRayUserDist;
 			float maxRayPossibleDist;
 			float maxRayPossibleGroundDist;
 			float2 dynamicRaymarchParameters;
@@ -613,7 +612,7 @@ Shader "Aetherius/RaymarchShader"
 
 				if (atmosIntersection.hasRay2)
 				{
-					RaymarchThroughAtmos(blueNoiseOffset, rd, atmosIntersection.intersectionsT.z, atmosIntersection.intersectionsT.w, maxDepth, atmosIntersection.startsInAtmos, cosAngle, isMaxDepth, atmosphereHazeAssigned, scatteredtransmittance, scatteredLuminance, atmosphereHazeT);
+					RaymarchThroughAtmos(blueNoiseOffset, rd, atmosIntersection.intersectionsT.z, atmosIntersection.intersectionsT.w, maxDepth, true, cosAngle, isMaxDepth, atmosphereHazeAssigned, scatteredtransmittance, scatteredLuminance, atmosphereHazeT);
 				}
 
 				float ammountTravelledThroughAtmos = 0.0;

@@ -18,7 +18,6 @@ namespace Aetherius
         //Ray March
         public float baseRaymarchStep = 200.0f;
         public float dynamicStepsCoefficient = 4.0f;
-        public int maxRayVisibilityDist = 50000; //ray distance through the cloud layer
         public Texture2D blueNoise;
 
         //Weather System
@@ -238,7 +237,6 @@ namespace Aetherius
             mat.SetTexture("blueNoiseTexture", blueNoise);
             mat.SetVector("texDimensions", texDimensions);
 
-            mat.SetFloat("maxRayUserDist", maxRayVisibilityDist);
             mat.SetFloat("hazeMinDist", hazeVisibilityAtmos.x);
             mat.SetFloat("hazeMaxDist", hazeVisibilityAtmos.y);
 

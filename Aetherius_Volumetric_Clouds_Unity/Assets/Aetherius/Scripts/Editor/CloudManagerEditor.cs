@@ -106,8 +106,7 @@ namespace Aetherius
 
 
             _myScript.baseRaymarchStep = Mathf.Max(EditorGUILayout.FloatField("Initial Ray March Step Size", _myScript.baseRaymarchStep), 10.0f);
-            _myScript.dynamicStepsCoefficient = Mathf.Max(EditorGUILayout.FloatField("Dynamic Steps Increase Rate", _myScript.dynamicStepsCoefficient), 0.001f);
-            _myScript.maxRayVisibilityDist = Mathf.Max(EditorGUILayout.IntField("Max Ray Distance", _myScript.maxRayVisibilityDist), 0);
+            _myScript.dynamicStepsCoefficient = Mathf.Max(EditorGUILayout.FloatField("Max Ray March Step Size", _myScript.dynamicStepsCoefficient), Mathf.Sqrt(Mathf.Pow((_myScript.planetRadiusKm * 1000.0f)+ _myScript.maxCloudHeightMeters, 2) - Mathf.Pow((_myScript.planetRadiusKm * 1000.0f) + _myScript.minCloudHeightMeters, 2)) * 2.0f *0.075f);
             _myScript.blueNoise = (Texture2D)EditorGUILayout.ObjectField("Blue Noise", _myScript.blueNoise, typeof(Texture2D), false);
 
 
