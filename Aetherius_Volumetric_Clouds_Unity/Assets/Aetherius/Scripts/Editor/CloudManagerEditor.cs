@@ -255,16 +255,6 @@ namespace Aetherius
 
                         }
 
-
-                        //TODO won't be able to edit these in the near future
-                        /*
-                        _myScript.simple.baseShapeSize = EditorGUILayout.IntField("Base Shape Size",(int)_myScript.simple.baseShapeSize);
-                        _myScript.simple.detailSize = EditorGUILayout.IntField("Detail Shape Size", (int)_myScript.simple.detailSize);
-                        _myScript.simple.globalCoverage = EditorGUILayout.FloatField("Global Coverage", _myScript.simple.globalCoverage);
-                        _myScript.simple.globalDensity = EditorGUILayout.FloatField("Global Density", _myScript.simple.globalDensity);
-                        _myScript.simple.weatherMapSize = EditorGUILayout.IntField("Weather Map Size", (int)_myScript.simple.weatherMapSize);
-                        */
-
                     }
                     break;
                 case CLOUD_CONTROL.ADVANCED:
@@ -275,6 +265,9 @@ namespace Aetherius
                         _myScript.advanced.globalCoverage = EditorGUILayout.FloatField("Global Coverage", _myScript.advanced.globalCoverage);
                         _myScript.advanced.globalDensity = EditorGUILayout.FloatField("Global Density", _myScript.advanced.globalDensity);
                         _myScript.advanced.weatherMapSize = EditorGUILayout.IntField("Weather Map Size", (int)_myScript.advanced.weatherMapSize);
+                        _myScript.advancedWM = (Texture2D)EditorGUILayout.ObjectField(new GUIContent("Weather Map","Input 2D texture, if no texture is provided, the current simple mode texture is used instead"), _myScript.advancedWM, typeof(Texture2D), false);
+
+
 
                         _myScript.densityCurveMultiplier1 = EditorGUILayout.FloatField("Layer1 Density Multiplier", _myScript.densityCurveMultiplier1);
                         _myScript.densityCurve1 = EditorGUILayout.CurveField("Layer1 Density Profile", _myScript.densityCurve1);

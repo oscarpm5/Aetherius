@@ -267,11 +267,20 @@ Shader "Aetherius/RaymarchShader"
 					DensityGradient(heightPercent, cloudLayerGradient3));
 			}
 
+
+
 			float3 ShapeAlteringAdvanced(float heightPercent)
 			{
-				return float3(densityCurveBuffer1[heightPercent * densityCurveBufferSize1] * densityCurveMultiplier1,
-					densityCurveBuffer2[heightPercent * densityCurveBufferSize2] * densityCurveMultiplier2,
-					densityCurveBuffer3[heightPercent * densityCurveBufferSize3] * densityCurveMultiplier3);
+				float3 indexF = float3(densityCurveBufferSize1, densityCurveBufferSize2, densityCurveBufferSize3)* heightPercent;
+				int3 indexI = trunc(indexF);
+
+				float3 t = frac(indexF);
+
+
+
+				return float3(lerp(densityCurveBuffer1[indexI.x], densityCurveBuffer1[indexI.x+1],t.x) * densityCurveMultiplier1,
+					lerp(densityCurveBuffer2[indexI.y], densityCurveBuffer2[indexI.y + 1], t.y) * densityCurveMultiplier2,
+					lerp(densityCurveBuffer3[indexI.z], densityCurveBuffer3[indexI.z + 1], t.z) * densityCurveMultiplier3);
 			}
 
 			float3 ShapeAltering(float heightPercent) //Makes Clouds have more shape at the top & be more round towards the bottom, the weather map also influences the density

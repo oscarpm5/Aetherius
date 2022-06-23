@@ -25,6 +25,7 @@ namespace Aetherius
         public bool windDisplacesWeatherMap = true;
         public bool cumulusHorizon = false;
         public Vector2 cumulusHorizonGradient = new Vector2(18000, 75000);
+        public Texture2D advancedWM;
         //WS Cloud Layers
         public Vector4 cloudLayerGradient1 = new Vector4(0.0f, 0.05f, 0.1f, 0.3f);
         public Vector4 cloudLayerGradient2 = new Vector4(0.2f, 0.3f, 0.3f, 0.45f);
@@ -79,7 +80,7 @@ namespace Aetherius
         public float absorptionC = 0.0f;
         public float shadowSize = 100.0f;
         public bool softerShadows = false;
-        public int lightIterations=2;
+        public int lightIterations = 2;
 
         public TextureGenerator textureGenerator;
         public List<Vector4> conekernel;
@@ -183,7 +184,7 @@ namespace Aetherius
                 transitionTimeWM = duration;
             }
             currentTransitionTimeWM = 0.0f;
-            
+
             textureGenerator.GenerateWeatherMap(256, ref textureGenerator.newWM, wmSeed, preset);
             transitioning = true;
 
@@ -225,15 +226,26 @@ namespace Aetherius
             return retList;
         }
 
-        public void SetMaterialProperties(ref Material mat,Vector2 texDimensions)
+        public void SetMaterialProperties(ref Material mat, Vector2 texDimensions)
         {
-                mat.SetFloat("transitionLerpT", Mathf.Clamp01(currentTransitionTimeWM / transitionTimeWM));
+           
                 mat.SetTexture("weatherMapTextureNew", textureGenerator.newWM);
+
+            if (mode == CLOUD_CONTROL.ADVANCED && advancedWM !=null)
+            {
+                mat.SetTexture("weatherMapTexture", advancedWM);
+                mat.SetFloat("transitionLerpT", 0.0f);
+            }
+            else
+            {
+                mat.SetFloat("transitionLerpT", Mathf.Clamp01(currentTransitionTimeWM / transitionTimeWM));
+                mat.SetTexture("weatherMapTexture", textureGenerator.GetWM(wmSeed, preset));
+
+            }
 
 
             mat.SetTexture("baseShapeTexture", textureGenerator.GetTexture(TEXTURE_TYPE.BASE_SHAPE));
             mat.SetTexture("detailTexture", textureGenerator.GetTexture(TEXTURE_TYPE.DETAIL));
-            mat.SetTexture("weatherMapTexture", textureGenerator.GetWM(wmSeed, preset));
             mat.SetTexture("blueNoiseTexture", blueNoise);
             mat.SetVector("texDimensions", texDimensions);
 
@@ -273,18 +285,18 @@ namespace Aetherius
 
             float weightedGrayscaleAmbientSky = 0.299f * ambientColors[0].x + 0.587f * ambientColors[0].y + 0.114f * ambientColors[0].z;
             float weightedGrayscaleAmbientSun = 0.299f * ambientColors[1].x + 0.587f * ambientColors[1].y + 0.114f * ambientColors[1].z;
-            float weightedGrayscaleAmbient = Mathf.Min(Mathf.Max(weightedGrayscaleAmbientSun , weightedGrayscaleAmbientSky),0.18f);
+            float weightedGrayscaleAmbient = Mathf.Min(Mathf.Max(weightedGrayscaleAmbientSun, weightedGrayscaleAmbientSky), 0.18f);
 
             float inclination = Vector3.Dot(-currentSunDir, Vector3.up);
             inclination = Utility.RemapClamp(inclination, -0.10f, 0.0f, 0.0f, 1.0f);
             //inclination = inclination*inclination;
-            float newAmbientLightIntensity = Mathf.Lerp(6.0f * ambientLightIntensity, ambientLightIntensity,inclination);
+            float newAmbientLightIntensity = Mathf.Lerp(6.0f * ambientLightIntensity, ambientLightIntensity, inclination);
 
             for (int i = 0; i < ambientColors.Count; ++i)
             {
                 ambientColors[i] *= newAmbientLightIntensity;
             }
-            
+
             mat.SetVector("lightColor", sunLight.color * sunLight.intensity * lightIntensityMult * weightedGrayscaleAmbient);
             mat.SetVectorArray("ambientColors", ambientColors);
             mat.SetVectorArray("coneKernel", conekernel);
@@ -304,7 +316,7 @@ namespace Aetherius
             mat.SetFloat("maxRayPossibleDist", Mathf.Sqrt(Mathf.Pow(planetAtmos.z, 2) - Mathf.Pow(planetAtmos.y, 2)) * 2.0f); //maximum ray length on the cloud layer
             mat.SetFloat("maxRayPossibleGroundDist", Mathf.Sqrt(Mathf.Pow(planetAtmos.z, 2) - Mathf.Pow(planetAtmos.x, 2)) * 2.0f);//maximum ray length of a ray travelling trough the atmosphere without touching the ground 
             mat.SetVector("dynamicRaymarchParameters", new Vector2(baseRaymarchStep, dynamicStepsCoefficient));
-            
+
             mat.SetInt("cumulusHorizon", cumulusHorizon ? 1 : 0);
             mat.SetVector("cumulusHorizonGradient", cumulusHorizonGradient);
             mat.SetVector("cloudLayerGradient1", cloudLayerGradient1);
@@ -325,17 +337,17 @@ namespace Aetherius
 
 
             CreateLightParamPows(lightIterations, ref mat);
-          
+
         }
 
-        void CreateLightParamPows(int bufferSize,ref Material mat)
+        void CreateLightParamPows(int bufferSize, ref Material mat)
         {
             List<Vector3> lightParamPows = new List<Vector3>();
 
 
             for (int i = 0; i < bufferSize; ++i)
             {
-                lightParamPows.Add(new Vector3(Mathf.Pow(lightOctaveParameters.x,i), Mathf.Pow(lightOctaveParameters.y, i), Mathf.Pow(lightOctaveParameters.z, i)));
+                lightParamPows.Add(new Vector3(Mathf.Pow(lightOctaveParameters.x, i), Mathf.Pow(lightOctaveParameters.y, i), Mathf.Pow(lightOctaveParameters.z, i)));
             }
             ComputeBuffer newBuff = textureGenerator.CreateComputeBuffer(sizeof(float) * 3, lightParamPows.ToArray());
             mat.SetBuffer("lightOctaveParameters", newBuff);
