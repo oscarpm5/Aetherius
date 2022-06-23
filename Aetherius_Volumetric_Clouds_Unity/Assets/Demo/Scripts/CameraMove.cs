@@ -27,10 +27,6 @@ public class CameraMove : MonoBehaviour
 
     Vector3 camOrigin = new Vector3(0.0f, 2.0f, 0.0f);
 
-
-    //TODO delete debug variable
-    //bool hasToStop = false;
-    //int framesToStop = 0;
     
     
     // Start is called before the first frame update
@@ -48,31 +44,6 @@ public class CameraMove : MonoBehaviour
 
         Cursor.lockState = fpCamMode && enabledControl ? CursorLockMode.Locked : CursorLockMode.None;
 
-
-        //Test Code TODO delete
-//        {
-//            if (hasToStop)
-//            {
-//                if (framesToStop > 20)
-//                {
-//#if UNITY_EDITOR
-//                    UnityEditor.EditorApplication.isPlaying = false;
-//#else
-//            Application.Quit();
-//#endif
-//                }
-//                //framesToStop++;
-
-
-//            }
-
-//            if (Input.GetKeyDown(KeyCode.G))
-//            {
-//                pitch += 0.01f;
-//                SetPitchYaw(pitch, yaw);
-//                hasToStop = true;
-//            }
-//        }
     }
 
 

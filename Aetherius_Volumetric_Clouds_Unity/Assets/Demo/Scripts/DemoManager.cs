@@ -24,6 +24,7 @@ public class DemoManager : MonoBehaviour
     public Dropdown resolution;
     public Dropdown preset;
     public GameObject benchmarkToggleButton;
+    public Canvas mainCanvas;
     public Canvas benchmarkCanvas;
     public Canvas benchmarkExcludeCanvas;
     public Light sun;
@@ -42,6 +43,7 @@ public class DemoManager : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
+        mainCanvas.gameObject.SetActive(true);
         benchmarkCanvas.gameObject.SetActive(true);
         benchmarkToggleImage = benchmarkToggleButton.GetComponent<Image>();
         benchmarkToggleText = benchmarkToggleButton.transform.Find("Text").GetComponent<Text>();
@@ -52,54 +54,6 @@ public class DemoManager : MonoBehaviour
         SetBenchmarkButtonDisplay(false);
         initialSunRot = sun.transform.rotation;
 
-
-
-        ////Test Code TODO delete
-        //float currDist = 0.0f;
-        //int stepsToPerform = 256;
-        ////for (int i = 0; i < stepsToPerform; i++)
-        ////{
-        ////    float stepLength = 110+(currDist/638749)*currDist*0.4f;
-        ////    currDist += stepLength;
-        ////    Debug.LogWarning("Distance Travelled in " + i.ToString() + "steps: " + currDist.ToString());
-        ////    Debug.LogWarning("Step length at " + i.ToString() + "steps: " + stepLength.ToString());
-        ////}
-
-        //float startExpDist = 15000;
-        //for (int i = 0; i < stepsToPerform; i++)
-        //{
-        //    float distFromExpStart = (currDist - startExpDist);
-        //    float distancePercentageFromStart = (distFromExpStart / (638748 - startExpDist));
-        //    float stepLength = Mathf.Lerp(300, 200000, distancePercentageFromStart*distancePercentageFromStart*5);
-        //    currDist += stepLength;
-        //    Debug.LogWarning("Distance Travelled in " + i.ToString() + "steps: " + currDist.ToString());
-        //    Debug.LogWarning("Step length at " + i.ToString() + "steps: " + stepLength.ToString());
-        //}
-
-        float tInit = 1000;
-        float tMax = 638748;
-        const float startExpDist = 7000;
-        float currentT = tInit;
-        int numSteps = 0;
-        while (currentT <= tMax)
-        {
-
-            float stepLength;
-            if (currentT <= tInit + startExpDist)
-            {
-                stepLength = 600;
-            }
-            else
-            {
-                float distFromExpStart = (currentT - (tInit + startExpDist));
-                float distancePercentageFromStart = (distFromExpStart / (638748.0f - startExpDist))*5.0f;
-                stepLength = Mathf.Clamp(Mathf.Lerp(600, 100000, distancePercentageFromStart* distancePercentageFromStart), 600, 100000);
-            }
-            currentT += stepLength;
-            numSteps++;
-            Debug.LogWarning("Distance Travelled in " + numSteps.ToString() + "steps: " + currentT.ToString());
-            Debug.LogWarning("Step length at " + numSteps.ToString() + "steps: " + stepLength.ToString());
-        }
     }
 
     // Update is called once per frame

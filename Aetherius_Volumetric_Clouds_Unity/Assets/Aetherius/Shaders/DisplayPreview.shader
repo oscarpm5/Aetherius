@@ -56,12 +56,12 @@ Shader "Aetherius/DisplayPreview"
 				float h = _ScreenParams.y;//height of the cam target texture in pixels
 
 				float minDimensionsScaled = min(w, h) * debugTextureSize;//we get the shortest screen axis in pixels and multiply it by a scale factor between 0 and 1
-				float2 currPixel = float2(i.uv.x * w, i.uv.y * h);//Pixel equivalent of uv.xy //TODO change name to a more readable one
+				float2 currPixelCoords = float2(i.uv.x * w, i.uv.y * h);//Pixel equivalent of uv.xy
 
 
-				if (currPixel.x < minDimensionsScaled && currPixel.y < minDimensionsScaled) //overwrite only the pixels inside the wanted square
+				if (currPixelCoords.x < minDimensionsScaled && currPixelCoords.y < minDimensionsScaled) //overwrite only the pixels inside the wanted square
 				{
-					float2 st = (currPixel / minDimensionsScaled) * tileAmmount;
+					float2 st = (currPixelCoords / minDimensionsScaled) * tileAmmount;
 					col = tex3Dlod(_DisplayTex3D, float4(frac(st), slice3DTex,lod));
 					
 					if (displayAllChannels == 0) //If we only want to display one channel

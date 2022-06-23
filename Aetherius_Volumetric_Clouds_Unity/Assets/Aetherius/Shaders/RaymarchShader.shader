@@ -56,7 +56,7 @@ Shader "Aetherius/RaymarchShader"
 
 
 			Texture3D<float4> baseShapeTexture;
-			Texture3D<float3> detailTexture; //TODO see if I can get around using a float3
+			Texture3D<float3> detailTexture; 
 			Texture2D<float3> weatherMapTexture;
 			Texture2D<float3> weatherMapTextureNew;
 			Texture2D<float> blueNoiseTexture;
@@ -404,7 +404,7 @@ Shader "Aetherius/RaymarchShader"
 					shadow *= exp(-density * currStep * initialStepSize * eCoeff);
 				}
 
-				return shadow;//TODO can lerp powder effect here (multiplying shadow) but might not be energy conserving!
+				return shadow;
 			}
 
 			float LightShadowTransmittanceCone(float3 pos, float initialStepSize, float eCoeff, float initialSampleLvl)
@@ -420,7 +420,7 @@ Shader "Aetherius/RaymarchShader"
 					shadow *= exp(-density * length(newPos) * eCoeff);
 				}
 
-				return shadow;//TODO can lerp powder effect here (multiplying shadow) but might not be energy conserving!
+				return shadow;
 			}
 
 			float3 LightScatter(float3 currPos, float cosAngle,int i, float initialSampleLvl)
@@ -634,9 +634,6 @@ Shader "Aetherius/RaymarchShader"
 				float maxHazeDist = atmosphereVisibDist;//Horizon max view
 				float minHazeDist = hazeMinDist;//TODO consider making this public
 				float hazeAmmount = saturate(Remap(ammountTravelledThroughAtmos, minHazeDist, maxHazeDist, 0.0, 1.0));
-
-
-				//col = lerp(scatteredtransmittance * col + scatteredLuminance, col, 1.0 - (1.0 - hazeAmmount) * (1.0 - hazeAmmount));
 
 				hazeAmmount = 1.0 - (1.0 - hazeAmmount) * (1.0 - hazeAmmount);
 				return float4(scatteredLuminance * saturate(1.0 - hazeAmmount), max(scatteredtransmittance,hazeAmmount));

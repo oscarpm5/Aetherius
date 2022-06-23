@@ -304,7 +304,7 @@ namespace Aetherius
             GenerateWeatherMapChannel(preset, TEXTURE_CHANNEL.G,kernelIndex, dim, ref output,  seed + 1);
             GenerateWeatherMapChannel(preset, TEXTURE_CHANNEL.B,kernelIndex, dim, ref output,  seed + 2);
 
-            //TODO this line will be used to model precipitation extra absorption
+            //TODO this line will be used to model precipitation extra absorption or any extra info
             //GenerateWeatherMapChannel(preset, TEXTURE_CHANNEL.A, kernelIndex, dim, ref output, seed);
             output.GenerateMips();
         }

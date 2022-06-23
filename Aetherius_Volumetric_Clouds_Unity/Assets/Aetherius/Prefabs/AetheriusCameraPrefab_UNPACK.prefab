@@ -17,7 +17,7 @@ GameObject:
   - component: {fileID: 3966771012703584864}
   - component: {fileID: 3966771012703584867}
   m_Layer: 0
-  m_Name: AetheriusCamera
+  m_Name: AetheriusCameraPrefab_UNPACK
   m_TagString: MainCamera
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
