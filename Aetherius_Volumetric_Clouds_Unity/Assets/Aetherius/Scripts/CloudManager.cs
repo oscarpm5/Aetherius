@@ -9,15 +9,15 @@ namespace Aetherius
     {
 
         public CLOUD_CONTROL mode = CLOUD_CONTROL.SIMPLE;
-        public CLOUD_PRESET preset = CLOUD_PRESET.SPARSE;
+        public CLOUD_PRESET preset = CLOUD_PRESET.CLOUDY;
         public CLOUD_RESOLUTION resolution = CLOUD_RESOLUTION.ORIGINAL;
 
         public CloudShape simple;
         public CloudShape advanced;
 
         //Ray March
-        public float baseRaymarchStep = 200.0f;
-        public float dynamicStepsCoefficient = 4.0f;
+        public float baseRaymarchStep = 400.0f;
+        public float dynamicStepsCoefficient = 100000.0f;
         public Texture2D blueNoise;
 
         //Weather System
@@ -80,7 +80,7 @@ namespace Aetherius
         public float absorptionC = 0.0f;
         public float shadowSize = 100.0f;
         public bool softerShadows = false;
-        public int lightIterations = 2;
+        public int lightIterations = 4;
 
         public TextureGenerator textureGenerator;
         public List<Vector4> conekernel;
