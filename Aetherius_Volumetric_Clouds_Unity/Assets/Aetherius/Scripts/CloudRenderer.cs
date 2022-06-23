@@ -14,39 +14,15 @@ namespace Aetherius
         private Camera _cam;
         public Shader _shader;
         public Shader _displayToScreen;
-        [HideInInspector]
-        public Material _material;
-        [HideInInspector]
-        public Material _displayMaterial;
+
 
         [SerializeField]
         private CloudManager _cloudManager;
+        [HideInInspector]
+        public Material rayMarchMaterial;
 
-        public Material rayMarchMaterial
-        {
-            get
-            {
-                if (!_material && _shader)
-                {
-                    _material = new Material(_shader);
-                    _material.hideFlags = HideFlags.HideAndDontSave;
-                }
-                return _material;
-            }
-        }
-
-        public Material displayMaterial
-        {
-            get
-            {
-                if (!_displayMaterial && _displayToScreen)
-                {
-                    _displayMaterial = new Material(_displayToScreen);
-                    _displayMaterial.hideFlags = HideFlags.HideAndDontSave;
-                }
-                return _displayMaterial;
-            }
-        }
+        [HideInInspector]
+        public Material displayMaterial;
 
         public Camera cam
         {
@@ -66,12 +42,29 @@ namespace Aetherius
         {
             cam.depthTextureMode = DepthTextureMode.Depth;
 
-            if (rayMarchMaterial == null || displayMaterial == null || _cloudManager == null)
+
+
+            if (_shader == null || _displayToScreen == null || _cloudManager == null)
             {
                 Graphics.Blit(source, destination);
                 Debug.LogWarning("Couldn't render clouds. Check that the script has both a shader and a cloud manager assigned.");
                 return;
             }
+
+            if (rayMarchMaterial==null || rayMarchMaterial.shader!=_shader)
+            {
+                rayMarchMaterial = new Material(_shader);
+            }
+
+            if (displayMaterial == null || displayMaterial.shader != _displayToScreen)
+            {
+                displayMaterial = new Material(_displayToScreen);
+            }
+
+
+
+
+
 
             RenderTexture halfResTexture = null;
             int resDecrease = (int)Mathf.Pow(2, (int)_cloudManager.resolution);
@@ -100,9 +93,9 @@ namespace Aetherius
 
             displayMaterial.SetTexture("_MainTex", source); //input the rendered camera texture 
             displayMaterial.SetTexture("cloudTex", halfResTexture); //input the rendered camera texture 
-            displayMaterial.SetVector("texelRes", new Vector2( 1.0f / halfRes.x, 1.0f / halfRes.y));
+            displayMaterial.SetVector("texelRes", new Vector2(1.0f / halfRes.x, 1.0f / halfRes.y));
             SetResolutionParameters(_cloudManager.resolution);
-          
+
 
 
             Graphics.Blit(source, destination, displayMaterial);

@@ -116,7 +116,6 @@ Shader "Aetherius/RaymarchShader"
 			float hazeMinDist;
 			float hazeMaxDist;
 
-			bool transitioningWM;
 			float transitionLerpT;
 
 
@@ -321,11 +320,14 @@ Shader "Aetherius/RaymarchShader"
 				float fTime = _Time;
 				float3 windOffset = -windDir * float3(fTime, fTime, fTime);//TODO make this & skewk consistent around the globe
 				float3 skewPos = currPos - normalize(windDir) * cloudHeightPercent * cloudHeightPercent * 100 * skewAmmount;
-				float3 weatherMapCloud = weatherMapTexture.SampleLevel(samplerweatherMapTexture, (skewPos.xz / weatherMapSize) + windOffset.xz * windDisplacesWeatherMap,sampleLvl); //We sample the weather map (r coverage,g type)
-				if (transitioningWM == true)
-				{
-					weatherMapCloud = lerp(weatherMapCloud, weatherMapTextureNew.SampleLevel(samplerweatherMapTexture, (skewPos.xz / weatherMapSize) + windOffset.xz * windDisplacesWeatherMap, sampleLvl), transitionLerpT);
-				}
+
+				float2 wmUVs = (skewPos.xz / weatherMapSize) + windOffset.xz * windDisplacesWeatherMap;
+				float3 weatherMapCloudOriginal = weatherMapTexture.SampleLevel(samplerweatherMapTexture, wmUVs, sampleLvl);//We sample the weather map (r coverage,g type)
+				float3 weatherMapCloudNew = weatherMapTextureNew.SampleLevel(samplerweatherMapTexture, wmUVs, sampleLvl);
+				float3 weatherMapCloud = lerp(weatherMapCloudOriginal, weatherMapCloudNew,saturate(transitionLerpT));
+
+
+
 
 				//Cloud Base shape
 				float4 lowFreqNoise = baseShapeTexture.SampleLevel(samplerbaseShapeTexture, (currPos / baseShapeSize) + windOffset * baseShapeWindMult, sampleLvl);

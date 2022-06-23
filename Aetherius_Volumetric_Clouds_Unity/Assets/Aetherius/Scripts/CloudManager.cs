@@ -228,12 +228,8 @@ namespace Aetherius
 
         public void SetMaterialProperties(ref Material mat,Vector2 texDimensions)
         {
-            if (transitioning)
-            {
-                mat.SetTexture("weatherMapTextureNew", textureGenerator.newWM);
                 mat.SetFloat("transitionLerpT", Mathf.Clamp01(currentTransitionTimeWM / transitionTimeWM));
-            }
-            mat.SetInt("transitioningWM", transitioning ? 1 : 0);
+                mat.SetTexture("weatherMapTextureNew", textureGenerator.newWM);
 
 
             mat.SetTexture("baseShapeTexture", textureGenerator.GetTexture(TEXTURE_TYPE.BASE_SHAPE));
