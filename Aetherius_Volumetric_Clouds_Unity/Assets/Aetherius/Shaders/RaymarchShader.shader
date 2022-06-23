@@ -375,25 +375,6 @@ Shader "Aetherius/RaymarchShader"
 				return ((1.0 - g2) / pow(1.0 + g2 - 2.0 * g * cosAngle, 1.5)) / (4 * 3.1415);
 			}
 
-			float CalculateStepsForRay(float rayLength)
-			{
-				float atmosphereHeight = planetAtmos.z - planetAtmos.y;
-				rayLength = max(rayLength, atmosphereHeight);
-				return Remap(rayLength, atmosphereHeight,maxRayPossibleDist, 64.0,128.0);
-			}
-
-			float CalculateMaxRayDist(float rayLength)
-			{
-				if (maxRayUserDist == 0.0)
-				{
-					return rayLength;
-				}
-				else
-				{
-					return min(maxRayUserDist, rayLength);
-				}
-			}
-
 			bool IsPosVisible(float3 pos,float maxDepth,bool isMaxDepth)
 			{
 				if (!isMaxDepth)
@@ -484,18 +465,34 @@ Shader "Aetherius/RaymarchShader"
 				
 				
 				const float startExpDist = (planetAtmos.z-planetAtmos.y);
+				const float startExpDistInit = (tInit + startExpDist);
 				float stepLength = dynamicRaymarchParameters.x;
 				
 				while (currentT <= tMax && finished == false)
 				{
-					
-					if (currentT >= startExpDist)
+					if (isInsideAtmos == true)
 					{
-						float distFromExpStart = (currentT -  startExpDist);
-						float distancePercentageFromStart = (distFromExpStart / (maxRayPossibleGroundDist- startExpDist));
-						float t =saturate(distancePercentageFromStart * distancePercentageFromStart *15);
-						stepLength = lerp(dynamicRaymarchParameters.x, dynamicRaymarchParameters.y,t);
+						if (currentT >= startExpDist)
+						{
+							float distFromExpStart = (currentT - startExpDist);
+							float distancePercentageFromStart = (distFromExpStart / (maxRayPossibleGroundDist - startExpDist));
+							float t = saturate(distancePercentageFromStart * distancePercentageFromStart * 15);
+							stepLength = lerp(dynamicRaymarchParameters.x, dynamicRaymarchParameters.y, t);
+						}
 					}
+					else
+					{
+
+
+						if (currentT >= tInit)
+						{
+							float distFromExpStart = (currentT - tInit);
+							float distancePercentageFromStart = (distFromExpStart / (maxRayPossibleGroundDist));
+							float t = saturate(distancePercentageFromStart * distancePercentageFromStart * 15);
+							stepLength = lerp(dynamicRaymarchParameters.x, dynamicRaymarchParameters.y, t);
+						}
+					}
+					
 
 
 					float detailedStepLength = stepLength * 0.20;
@@ -664,8 +661,7 @@ Shader "Aetherius/RaymarchShader"
 
 				if (isAtmosRay && atmosIntersection.intersectionsT.y - atmosIntersection.intersectionsT.x > 0.0)
 				{
-					float4 result = Raymarching(rayDirection, atmosIntersection, i.uv, depthMeters, linearDepth >= 1.0);
-					return result;
+					return Raymarching(rayDirection, atmosIntersection, i.uv, depthMeters, linearDepth >= 1.0);
 				}
 				else
 				{

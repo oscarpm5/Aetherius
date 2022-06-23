@@ -136,6 +136,21 @@ public class Benchmark : MonoBehaviour
             }
             else
             {
+                if(currentTime >= evaluationTime*(2.0f/3.0f))
+                {
+                    aetheriusCamMove.SetPitchYawPos(30.0f, 200.0f, new Vector3(0.0f, 20000.0f, 0.0f));
+                }
+                else if (currentTime >= evaluationTime * (1.0f / 3.0f))
+                {
+                    aetheriusCamMove.SetPitchYawPos(0.0f, 200.0f, new Vector3(0.0f, 3000.0f, 0.0f));
+                }
+                else
+                {
+                    aetheriusCamMove.SetPitchYawPos(-30.0f, 200.0f, new Vector3(0.0f, 10.0f, 0.0f));
+                }
+
+
+
                 currentTime += Time.unscaledDeltaTime;
                 evaluatingFrames.Add(Time.unscaledDeltaTime);
             }
