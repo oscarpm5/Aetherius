@@ -200,6 +200,30 @@ namespace Aetherius.Demo
 
             }
 
+            if( benchmarkRef.evaluatingPreset ==Benchmark.EVALUATION_STAGE.INACTIVE)
+            {
+                if(Input.GetKeyDown(KeyCode.Alpha4) && managerRef.preset != CLOUD_PRESET.SPARSE)
+                {
+                    managerRef.preset = CLOUD_PRESET.SPARSE;
+                    managerRef.StartWMTransition(presetTransitionTime);
+                }
+                else if (Input.GetKeyDown(KeyCode.Alpha5) && managerRef.preset != CLOUD_PRESET.CLOUDY)
+                {
+                    managerRef.preset = CLOUD_PRESET.CLOUDY;
+                    managerRef.StartWMTransition(presetTransitionTime);
+                }
+                else if (Input.GetKeyDown(KeyCode.Alpha6) && managerRef.preset != CLOUD_PRESET.STORMY)
+                {
+                    managerRef.preset = CLOUD_PRESET.STORMY;
+                    managerRef.StartWMTransition(presetTransitionTime);
+                }
+                else if (Input.GetKeyDown(KeyCode.Alpha7) && managerRef.preset != CLOUD_PRESET.OVERCAST)
+                {
+                    managerRef.preset = CLOUD_PRESET.OVERCAST;
+                    managerRef.StartWMTransition(presetTransitionTime);
+                }
+            }
+
             if (!cinematicMode && Input.GetKeyDown(KeyCode.B))
             {
                 benchmarkRef.ToggleBenchmark();

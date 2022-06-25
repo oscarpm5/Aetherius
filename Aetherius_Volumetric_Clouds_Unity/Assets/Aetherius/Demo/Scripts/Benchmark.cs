@@ -20,7 +20,7 @@ namespace Aetherius.Demo
 
     public class Benchmark : MonoBehaviour
     {
-        enum EVALUATION_STAGE
+        public enum EVALUATION_STAGE
         {
             SPARSE,
             CLOUDY,
@@ -35,7 +35,8 @@ namespace Aetherius.Demo
         public Aetherius.CloudManager cloudManager;
         public DemoManager demo;
         public CameraMove aetheriusCamMove;
-        EVALUATION_STAGE evaluatingPreset;
+        [HideInInspector]
+        public EVALUATION_STAGE evaluatingPreset;
         public float evaluationTime = 10.0f;
         float currentTime;
         List<float> evaluatingFrames;
