@@ -32,7 +32,8 @@ namespace Aetherius.Demo
         public Canvas benchmarkExcludeCanvas;
         public Light sun;
         public Slider dayNightCycleSlider;
-        public Toggle animateSun;
+        public Toggle animateSunToggle;
+        public bool animateSun;
 
         Text benchmarkToggleText;
         Image benchmarkToggleImage;
@@ -43,9 +44,13 @@ namespace Aetherius.Demo
 
         Quaternion initialSunRot;
 
+        [HideInInspector]
+        public bool cinematicMode = false;
+
         // Start is called before the first frame update
         void Start()
         {
+            cinematicMode = false;
             mainCanvas.gameObject.SetActive(true);
             benchmarkCanvas.gameObject.SetActive(true);
             benchmarkToggleImage = benchmarkToggleButton.GetComponent<Image>();
@@ -74,13 +79,16 @@ namespace Aetherius.Demo
 
         void SetSunPos()
         {
-            if (animateSun.isOn)
+            if (animateSun)
             {
                 dayNightCycleSlider.value = (dayNightCycleSlider.value + Time.deltaTime * 2.0f) % dayNightCycleSlider.maxValue;
             }
 
             sun.transform.rotation = initialSunRot * Quaternion.AngleAxis(dayNightCycleSlider.value, Vector3.right);
-
+            if (!cinematicMode)
+            {
+                animateSun = animateSunToggle.isOn;
+            }
         }
 
         void SetResolutionText()
@@ -178,9 +186,23 @@ namespace Aetherius.Demo
                 Quit();
             }
 
-            if (Input.GetKeyDown(KeyCode.B))
+            if (Input.GetKeyDown(KeyCode.C))
             {
-                GetComponent<Benchmark>().ToggleBenchmark();
+                cinematicMode = !cinematicMode;
+
+                mainCanvas.gameObject.SetActive(!cinematicMode);
+                benchmarkRef.StopBenchmark();
+
+                if (!cinematicMode)
+                    animateSunToggle.isOn = animateSun;
+
+
+
+            }
+
+            if (!cinematicMode && Input.GetKeyDown(KeyCode.B))
+            {
+                benchmarkRef.ToggleBenchmark();
             }
 
 
