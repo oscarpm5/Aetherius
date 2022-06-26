@@ -48,8 +48,6 @@ namespace Aetherius.Demo
         string filename = "";
         bool resultsSaved = false;
 
-        bool wasSunAniamted = false;
-
         // Start is called before the first frame update
         void Start()
         {
@@ -96,8 +94,6 @@ namespace Aetherius.Demo
             cloudManager.StartWMTransition(0.0f);
             aetheriusCamMove.SetPitchYawPos(-30.0f, 200.0f, new Vector3(0.0f, 10.0f, 0.0f));
             aetheriusCamMove.enabledControl = false;
-            wasSunAniamted = demo.animateSunToggle.isOn;
-            demo.animateSunToggle.isOn = false;
             demo.SetBenchmarkButtonDisplay(true);
         }
 
@@ -106,7 +102,6 @@ namespace Aetherius.Demo
             evaluatingPreset = EVALUATION_STAGE.INACTIVE;
             aetheriusCamMove.enabledControl = true;
             demo.SetBenchmarkButtonDisplay(false);
-            demo.animateSunToggle.isOn = wasSunAniamted;
         }
 
         // Update is called once per frame

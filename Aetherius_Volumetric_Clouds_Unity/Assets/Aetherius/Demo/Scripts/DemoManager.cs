@@ -76,19 +76,19 @@ namespace Aetherius.Demo
             SetPresetText();
 
         }
+        public void SetAnimateSun()
+        {
+            animateSun = animateSunToggle.isOn;
+        }
 
         void SetSunPos()
         {
-            if (animateSun)
+            if (animateSun && benchmarkRef.evaluatingPreset == Benchmark.EVALUATION_STAGE.INACTIVE)
             {
                 dayNightCycleSlider.value = (dayNightCycleSlider.value + Time.deltaTime * 2.0f) % dayNightCycleSlider.maxValue;
             }
 
             sun.transform.rotation = initialSunRot * Quaternion.AngleAxis(dayNightCycleSlider.value, Vector3.right);
-            if (!cinematicMode)
-            {
-                animateSun = animateSunToggle.isOn;
-            }
         }
 
         void SetResolutionText()
@@ -188,21 +188,12 @@ namespace Aetherius.Demo
 
             if (Input.GetKeyDown(KeyCode.C))
             {
-                cinematicMode = !cinematicMode;
-
-                mainCanvas.gameObject.SetActive(!cinematicMode);
-                benchmarkRef.StopBenchmark();
-
-                if (!cinematicMode)
-                    animateSunToggle.isOn = animateSun;
-
-
-
+                ToggleCinematicMode();
             }
 
-            if( benchmarkRef.evaluatingPreset ==Benchmark.EVALUATION_STAGE.INACTIVE)
+            if (benchmarkRef.evaluatingPreset == Benchmark.EVALUATION_STAGE.INACTIVE)
             {
-                if(Input.GetKeyDown(KeyCode.Alpha4) && managerRef.preset != CLOUD_PRESET.SPARSE)
+                if (Input.GetKeyDown(KeyCode.Alpha4) && managerRef.preset != CLOUD_PRESET.SPARSE)
                 {
                     managerRef.preset = CLOUD_PRESET.SPARSE;
                     managerRef.StartWMTransition(presetTransitionTime);
@@ -242,6 +233,16 @@ namespace Aetherius.Demo
             {
                 managerRef.resolution = Aetherius.CLOUD_RESOLUTION.QUARTER;
             }
+        }
+
+
+        void ToggleCinematicMode()
+        {
+            cinematicMode = !cinematicMode;
+            benchmarkRef.StopBenchmark();
+            mainCanvas.gameObject.SetActive(!cinematicMode);
+
+           
         }
 
         private static void Quit()
