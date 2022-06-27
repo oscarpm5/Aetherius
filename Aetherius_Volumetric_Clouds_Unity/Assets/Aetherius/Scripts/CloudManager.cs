@@ -67,7 +67,7 @@ namespace Aetherius
         public float baseShapeWindMult = 1.5f;
         public float detailShapeWindMult = 3.0f;
         public float skewAmmount = 0.1f;
-        public Vector3 windDirection = new Vector3(0.01f, 0.025f, 0.005f);
+        public Vector3 windDirection = new Vector3(0.005f, 0.025f, 0.01f);
         public int planetRadiusKm = 6371;
         public Vector2Int hazeVisibilityAtmos = new Vector2Int(50000, 100000); //distance through the atmosphere layer
 
