@@ -73,7 +73,7 @@ namespace Aetherius
 
         //Lighting
         public Light sunLight;
-        public float lightIntensityMult = 6.5f;
+        public float lightIntensityMult = 25.0f;
         public float ambientLightIntensity = 1.0f;
         public float extintionC = 0.0f;
         public float scatterC = 0.1f;
@@ -113,8 +113,22 @@ namespace Aetherius
             }
         }
 
+        public void Reset()
+        {
+            OnReset();
+        }
         public void OnEnable()
         {
+            OnReset();
+        }
+
+        public void OnReset()
+        {
+
+            if (GetComponent<CloudRenderer>())
+            {
+                GetComponent<CloudRenderer>()._cloudManager = this;
+            }
 
             if (textureGenerator == null)
             {
@@ -122,12 +136,16 @@ namespace Aetherius
             }
             textureGenerator.InitializeTextures();
             conekernel = GenerateConeKernels();
-            textureGenerator.GenerateWeatherMap(256, ref textureGenerator.originalWM, wmSeed, preset);
-            textureGenerator.GenerateAllNoise();
+            if (textureGenerator.computeShader != null)
+            {
+                textureGenerator.GenerateWeatherMap(256, ref textureGenerator.originalWM, wmSeed, preset);
+                textureGenerator.GenerateAllNoise();
+            }
 
-
-            sunLight = RenderSettings.sun;
-
+            if (sunLight == null)
+            {
+                sunLight = RenderSettings.sun;
+            }
         }
 
 
@@ -135,12 +153,18 @@ namespace Aetherius
         public void Update()
         {
             currentTimeUpdateGI += Time.deltaTime;
-
-            if (sunLight.transform.rotation != lastSunRotation && currentTimeUpdateGI >= timeToUpdateGI)
+            if (sunLight)
             {
-                DynamicGI.UpdateEnvironment();
-                lastSunRotation = sunLight.transform.rotation;
-                currentTimeUpdateGI = 0.0f;
+                if (sunLight.transform.rotation != lastSunRotation && currentTimeUpdateGI >= timeToUpdateGI)
+                {
+                    DynamicGI.UpdateEnvironment();
+                    lastSunRotation = sunLight.transform.rotation;
+                    currentTimeUpdateGI = 0.0f;
+                }
+            }
+            else
+            {
+                Debug.LogWarning("Missing sunlight reference on cloud manager!");
             }
 
 
@@ -226,12 +250,17 @@ namespace Aetherius
             return retList;
         }
 
-        public void SetMaterialProperties(ref Material mat, Vector2 texDimensions)
+        public bool SetMaterialProperties(ref Material mat, Vector2 texDimensions)
         {
-           
-                mat.SetTexture("weatherMapTextureNew", textureGenerator.newWM);
+            if (sunLight == null)
+            {
+                return false;
+            }
 
-            if (mode == CLOUD_CONTROL.ADVANCED && advancedWM !=null)
+
+            mat.SetTexture("weatherMapTextureNew", textureGenerator.newWM);
+
+            if (mode == CLOUD_CONTROL.ADVANCED && advancedWM != null)
             {
                 mat.SetTexture("weatherMapTexture", advancedWM);
                 mat.SetFloat("transitionLerpT", 0.0f);
@@ -337,6 +366,7 @@ namespace Aetherius
 
 
             CreateLightParamPows(lightIterations, ref mat);
+            return true;
 
         }
 

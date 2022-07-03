@@ -40,11 +40,20 @@ namespace Aetherius
             }
         }
 
+        public void Reset()
+        {
+            OnReset();
+        }
+
         public void OnEnable()
+        {
+            OnReset();
+        }
+        public void OnReset()
         {
             if (cloudManager == null)
             {
-                cloudManager = GetComponent<CloudManager>();              
+                cloudManager = GetComponent<CloudManager>();
             }
         }
 

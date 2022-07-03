@@ -116,9 +116,18 @@ namespace Aetherius
         void TextureGenerationSection()
         {
             StartSection("Texture Generation");
+            using (EditorGUI.ChangeCheckScope check = new EditorGUI.ChangeCheckScope())
+            {
+                _myScript.textureGenerator.computeShader = (ComputeShader)EditorGUILayout.ObjectField("Compute Shader", _myScript.textureGenerator.computeShader, typeof(ComputeShader), false);
 
-            _myScript.textureGenerator.computeShader = (ComputeShader)EditorGUILayout.ObjectField("Compute Shader", _myScript.textureGenerator.computeShader, typeof(ComputeShader), false);
-            int newSeed = EditorGUILayout.IntField("Cloudscape Seed", _myScript.wmSeed);
+                if (check.changed) 
+                {
+                    _myScript.OnReset();
+                }
+
+            }
+                
+                int newSeed = EditorGUILayout.IntField("Cloudscape Seed", _myScript.wmSeed);
             if (_myScript.wmSeed != newSeed)
             {
                 _myScript.wmSeed = newSeed;

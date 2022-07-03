@@ -11,13 +11,12 @@ namespace Aetherius
     public class CloudRenderer : MonoBehaviour
     {
 
-        private Camera _cam;
         public Shader _shader;
         public Shader _displayToScreen;
 
 
-        [SerializeField]
-        private CloudManager _cloudManager;
+        
+        public CloudManager _cloudManager;
         [HideInInspector]
         public Material rayMarchMaterial;
 
@@ -26,15 +25,32 @@ namespace Aetherius
 
         public Camera cam
         {
-            get //TODO will this work with the editor cam?
+            get 
             {
-                if (!_cam)
-                {
-                    _cam = GetComponent<Camera>();
-                }
-                return _cam;
+                return this.GetComponent<Camera>();
             }
 
+        }
+
+        public void Reset()
+        {
+            OnReset();
+        }
+        public void OnEnable()
+        {
+            OnReset();
+        }
+
+        public void OnReset()
+        {
+            cam.depthTextureMode = DepthTextureMode.Depth;
+            if (_cloudManager==null)
+            {
+                if(GetComponent<CloudManager>())
+                {
+                    _cloudManager= GetComponent<CloudManager>();
+                }
+            }
         }
 
         [ImageEffectOpaque]
@@ -82,8 +98,11 @@ namespace Aetherius
 
             rayMarchMaterial.SetTexture("_MainTex", source); //input the rendered camera texture 
 
-            Material mat = rayMarchMaterial; //TODO this may cause problems?
-            _cloudManager.SetMaterialProperties(ref mat, halfRes);
+            if(!_cloudManager.SetMaterialProperties(ref rayMarchMaterial, halfRes))
+            {
+                Graphics.Blit(source, destination);
+                return;
+            }
 
 
 
